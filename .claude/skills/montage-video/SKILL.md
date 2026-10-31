@@ -5,8 +5,13 @@ description: Monter un reel / TikTok / Short vertical à partir d'un rush et d'u
 
 # Montage vidéo vertical (Remotion)
 
-Objectif : à partir d'un rush (`rushs/*.webm` ou `.mp4`) et du script du post, produire une
-vidéo 1080x1920 prête à publier dans `montages/`.
+Objectif : à partir d'un rush et du script du post, produire une vidéo 1080x1920 prête à
+publier dans `montages/`.
+
+- Les prises enregistrées au prompteur arrivent dans `rushs/<semaine>-<numéro>-<heure>.webm`
+  (plusieurs prises possibles : prends la meilleure, ou la dernière si on ne précise pas).
+- Les vidéos du site Portail Habitat sont dans `ecrans/*.mp4` (1080x1920, déjà au bon format) :
+  s'il en manque une, lance `python machine/ecrans.py <nom>`.
 
 ## Étapes
 
@@ -22,6 +27,8 @@ vidéo 1080x1920 prête à publier dans `montages/`.
    - sous-titres mot par mot, gros, centrés, le mot en cours surligné (couleur d'accent),
    - un zoom léger toutes les 2 à 4 secondes pour garder le rythme,
    - les chiffres et les prix en grand à l'écran quand ils sont prononcés,
+   - dès que le script parle du site (inscription, recherche d'artisan, devis...), un plan de
+     coupe tiré de `ecrans/` : en plein écran ou en incrustation au-dessus de la tête,
    - à la fin, un carton « Commente <MOT> » (Instagram/Facebook) ou « Lien en bio : <MOT> »
      (TikTok/Shorts).
 6. Ne recopie jamais le design d'une vidéo d'origine : couleurs, polices et éléments sont

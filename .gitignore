@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 serveur/machine.db
 rushs/
+ecrans/
 montages/
 montage/node_modules/
 sorties/publies.txt

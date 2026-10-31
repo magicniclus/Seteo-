@@ -46,3 +46,31 @@ comptes_a_surveiller:
 
 # Une vidéo est un « outlier » si elle fait X fois l'engagement habituel du compte
 seuil_outlier: 3
+
+# --- Veille tendances & hooks (machine/tendances.py) ---
+# Hashtags Instagram à scanner (sans #). Instagram limite à 30 hashtags différents par semaine.
+hashtags_a_surveiller:
+  - renovation
+  - travauxmaison
+  - renovationmaison
+  - immobilier
+  - homedesign
+# Recherches YouTube Shorts (France), triées par nombre de vues
+recherches_youtube:
+  - "rénovation maison"
+  - "prix travaux"
+  - "erreur rénovation"
+  - "achat immobilier conseils"
+  - "home renovation hack"
+
+# --- Captures d'écran vidéo du site (machine/ecrans.py) ---
+# Chaque page est filmée en format vertical (téléphone) pour servir de plans dans tes vidéos.
+# `cliquer` (facultatif) : textes des boutons à cliquer pendant la vidéo, dans l'ordre.
+pages_ecran:
+  - nom: accueil
+    url: "https://www.portail-habitat.fr"
+  - nom: inscription
+    url: "https://www.portail-habitat.fr/inscription"
+  # - nom: recherche-artisan
+  #   url: "https://www.portail-habitat.fr/artisans"
+  #   cliquer: ["Trouver un artisan"]

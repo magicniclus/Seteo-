@@ -46,11 +46,24 @@
     morceaux = [];
     enregistreur = new MediaRecorder(flux);
     enregistreur.ondataavailable = ev => morceaux.push(ev.data);
-    enregistreur.onstop = () => {
+    enregistreur.onstop = async () => {
       e.target.classList.remove("actif"); e.target.textContent = "● Enregistrer";
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob(morceaux, { type: enregistreur.mimeType }));
-      a.download = "rush-" + Date.now() + ".webm"; a.click();
+      const prise = new Blob(morceaux, { type: enregistreur.mimeType });
+      const info = document.getElementById("info");
+      info.textContent = "Envoi de la prise...";
+      const donnees = new FormData();
+      donnees.append("video", prise, "prise.webm");
+      try {
+        const r = await fetch("{{URL_ENVOI}}", { method: "POST", body: donnees });
+        if (!r.ok) throw new Error(r.status);
+        info.textContent = "Prise envoyée ✓ (" + (await r.json()).fichier + ")";
+      } catch {
+        // Si l'envoi échoue, on garde la prise sur l'appareil
+        info.textContent = "Envoi impossible : prise téléchargée sur l'appareil";
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(prise);
+        a.download = "rush-" + Date.now() + ".webm"; a.click();
+      }
     };
     enregistreur.start();
     e.target.classList.add("actif"); e.target.textContent = "■ Stop";

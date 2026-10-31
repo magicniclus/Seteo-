@@ -4,7 +4,8 @@
                        quelqu'un écrit en DM -> l'IA répond dans ton style
 - /ressource/<mot>   : page « prénom + email » -> inscription Portail Habitat -> ressource
 - /stats             : DM envoyés, ouvertures, inscriptions, conversion par mot-clé
-- /prompteur/...     : prompteur + caméra pour enregistrer tes vidéos
+- /studio            : tes scripts à tourner, les écrans du site, les hooks du moment
+- /prompteur/...     : prompteur + caméra ; chaque prise est envoyée dans rushs/
 
 Lancer : uvicorn serveur.app:app --host 0.0.0.0 --port 8000
 """
@@ -16,12 +17,13 @@ import json
 import os
 import sqlite3
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import markdown
 import requests
-from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "machine"))
 from commun import DOSSIER_RESSOURCES, MODELE, RACINE, cerveau, client, config, slug  # noqa: E402
@@ -193,8 +195,7 @@ def inscription(mot: str, prenom: str = Form(...), email: str = Form(...), src: 
 
 @app.get("/stats", response_class=HTMLResponse)
 def stats(cle: str = ""):
-    if cle != os.environ["STATS_KEY"]:
-        raise HTTPException(403)
+    verifier_cle(cle)
     with db() as c:
         lignes = c.execute("""SELECT mot,
             SUM(type='dm_envoye'), SUM(type='ouverture'), SUM(type='inscription')
@@ -208,16 +209,84 @@ def stats(cle: str = ""):
 <th>Ouvertures</th><th>Inscriptions</th><th>Conversion</th></tr>{rangs}</table>"""
 
 
-# ---------- Prompteur + enregistrement ----------
+# ---------- Studio : s'enregistrer sur les textes de Claude ----------
 
-@app.get("/prompteur/{semaine}/{numero}", response_class=HTMLResponse)
-def prompteur(semaine: str, numero: int):
+RUSHS = RACINE / "rushs"
+ECRANS = RACINE / "ecrans"
+
+
+def verifier_cle(cle: str) -> None:
+    if not hmac.compare_digest(cle, os.environ["STATS_KEY"]):
+        raise HTTPException(403)
+
+
+def post_du_calendrier(semaine: str, numero: int) -> dict:
     fichier = RACINE / "sorties" / Path(semaine).name / "calendrier.json"
     if not fichier.exists():
         raise HTTPException(404)
     posts = json.loads(fichier.read_text(encoding="utf-8"))["posts"]
     if not 1 <= numero <= len(posts):
         raise HTTPException(404)
-    p = posts[numero - 1]
+    return posts[numero - 1]
+
+
+@app.get("/studio", response_class=HTMLResponse)
+def studio(cle: str = ""):
+    verifier_cle(cle)
+    t = html.escape
+    lignes = []
+    for cal in sorted((RACINE / "sorties").glob("20*/calendrier.json"), reverse=True)[:2]:
+        semaine = cal.parent.name
+        for n, p in enumerate(json.loads(cal.read_text(encoding="utf-8"))["posts"], 1):
+            if p["format"] not in ("reel", "short"):
+                continue
+            fait = any(RUSHS.glob(f"{semaine}-{n}-*"))
+            lignes.append(
+                f"<tr><td>{'✅' if fait else '⏺'}</td><td>{semaine} #{n}<br><small>{t(p['reseau'])} · "
+                f"{t(p['mot_cle'].upper())}</small></td><td>{t(p['accroche'])}</td>"
+                f"<td><a href='/prompteur/{semaine}/{n}?cle={t(cle)}'>Enregistrer</a></td></tr>")
+    ecrans = "".join(
+        f"<figure style='display:inline-block;width:150px;margin:4px'><video src='/ecrans/{f.name}?cle={t(cle)}' "
+        f"muted loop playsinline onmouseover='this.play()' style='width:100%'></video>"
+        f"<figcaption>{t(f.stem)}</figcaption></figure>" for f in sorted(ECRANS.glob("*.mp4")))
+    biblio = RACINE / "sorties" / "tendances" / "hooks.json"
+    hooks = json.loads(biblio.read_text(encoding="utf-8"))[-10:][::-1] if biblio.exists() else []
+    liste_hooks = "".join(f"<li>{t(h['version_portail_habitat'])}</li>" for h in hooks)
+    return f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio</title>{STYLE}
+<h1>Studio</h1><h2>Vidéos à enregistrer</h2>
+<table><tr><th></th><th>Post</th><th>Accroche</th><th></th></tr>{''.join(lignes) or '<tr><td colspan=4>Lance generer.py</td></tr>'}</table>
+<h2>Écrans du site</h2>{ecrans or '<p>Lance machine/ecrans.py</p>'}
+<h2>Hooks du moment</h2><ul>{liste_hooks or '<li>Lance machine/tendances.py</li>'}</ul>"""
+
+
+@app.get("/prompteur/{semaine}/{numero}", response_class=HTMLResponse)
+def prompteur(semaine: str, numero: int, cle: str = ""):
+    verifier_cle(cle)
+    p = post_du_calendrier(semaine, numero)
     texte = html.escape("\n\n".join([p["accroche"], *p["script_ou_slides"]]))
-    return (RACINE / "serveur" / "prompteur.html").read_text(encoding="utf-8").replace("{{TEXTE}}", texte)
+    envoi = f"/rushs/{Path(semaine).name}/{numero}?cle={html.escape(cle)}"
+    return ((RACINE / "serveur" / "prompteur.html").read_text(encoding="utf-8")
+            .replace("{{TEXTE}}", texte).replace("{{URL_ENVOI}}", envoi))
+
+
+@app.post("/rushs/{semaine}/{numero}")
+async def recevoir_rush(semaine: str, numero: int, video: UploadFile = File(...), cle: str = ""):
+    """Le prompteur envoie ici chaque prise : rushs/<semaine>-<numero>-<heure>.webm"""
+    verifier_cle(cle)
+    post_du_calendrier(semaine, numero)
+    RUSHS.mkdir(exist_ok=True)
+    cible = RUSHS / f"{Path(semaine).name}-{numero}-{datetime.now():%H%M%S}.webm"
+    with open(cible, "wb") as f:
+        while morceau := await video.read(1 << 20):
+            f.write(morceau)
+    return {"ok": True, "fichier": cible.name}
+
+
+@app.get("/ecrans/{fichier}")
+def ecran(fichier: str, cle: str = ""):
+    verifier_cle(cle)
+    chemin = ECRANS / Path(fichier).name
+    if not chemin.exists():
+        raise HTTPException(404)
+    return FileResponse(chemin)

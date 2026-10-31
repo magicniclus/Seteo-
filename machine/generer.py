@@ -44,6 +44,24 @@ class Calendrier(BaseModel):
     posts: List[Post]
 
 
+def bloc_veille() -> str:
+    """Dernières tendances + bibliothèque de hooks produites par tendances.py et outliers.py."""
+    dossier = RACINE / "sorties"
+    morceaux = []
+    if (biblio := dossier / "tendances" / "hooks.json").exists():
+        hooks = json.loads(biblio.read_text(encoding="utf-8"))[-40:]
+        morceaux.append("Hooks qui marchent en ce moment (inspire-toi des modèles) :\n"
+                        + "\n".join(f"- {h['modele']}" for h in hooks))
+    for sous_dossier in ("tendances", "outliers"):
+        rapports = sorted((dossier / sous_dossier).glob("20*.md"))
+        if rapports:
+            morceaux.append(f"Dernier rapport {sous_dossier} :\n{rapports[-1].read_text(encoding='utf-8')[:6000]}")
+    if not morceaux:
+        return ""
+    return ("Veille de la semaine (utilise ces tendances et ces hooks, en les adaptant) :\n\n"
+            + "\n\n".join(morceaux))
+
+
 def construire_prompt(cfg: dict, stats: str | None) -> str:
     bloc_stats = (
         f"Voici les performances de nos derniers posts (CSV) :\n{stats}\n"
@@ -59,6 +77,8 @@ Promesse de l'inscription gratuite : {cfg['promesse_inscription']}
 Thèmes possibles : {', '.join(cfg['themes'])}
 
 {bloc_stats}
+
+{bloc_veille()}
 
 Produis {cfg['posts_par_reseau_par_semaine']} posts par réseau pour : {', '.join(cfg['reseaux'])}.
 Règles :
@@ -124,10 +144,10 @@ def main() -> None:
                   f"{l['format']} · mot-clé {l['mot_cle']}\n")
         md.append(f"**Accroche :** {l['accroche']}\n\n**Script :** {l['script']}\n")
         md.append(f"\n**Visuel :** {l['idee_visuel']}\n\n**Légende :**\n\n{l['legende']}\n")
-        md.append(f"\n**Prompteur :** {cfg['url_serveur']}/prompteur/{lundi}/{l['numero']}\n")
     (dossier / "calendrier.md").write_text("".join(md), encoding="utf-8")
 
     print(f"{len(lignes)} posts prêts dans {dossier}")
+    print(f"Pour t'enregistrer : {cfg['url_serveur']}/studio?cle=<STATS_KEY>")
 
 
 if __name__ == "__main__":

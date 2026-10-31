@@ -1,4 +1,4 @@
-# - Chaque matin à 7h26 (Paris) : cherche les vidéos qui explosent dans ta niche
+# - Chaque matin à 7h26 (Paris) : vidéos qui explosent + tendances & hooks de ta niche
 # - Chaque dimanche à 18h (Paris) : prépare la semaine suivante + les ressources
 # Les résultats sont enregistrés dans le dépôt (dossiers sorties/ et ressources/).
 name: Machine d'acquisition
@@ -19,15 +19,18 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
       META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: Outliers du jour
+      - name: Outliers, tendances et hooks du jour
         if: github.event.schedule == '26 6 * * *' || github.event_name == 'workflow_dispatch'
-        run: python machine/outliers.py
+        run: |
+          python machine/outliers.py
+          python machine/tendances.py
       - name: Semaine de contenu
         if: github.event.schedule == '0 17 * * 0' || github.event_name == 'workflow_dispatch'
         run: |

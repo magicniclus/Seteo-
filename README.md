@@ -7,12 +7,15 @@ en 2 semaines avec cette boucle :
 ```
  1. CERVEAU IA        CLAUDE.md : qui tu es, comment tu parles
         │
- 2. OUTLIERS          chaque matin : les vidéos qui explosent dans ta niche (outliers.py)
-        │               + chaque dimanche : la semaine complète (generer.py)
+ 2. VEILLE            chaque matin : les vidéos qui explosent (outliers.py)
+        │               + les tendances et les hooks du moment (tendances.py)
+        │               + chaque dimanche : la semaine complète écrite par Claude (generer.py)
         ▼
- 3. TOURNAGE          /prompteur : script qui défile + caméra qui enregistre
+ 3. TOURNAGE          /studio -> /prompteur : le texte de Claude défile, tu t'enregistres,
+        │               la prise part toute seule sur le serveur (rushs/)
+        │             + ecrans.py filme le site Portail Habitat (plans de coupe 1080x1920)
         │
- 4. MONTAGE           Claude Code + le skill montage-video (Remotion) -> vidéo 9:16
+ 4. MONTAGE           Claude Code + le skill montage-video (Remotion) : ta prise + les écrans du site
         │
  5. PUBLICATION       publier_instagram.py (3 à 12 posts/jour) ; TikTok via Metricool
         │
@@ -30,11 +33,13 @@ en 2 semaines avec cette boucle :
 | `CLAUDE.md` | Le « cerveau IA » : identité, ton, règles. Lu par Claude Code et tous les scripts |
 | `config/marque.yaml` | Ton URL, ta cible, ta promesse, les comptes à surveiller |
 | `machine/outliers.py` | Trouve les vidéos à x3+ de leur moyenne et réécrit le script à ta sauce |
+| `machine/tendances.py` | Scanne les hashtags Instagram et les Shorts YouTube : tendances + bibliothèque de hooks |
+| `machine/ecrans.py` | Filme le site Portail Habitat en vertical (défilement, clics) pour tes vidéos |
 | `machine/generer.py` | Semaine complète, tous réseaux + une ressource gratuite par mot-clé |
 | `machine/publier_instagram.py` | Publie les reels et images à l'heure prévue |
-| `serveur/app.py` | Commentaire -> DM, réponses IA aux DM, pages d'inscription, stats, prompteur |
+| `serveur/app.py` | Commentaire -> DM, réponses IA aux DM, pages d'inscription, stats, studio, prompteur |
 | `.claude/skills/montage-video/` | Le skill que Claude Code utilise pour monter tes vidéos |
-| `.github/workflows/hebdo.yml` | Lance outliers chaque matin et la semaine chaque dimanche, tout seul |
+| `.github/workflows/hebdo.yml` | Lance outliers + tendances chaque matin et la semaine chaque dimanche, tout seul |
 
 ## Ce qu'il faut installer, et où
 
@@ -45,6 +50,7 @@ en 2 semaines avec cette boucle :
 | **Claude Code** | Ton ordi : `npm install -g @anthropic-ai/claude-code`, puis `claude` dans le dossier | Le monteur et le développeur IA |
 | **ffmpeg** | Ton ordi : https://ffmpeg.org/download.html | Traitement vidéo |
 | **Clé API Anthropic** | https://console.anthropic.com → API Keys (quelques € de crédit) | Le cerveau des scripts |
+| **Clé API YouTube** | https://console.cloud.google.com → active « YouTube Data API v3 » → Identifiants → Clé API (gratuit) | Veille des Shorts les plus vus |
 | **Compte Meta Developer** | https://developers.facebook.com | Publication, commentaires et DM Instagram |
 | **Un serveur (VPS)** | Hetzner, OVH, Scaleway : ~5 €/mois, Ubuntu | Tourne 24h/24 : DM, pages, publication (c'est le « Hermès » de la vidéo) |
 | **Un sous-domaine** | Chez ton hébergeur de domaine, ex. `machine.portail-habitat.fr` → IP du serveur | L'adresse des liens envoyés en DM |
@@ -57,15 +63,20 @@ en 2 semaines avec cette boucle :
 python -m venv .venv
 source .venv/bin/activate          # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
+playwright install chromium        # le navigateur qui filme le site
 cp .env.example .env               # puis remplis .env
 ```
 
 **2. Remplis `config/marque.yaml` et `CLAUDE.md`** : URL, cible, promesse, ton. Ajoute 10 à 30
-comptes Instagram pros de ta niche (FR et US) dans `comptes_a_surveiller`.
+comptes Instagram pros de ta niche (FR et US) dans `comptes_a_surveiller`, tes hashtags et tes
+recherches YouTube, et les pages du site à filmer dans `pages_ecran`.
 
-**3. Génère ta première semaine :**
+**3. Lance la veille, filme le site, puis génère ta première semaine :**
 ```bash
-python machine/generer.py
+python machine/tendances.py        # tendances + hooks -> sorties/tendances/
+python machine/outliers.py         # vidéos qui explosent -> sorties/outliers/
+python machine/ecrans.py           # vidéos du site -> ecrans/*.mp4
+python machine/generer.py          # la semaine, nourrie par la veille
 ```
 → `sorties/<lundi>/calendrier.md` (à lire), `calendrier.csv` (planning), et `ressources/*.json`
 (une ressource gratuite par mot-clé).
@@ -106,11 +117,16 @@ Ajoute les tâches automatiques (`crontab -e`) :
 (Pense à lancer uvicorn en service permanent avec `systemd` ou `tmux` pour qu'il tourne 24h/24.)
 
 **6. Tourne, monte, publie :**
-- Ouvre `https://machine.portail-habitat.fr/prompteur/<lundi>/<numéro>` sur ton téléphone ou ton
-  ordi : le script défile, tu enregistres, le rush se télécharge.
-- Mets le rush dans `rushs/`, lance `claude` dans le dossier et dis :
-  *« Monte le post 3 de la semaine avec le rush rushs/xxx.webm »*. Claude utilise le skill
-  `montage-video`, tu fais tes retours, il refait une V2.
+- Ouvre `https://machine.portail-habitat.fr/studio?cle=<STATS_KEY>` sur ton téléphone (ajoute-le à
+  l'écran d'accueil). Tu y vois les vidéos à tourner cette semaine (⏺ à faire, ✅ faite), les
+  vidéos du site et les hooks du moment.
+- Clique sur **Enregistrer** : le texte écrit par Claude défile sur l'écran, la caméra filme.
+  À chaque **Stop**, la prise est envoyée sur le serveur dans `rushs/` (refais autant de prises
+  que tu veux). Si le réseau coupe, la prise est téléchargée sur ton téléphone.
+- Récupère les prises sur ton ordi : `rsync -av root@<ip-serveur>:machine/rushs/ rushs/`
+- Lance `claude` dans le dossier et dis : *« Monte le post 3 de la semaine »*. Claude prend
+  ta prise, ajoute les vidéos du site (`ecrans/`) quand tu en parles, les sous-titres, le
+  carton « Commente <MOT> ». Tu fais tes retours, il refait une V2.
 - Mets la vidéo en ligne (lien public), colle le lien dans `url_media` du CSV : elle part à l'heure prévue.
 - TikTok / Shorts / LinkedIn : importe le CSV dans Metricool.
 
