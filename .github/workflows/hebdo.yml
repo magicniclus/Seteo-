@@ -1,9 +1,11 @@
-# Chaque dimanche à 18h (heure de Paris), l'IA prépare la semaine suivante
-# et l'enregistre dans le dossier sorties/ du dépôt.
-name: Contenu de la semaine
+# - Chaque matin à 7h26 (Paris) : cherche les vidéos qui explosent dans ta niche
+# - Chaque dimanche à 18h (Paris) : prépare la semaine suivante + les ressources
+# Les résultats sont enregistrés dans le dépôt (dossiers sorties/ et ressources/).
+name: Machine d'acquisition
 
 on:
   schedule:
+    - cron: "26 6 * * *"
     - cron: "0 17 * * 0"
   workflow_dispatch:
 
@@ -11,25 +13,32 @@ permissions:
   contents: write
 
 jobs:
-  generer:
+  tourner:
     runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+      META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: |
+      - name: Outliers du jour
+        if: github.event.schedule == '26 6 * * *' || github.event_name == 'workflow_dispatch'
+        run: python machine/outliers.py
+      - name: Semaine de contenu
+        if: github.event.schedule == '0 17 * * 0' || github.event_name == 'workflow_dispatch'
+        run: |
           if [ -f stats.csv ]; then
             python machine/generer.py --stats stats.csv
           else
             python machine/generer.py
           fi
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - run: |
           git config user.name "machine-acquisition"
           git config user.email "actions@github.com"
-          git add sorties
-          git commit -m "Contenu de la semaine" || echo "Rien de nouveau"
+          git add sorties ressources 2>/dev/null || true
+          git commit -m "Machine : nouveau contenu" || echo "Rien de nouveau"
           git push

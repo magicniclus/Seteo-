@@ -1,4 +1,4 @@
-"""Génère le calendrier de contenu de la semaine pour tous les réseaux.
+"""Génère le calendrier de contenu de la semaine + les ressources « Commente <MOT> ».
 
 Usage :
     python machine/generer.py                      # semaine standard
@@ -11,15 +11,16 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 from typing import List, Literal
-from urllib.parse import urlencode
 
-import anthropic
-import yaml
-from dotenv import load_dotenv
 from pydantic import BaseModel
 
-RACINE = Path(__file__).resolve().parent.parent
-MODELE = "claude-opus-5-5"
+from commun import RACINE, config, enregistrer_ressource, generer_structure, slug
+
+
+class Ressource(BaseModel):
+    titre: str  # ex. « Le guide des vrais prix d'une salle de bain en 2026 »
+    promesse: str  # une phrase : ce que la personne reçoit
+    contenu_markdown: str  # la ressource complète, vraiment utile (guide, checklist, tableau)
 
 
 class Post(BaseModel):
@@ -32,8 +33,9 @@ class Post(BaseModel):
     script_ou_slides: List[str]  # plan vidéo plan par plan, ou texte de chaque slide
     legende: str
     hashtags: List[str]
-    appel_a_l_action: str  # pousse vers l'inscription gratuite
-    idee_visuel: str  # ce qu'il faut filmer / générer comme image
+    mot_cle: str  # UN mot à commenter, ex. DEVIS
+    ressource: Ressource
+    idee_visuel: str
 
 
 class Calendrier(BaseModel):
@@ -42,66 +44,45 @@ class Calendrier(BaseModel):
     posts: List[Post]
 
 
-def lien_suivi(url: str, reseau: str, numero: int) -> str:
-    """Ajoute des UTM pour savoir quel post amène des inscrits."""
-    params = {"utm_source": reseau, "utm_medium": "social", "utm_campaign": f"post{numero}"}
-    return f"{url}{'&' if '?' in url else '?'}{urlencode(params)}"
-
-
 def construire_prompt(cfg: dict, stats: str | None) -> str:
     bloc_stats = (
         f"Voici les performances de nos derniers posts (CSV) :\n{stats}\n"
-        "Analyse ce qui a le mieux marché (vues, abonnés gagnés, clics, inscriptions) "
-        "et fais plus de ce qui marche, moins de ce qui ne marche pas."
+        "Analyse ce qui a le mieux marché (vues, abonnés gagnés, commentaires du mot-clé, "
+        "inscriptions) et fais plus de ce qui marche, moins de ce qui ne marche pas."
         if stats
         else "Pas encore de statistiques : teste des formats et des accroches variés."
     )
-    return f"""Tu es le responsable acquisition de la marque {cfg['marque']} ({cfg['site']}).
-Objectif n°1 : gagner des abonnés sur chaque réseau. Objectif n°2 : convertir ces abonnés
-en inscrits gratuits sur {cfg['page_inscription']}.
+    return f"""Prépare la semaine de contenu de {cfg['marque']}.
 
 Cible : {cfg['cible']}
 Promesse de l'inscription gratuite : {cfg['promesse_inscription']}
-Ton : {cfg['ton']}
-Langue : {cfg['langue']}
 Thèmes possibles : {', '.join(cfg['themes'])}
 
 {bloc_stats}
 
 Produis {cfg['posts_par_reseau_par_semaine']} posts par réseau pour : {', '.join(cfg['reseaux'])}.
 Règles :
-- Adapte vraiment chaque post au réseau (TikTok/Reels/Shorts = vidéo verticale avec accroche
-  forte dans les 2 premières secondes ; LinkedIn = texte expert ; Facebook = communauté/questions).
-- Chaque post doit apporter une vraie valeur (chiffre, astuce, erreur, avant/après), pas de pub.
-- L'appel à l'action renvoie vers l'inscription gratuite (« lien en bio » sur Instagram/TikTok).
-- Pas de fausses promesses, pas de faux chiffres : si tu cites un prix, donne une fourchette réaliste.
+- Adapte chaque post au réseau (Reels/TikTok/Shorts = vidéo verticale, hook fort dans les
+  2 premières secondes ; LinkedIn = texte expert ; Facebook = communauté/questions).
+- Chaque post apporte une vraie valeur (chiffre, astuce, erreur, avant/après).
+- Chaque post a un mot-clé unique (un seul mot, en majuscules) et une ressource gratuite
+  liée, vraiment utile, que la personne reçoit en échange de son inscription.
+- Fin du script Instagram/Facebook : « Commente <MOT> et je t'envoie <ressource> en DM ».
+  Fin TikTok/Shorts/LinkedIn : « Tape <MOT> sur le lien dans ma bio ».
 - Varie les heures de publication sur les créneaux forts de chaque réseau.
 """
 
 
 def main() -> None:
-    load_dotenv(RACINE / ".env")
     parser = argparse.ArgumentParser()
     parser.add_argument("--stats", help="CSV de tes stats passées (optionnel)")
     args = parser.parse_args()
 
-    cfg = yaml.safe_load((RACINE / "config" / "marque.yaml").read_text(encoding="utf-8"))
+    cfg = config()
     stats = Path(args.stats).read_text(encoding="utf-8") if args.stats else None
 
-    client = anthropic.Anthropic()  # lit ANTHROPIC_API_KEY dans .env
     print("L'IA prépare la semaine de contenu...")
-    reponse = client.beta.messages.parse(
-        model=MODELE,
-        max_tokens=64000,
-        output_config={"effort": "high"},
-        betas=["server-side-fallback-2026-07-01"],
-        fallbacks="default",
-        messages=[{"role": "user", "content": construire_prompt(cfg, stats)}],
-        output_format=Calendrier,
-    )
-    if reponse.stop_reason == "refusal":
-        raise SystemExit("La génération a été refusée, reformule la config.")
-    cal = reponse.parsed_output
+    cal = generer_structure(construire_prompt(cfg, stats), Calendrier)
 
     lundi = date.today() + timedelta(days=(7 - date.today().weekday()) % 7 or 7)
     dossier = RACINE / "sorties" / lundi.isoformat()
@@ -109,26 +90,28 @@ def main() -> None:
 
     lignes = []
     for i, p in enumerate(cal.posts, 1):
-        jour = lundi + timedelta(days=p.jour - 1)
-        lien = lien_suivi(cfg["page_inscription"], p.reseau, i)
+        mot = slug(p.mot_cle)
+        enregistrer_ressource(mot, p.ressource.titre, p.ressource.promesse,
+                              p.ressource.contenu_markdown)
         lignes.append({
             "numero": i,
-            "date": jour.isoformat(),
+            "date": (lundi + timedelta(days=p.jour - 1)).isoformat(),
             "heure": p.heure,
             "reseau": p.reseau,
             "format": p.format,
             "theme": p.theme,
+            "mot_cle": mot.upper(),
             "accroche": p.accroche,
-            "legende": f"{p.legende}\n\n{p.appel_a_l_action}\n\n{' '.join(p.hashtags)}",
-            "lien_suivi": lien,
+            "legende": f"{p.legende}\n\n{' '.join(p.hashtags)}",
+            "lien_ressource": f"{cfg['url_serveur']}/ressource/{mot}?src={p.reseau}",
             "idee_visuel": p.idee_visuel,
             "script": " | ".join(p.script_ou_slides),
+            "url_media": "",  # à remplir : lien public de la vidéo/image montée
         })
 
     (dossier / "calendrier.json").write_text(
         json.dumps(cal.model_dump(), ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    # CSV importable dans Metricool / Buffer / Notion / Google Sheets
     with open(dossier / "calendrier.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=lignes[0].keys())
         w.writeheader()
@@ -137,10 +120,11 @@ def main() -> None:
     md = [f"# Semaine du {lundi:%d/%m/%Y}\n", f"**Stratégie :** {cal.strategie_de_la_semaine}\n",
           f"**Leçons des stats :** {cal.lecons_tirees_des_stats}\n"]
     for l in sorted(lignes, key=lambda x: (x["date"], x["heure"])):
-        md.append(f"\n## {l['date']} {l['heure']} · {l['reseau']} · {l['format']}\n")
+        md.append(f"\n## #{l['numero']} · {l['date']} {l['heure']} · {l['reseau']} · "
+                  f"{l['format']} · mot-clé {l['mot_cle']}\n")
         md.append(f"**Accroche :** {l['accroche']}\n\n**Script :** {l['script']}\n")
         md.append(f"\n**Visuel :** {l['idee_visuel']}\n\n**Légende :**\n\n{l['legende']}\n")
-        md.append(f"\n**Lien suivi :** {l['lien_suivi']}\n")
+        md.append(f"\n**Prompteur :** {cfg['url_serveur']}/prompteur/{lundi}/{l['numero']}\n")
     (dossier / "calendrier.md").write_text("".join(md), encoding="utf-8")
 
     print(f"{len(lignes)} posts prêts dans {dossier}")

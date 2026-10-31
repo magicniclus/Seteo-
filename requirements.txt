@@ -3,3 +3,7 @@ pydantic>=2
 python-dotenv
 pyyaml
 requests
+fastapi
+uvicorn
+python-multipart
+markdown

@@ -1,10 +1,11 @@
 # ============================================================
-#  CONFIG DE TA MARQUE — c'est le seul fichier à remplir
+#  CONFIG DE TA MARQUE : le seul fichier à remplir
 # ============================================================
 
 marque: "Portail Habitat"
-site: "https://www.portail-habitat.fr"   # <-- remplace par ta vraie URL
-page_inscription: "https://www.portail-habitat.fr/inscription"  # page où les gens s'inscrivent gratuitement
+site: "https://www.portail-habitat.fr"          # <-- remplace par ta vraie URL
+# Adresse publique de TON serveur machine (voir README, étape 5). Sert aux liens envoyés en DM.
+url_serveur: "https://machine.portail-habitat.fr"
 
 # Qui tu veux attirer (sois précis : l'IA écrit pour ces gens-là)
 cible: >
@@ -17,10 +18,8 @@ promesse_inscription: >
   Accès gratuit aux guides, estimations de prix et mises en relation avec des
   artisans vérifiés près de chez eux.
 
-ton: "Direct, utile, concret, un peu d'humour, jamais vendeur lourd. Tutoiement."
 langue: "français"
 
-# Thèmes qui marchent dans l'habitat (l'IA tourne dessus)
 themes:
   - "Prix réels des travaux (combien ça coûte vraiment)"
   - "Erreurs à éviter en rénovation"
@@ -38,3 +37,12 @@ reseaux:
   - youtube_shorts
 
 posts_par_reseau_par_semaine: 5
+
+# Comptes Instagram PROFESSIONNELS de ta niche à surveiller pour trouver les vidéos qui
+# explosent (outliers). Mets-en 10 à 30, français ET américains.
+comptes_a_surveiller:
+  - "exemple_renovation"
+  - "exemple_immo"
+
+# Une vidéo est un « outlier » si elle fait X fois l'engagement habituel du compte
+seuil_outlier: 3
