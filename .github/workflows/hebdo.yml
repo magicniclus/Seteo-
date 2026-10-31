@@ -1,0 +1,35 @@
+# Chaque dimanche à 18h (heure de Paris), l'IA prépare la semaine suivante
+# et l'enregistre dans le dossier sorties/ du dépôt.
+name: Contenu de la semaine
+
+on:
+  schedule:
+    - cron: "0 17 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: |
+          if [ -f stats.csv ]; then
+            python machine/generer.py --stats stats.csv
+          else
+            python machine/generer.py
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - run: |
+          git config user.name "machine-acquisition"
+          git config user.email "actions@github.com"
+          git add sorties
+          git commit -m "Contenu de la semaine" || echo "Rien de nouveau"
+          git push

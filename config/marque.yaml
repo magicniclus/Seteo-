@@ -1,0 +1,40 @@
+# ============================================================
+#  CONFIG DE TA MARQUE — c'est le seul fichier à remplir
+# ============================================================
+
+marque: "Portail Habitat"
+site: "https://www.portail-habitat.fr"   # <-- remplace par ta vraie URL
+page_inscription: "https://www.portail-habitat.fr/inscription"  # page où les gens s'inscrivent gratuitement
+
+# Qui tu veux attirer (sois précis : l'IA écrit pour ces gens-là)
+cible: >
+  Particuliers propriétaires ou futurs propriétaires en France qui ont un projet
+  de travaux, rénovation, achat ou aménagement de leur logement, et qui cherchent
+  des conseils, des prix et des artisans de confiance.
+
+# Ce que l'inscription gratuite leur apporte (la promesse)
+promesse_inscription: >
+  Accès gratuit aux guides, estimations de prix et mises en relation avec des
+  artisans vérifiés près de chez eux.
+
+ton: "Direct, utile, concret, un peu d'humour, jamais vendeur lourd. Tutoiement."
+langue: "français"
+
+# Thèmes qui marchent dans l'habitat (l'IA tourne dessus)
+themes:
+  - "Prix réels des travaux (combien ça coûte vraiment)"
+  - "Erreurs à éviter en rénovation"
+  - "Avant / après"
+  - "Aides de l'État et économies d'énergie"
+  - "Arnaques d'artisans et comment les repérer"
+  - "Astuces déco petit budget"
+  - "Achat immobilier : pièges et checklists"
+
+reseaux:
+  - instagram
+  - tiktok
+  - facebook
+  - linkedin
+  - youtube_shorts
+
+posts_par_reseau_par_semaine: 5
