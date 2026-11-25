@@ -81,9 +81,9 @@ mouvements. Puis écris le bloc chez nous, en trois fichiers :
    `BLOCS` (`"plein"` = scène plein écran, enveloppée par `scene()` ; `"calque"` = par-dessus la prise).
    Tous les `id` commencent par `c["id"]` ; tout texte passe par `e()` et `c["typo"]()`.
 
-Un bloc plein écran doit aussi marcher quand la personne détourée reste devant lui (classe
-`.scene--devant`) : `commun.js` met alors son contenu en page sur une largeur variable et le met à
-la plus grande taille qui tient au-dessus de la tête. Donc pas de hauteur fixe ni de position
+Un bloc plein écran doit aussi marcher quand la personne reste à l'écran dans son cadre, en bas
+(mise en scène `cadre`, classe `.scene--devant`) : `commun.js` met alors son contenu en page sur une
+largeur variable et le met à la plus grande taille qui tient au-dessus du cadre. Donc pas de hauteur fixe ni de position
 absolue calée sur l'écran dans le contenu : il doit se replier tout seul (flex, marges). Si la
 place manque, ajoute au CSS du bloc une variante resserrée sous `.scene--devant` (voir `liste.css`).
 

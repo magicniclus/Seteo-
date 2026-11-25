@@ -39,6 +39,23 @@
     va(personne, { scale: w.echelle }, { scale: 1 }, 0.34, w.f - (bloc ? 0.72 : 0.36), "power3.inOut");
   });
 
+  // Blocs « en cadre » : la prise rétrécit dans un cadre arrondi en bas de l'écran, l'animation occupe
+  // le haut ; puis elle reprend tout l'écran (sauf si le bloc va jusqu'à la dernière image).
+  const prise = document.getElementById("prise");
+  D.cadres.forEach((w) => {
+    const bord = document.getElementById(w.bord);
+    const plein = { scale: 1, y: 0, clipPath: "inset(0px 0px 0px 0px round 0px)" };
+    const petit = { scale: w.s, y: w.y, clipPath: w.clip };
+    tl.set(prise, { zIndex: 4 }, w.d);            // au-dessus du bloc pendant le passage
+    va(prise, plein, petit, 0.5, w.d + 0.04, "power3.inOut");
+    tl.fromTo(bord, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.18, ease: "none" }, w.d + 0.48);
+    if (w.reste) return;
+    va(bord, { autoAlpha: 1 }, { autoAlpha: 0 }, 0.1, w.f - 0.72, "none");
+    va(prise, petit, plein, 0.4, w.f - 0.64, "power3.inOut");
+    tl.set(prise, { zIndex: 1 }, w.f);
+    tl.set(bord, { autoAlpha: 0 }, w.f);
+  });
+
   // 2. Plans de coupe
   D.broll.forEach((b) => {
     const boite = document.getElementById(b.id);

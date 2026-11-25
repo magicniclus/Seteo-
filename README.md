@@ -181,10 +181,9 @@ python machine/monter.py 2026-11-30-3 --rendu      # -> montages/2026-11-30-3.mp
 python machine/yeux.py 2026-11-30-3                # relecture
 ```
 
-**Deux styles d'animation**, au choix (`personne_devant` dans `config/da.yaml`, ou vidéo par vidéo) :
-l'animation remplace l'image quelques secondes, ou bien tu restes à l'écran, détouré, et l'animation,
-les plans de coupe et des mots géants passent derrière toi. Le détourage se calcule sur ta machine,
-compte environ 20 s par seconde détourée sans carte graphique.
+**Deux mises en scène des animations**, au choix (`mise_en_scene` dans `config/da.yaml`, ou vidéo
+par vidéo) : `plein`, l'animation remplace l'image quelques secondes ; `cadre`, tu restes à l'écran
+dans un cadre arrondi en bas et l'animation s'affiche au-dessus. Rien n'est détouré.
 
 **Clients** : une demande de travaux se montre soit en fiche redessinée (bloc `demande`), soit en
 filmant ton outil avec `broll.py ecran --prive --flouter ...`. Dans les deux cas le nom, l'adresse,

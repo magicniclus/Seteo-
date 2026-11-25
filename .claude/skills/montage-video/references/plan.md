@@ -40,7 +40,7 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
                 {"texte": "Les finitions", "detail": "joints, plinthes, peinture"}]},
     {"bloc": "commentaire", "de": "m62"}
   ],
-  "detourage": {"fond": "flou", "mots_derriere": [{"de": "m62", "a": "m64", "texte": "DEVIS"}]},
+  "mise_en_scene": "cadre",
   "reglages": {"visage_y": 0.45, "centre_y": 1330},
   "carton_fin": {"suite": "et je t'envoie ma checklist en DM"},
   "musique": "musique/fond-calme.mp3"
@@ -60,7 +60,8 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
 | `chiffres` | Cartes en haut de l'écran : `de`, `a` (défaut 2,6 s), `texte`, `legende`. Un nombre seul (`"12 000 €"`) défile jusqu'à sa valeur ; `"compter": false` pour l'empêcher. |
 | `broll` | Plans de coupe : `de`, `a`, `fichier` (vidéo ou image, chemin depuis la racine du dépôt), `mode` (`plein` = tout l'écran, les sous-titres restent ; `carte` = cadre arrondi en haut, la prise rétrécit dessous et le visage reste visible ; 1,2 s au moins ; `derriere` = tout l'écran derrière la personne détourée, demande `detourage`), `visage_y` (mode `derriere` : hauteur des yeux à ce moment-là si elle a bougé), `debut` (où commencer dans le fichier, en secondes), `ancre_x` (pour un extrait plus large que son cadre : 0 = garder la gauche, 0.5 = le centre, 1 = la droite). |
 | `blocs` | Animations prêtes à l'emploi : voir « Les blocs » ci-dessous. |
-| `detourage` | Découpe la personne de son décor. `"blocs": "derriere"` : les blocs plein écran passent derrière elle au lieu de la remplacer. `"fond"` : `"origine"` (défaut, décor intact), `"flou"` (décor flouté) ou `"univers"` (décor remplacé par le fond de la DA). `"mots_derriere": [{"de", "a", "texte"}]` : un mot géant passe derrière sa tête. `false` : pas de détourage, même si la DA le demande. Lent : ~20 s de calcul par seconde détourée. |
+| `mise_en_scene` | Pendant un bloc plein écran : `"plein"` (l'animation remplace l'image) ou `"cadre"` (la personne passe dans un cadre arrondi en bas, l'animation au-dessus). Défaut : celui de `config/da.yaml`. |
+| `detourage` | **À ne pas proposer** (résultat jugé mauvais, calcul très long) ; seulement si on le redemande. Découpe la personne de son décor. `"blocs": "derriere"` : les blocs plein écran passent derrière elle au lieu de la remplacer. `"fond"` : `"origine"` (défaut, décor intact), `"flou"` (décor flouté) ou `"univers"` (décor remplacé par le fond de la DA). `"mots_derriere": [{"de", "a", "texte"}]` : un mot géant passe derrière sa tête. `false` : pas de détourage, même si la DA le demande. Lent : ~20 s de calcul par seconde détourée. |
 | `reglages` | Réglages de la DA pour CETTE vidéo seulement, mêmes noms que dans `config/da.yaml` (`rythme` et `sous_titres`) : `visage_y` (les yeux), `tete_y`, `menton_y`, `decalage_y` (remonte ou descend l'image, en pixels), `centre_y`, `taille`, `mots_max`, `zoom_coupe`, `zoom_intervalle_min`... |
 | `carton_fin` | `de` (défaut : au dernier « commente » / « tape » prononcé), `suite` (la ligne sous le mot-clé). `false` pour ne pas en mettre. |
 | `sous_titres` | `false` pour une vidéo sans sous-titres (rare). |
@@ -68,8 +69,9 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
 
 ## Les blocs
 
-Chaque bloc a `bloc` (son nom), `de`, et `a` (facultatif : sinon sa durée par défaut). Un bloc plein
-écran qui passe derrière la personne accepte `visage_y` (hauteur des yeux à ce moment-là).
+Chaque bloc a `bloc` (son nom), `de`, et `a` (facultatif : sinon sa durée par défaut). Avec la mise
+en scène `cadre`, un bloc plein écran accepte `visage_y` (hauteur des yeux à ce moment-là). Un bloc
+dont la fin tombe sur la dernière image de la vidéo y reste, sans sortie.
 Les blocs plein écran acceptent tous `sur_titre` (petite étiquette) et `titre` (les `*astérisques*`
 passent en couleur d'accent). Styles et animations : `montage/blocs/` ; fabriques : `machine/blocs.py`.
 

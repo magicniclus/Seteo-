@@ -49,7 +49,7 @@
   }
   if (scene) {
     tl.fromTo(scene, { autoAlpha: 1, yPercent: 100 }, { autoAlpha: 1, yPercent: 0, duration: 0.45, ease: "power4.out" }, 0);
-    va(scene, { yPercent: 0 }, { yPercent: -100 }, 0.36, D.duree - 0.36, "power3.in");
+    if (!D.reste) va(scene, { yPercent: 0 }, { yPercent: -100 }, 0.36, D.duree - 0.36, "power3.in");
   }
   if (el("sur")) montrer(el("sur"), 0.22);
   if (el("titre")) montrer(el("titre"), 0.32);

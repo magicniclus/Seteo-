@@ -283,6 +283,12 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     if fond not in ("origine", "flou", "univers"):
         sys.exit(f"plan.json : detourage.fond inconnu « {fond} » (origine, flou ou univers).")
     blocs_derriere = detourage and det.get("blocs") == "derriere"
+    # ----- Mise en scène des animations plein écran : "plein" (elles remplacent l'image) ou "cadre"
+    # (la personne passe dans un cadre arrondi en bas, l'animation au-dessus ; aucun détourage)
+    style = plan.get("mise_en_scene", charte.get("mise_en_scene", "plein"))
+    if style not in ("plein", "cadre"):
+        sys.exit(f"mise_en_scene inconnue « {style} » (plein ou cadre).")
+    blocs_cadre = style == "cadre" and a_roll.exists() and not blocs_derriere
 
     # ----- Où est le visage dans l'image (une fois l'image décalée, si elle l'est) : les yeux, le haut
     # de la tête, le menton, en fraction de la hauteur. Tout le reste de la mise en scène en découle.
@@ -291,6 +297,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     tete_y = r.get("tete_y") or yeux - 0.115
     menton_y = r.get("menton_y") or yeux + 0.09
     normale = st["centre_y"] - zs["haut"] - 150    # la hauteur d'un bloc quand il a tout l'écran
+    decalage = round(r.get("decalage_y") or 0)     # l'image remontée (négatif) ou descendue, en pixels
 
     def mise_en_scene(element: dict) -> dict:
         """Quand la personne reste DEVANT un bloc ou un plan, elle rétrécit vers le bas et ce qui est
@@ -311,8 +318,63 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             echelle = (H - haut_tete) / (H - tete_px)
         return {"echelle": round(max(0.35, echelle), 3), "tete": haut_tete, "hauteur": round(place), "centre": centre}
 
+    def mise_en_cadre(element: dict) -> dict:
+        """La personne dans un cadre arrondi en bas de l'écran, l'animation au-dessus (sans détourage).
+        Cadrage normal : un grand cadre, la tête en haut, les sous-titres sur le buste comme d'habitude.
+        Visage en gros plan : un cadre plus petit que le visage remplit, les sous-titres juste au-dessus."""
+        L = fmt["largeur"]
+        bouge = float(element.get("visage_y", yeux)) - yeux
+        tete_px, menton_px = (tete_y + bouge) * H, (menton_y + bouge) * H
+        tete_h = menton_px - tete_px
+        bas = H - zs["bas"] + 60                      # le bas du cadre : il mord à peine sur la bande de l'interface
+        gros_plan = tete_h > 0.5 * L
+        if gros_plan:
+            large, haut_c = 450, 560
+            s = max(large / L, 0.75 * haut_c / tete_h)
+            marge = (haut_c - tete_h * s) / 2         # la tête au milieu du cadre
+        else:
+            large, haut_c = 620, 620
+            s = min(1.0, max(large / L, 0.44 * haut_c / tete_h))
+            marge = 0.09 * haut_c                     # la tête en haut, le buste dessous
+        haut = bas - haut_c
+        # la partie de l'image montrée dans le cadre (en pixels de l'image), sans sortir de l'image
+        image_haut, image_bas = max(0, decalage), H + min(0, decalage) - (110 if decalage else 0)
+        vue_haut = min(max(tete_px - marge / s, image_haut), max(image_haut, image_bas - haut_c / s))
+        cote = (L - large / s) / 2
+        if gros_plan:
+            centre = round(haut - 90)
+            place = centre - 100 - (zs["haut"] + 30)
+        else:
+            menton_ecran = haut + (menton_px - vue_haut) * s
+            centre = round(min(max(st["centre_y"], menton_ecran + 80), bas - 85))
+            centre = None if centre == st["centre_y"] else centre
+            place = haut - 40 - (zs["haut"] + 30)
+        return {"hauteur": round(place), "centre": centre, "s": round(s, 4),
+                "y": round(haut - H - (vue_haut - H) * s, 1),     # #prise rétrécit depuis son bord bas
+                "clip": f"inset({vue_haut:.1f}px {cote:.1f}px {H - vue_haut - haut_c / s:.1f}px {cote:.1f}px round {52 / s:.1f}px)",
+                "rect": (round((L - large) / 2), round(haut), large, haut_c)}
+
+    # ----- Les passages « en cadre » : un par bloc plein écran (deux blocs qui se suivent de près
+    # partagent le même passage : le cadre reste en place)
+    scenes, cadres = {}, []
+    if blocs_cadre:
+        for k, b in enumerate(plan.get("blocs", []), 1):
+            fiche = bibliotheque.BLOCS.get(b.get("bloc"))
+            if not fiche or fiche[1] != "plein":
+                continue
+            d = T(b["de"])
+            f = min(T(b["a"], fin=True) if "a" in b else d + fiche[2], total)
+            scenes["bloc", k] = g = mise_en_cadre(b)
+            if cadres and d - cadres[-1]["f"] < 0.8:
+                cadres[-1]["f"] = round(f, 3)
+            else:
+                cadres.append({"d": round(d, 3), "f": round(f, 3), "s": g["s"], "y": g["y"], "clip": g["clip"],
+                               "rect": g["rect"], "centre": g["centre"], "bord": f"cadre-bord-{len(cadres) + 1}"})
+        for w in cadres:
+            w["reste"] = w["f"] >= total - 0.05   # jusqu'à la dernière image : la personne ne reprend pas sa place
+
     # ----- Les passages où la personne reste devant quelque chose (blocs plein écran, plans « derriere »)
-    scenes, devant = {}, []
+    devant = []
     for k, b in enumerate(plan.get("blocs", []), 1):
         fiche = bibliotheque.BLOCS.get(b.get("bloc"))
         if fiche and blocs_derriere and fiche[1] == "plein":
@@ -338,7 +400,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     def centre_sous_titres(t: float):
         """Le milieu des sous-titres à l'instant t : remonté quand la personne, en gros plan, est rétrécie."""
-        return next((p["centre"] for p in passages if p["centre"] and p["d"] + 0.45 <= t < p["f"] - 0.5), None)
+        return next((p["centre"] for p in passages + cadres
+                     if p["centre"] and p["d"] + 0.3 <= t < p["f"] - (0 if p.get("reste") else 0.5)), None)
 
     # ----- Carton de fin
     fin, bloc_fin = None, ""
@@ -383,8 +446,9 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     for p in pages:
         spans = " ".join(f'<span id="{p["id"]}-{j}" class="st__mot">{e(m["t"])}</span>' for j, m in enumerate(p["mots"]))
         regles = [f'font-size:{round(st["taille"] * p["echelle"])}px'] if p["echelle"] < 1 else []
-        if centre_sous_titres(p["d"]):
-            regles.append(f'top:{centre_sous_titres(p["d"]) - 170}px')
+        milieu = (p["d"] + p["f"]) / 2
+        if centre_sous_titres(milieu):
+            regles.append(f'top:{centre_sous_titres(milieu) - 170}px')
         style = f' style="{";".join(regles)}"' if regles else ""
         bloc_st += (f'\n    <div id="{p["id"]}" class="st{" st--majuscules" if charte.get("majuscules") else ""}"{style}>'
                     f'<span class="st__ligne">{spans}</span></div>')
@@ -452,7 +516,6 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
     # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.
-    decalage = round(r.get("decalage_y") or 0)
     decale = f'<div class="decale{" decale--fondu" if decalage else ""}" style="transform:translateY({decalage}px)">'
     if a_roll.exists():
         flou = ' class="plan--flou"' if detourage and fond == "flou" else ""
@@ -512,7 +575,9 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
                     "media": lambda fichier, nom_media: preparer_media(fichier, dossier, nom_media, 0, 0)}
         balises, infos = fabrique(b, contexte)
         place_bloc = contexte["devant"]["hauteur"] if contexte["devant"] else 0   # 0 : le bloc a tout l'écran
-        css, js = code_bloc(genre, {**infos, "id": contexte["id"], "duree": contexte["duree"], "place": place_bloc})
+        # un bloc qui va jusqu'à la dernière image y reste : la vidéo se termine sur lui, sans sortie
+        css, js = code_bloc(genre, {**infos, "id": contexte["id"], "duree": contexte["duree"], "place": place_bloc,
+                                    "reste": f >= total - 0.05})
         calque(dossier, contexte["id"], fmt, balises, css, js, f"montage/blocs/{genre}.*")
         hotes_blocs += hote(contexte["id"], 5, d, f - d, f' class="bloc bloc--{mode}"')
         fenetres_blocs.append((d, f))
@@ -559,8 +624,10 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         personne = (f'\n      <div id="personne"><div id="plan-detoure">'
                     f'<div class="decale" style="transform:translateY({decalage}px)">{videos}</div></div></div>')
 
+    bords = "".join(f'\n      <div id="{w["bord"]}" class="cadre-bord" style="left:{w["rect"][0]}px;top:{w["rect"][1]}px;'
+                    f'width:{w["rect"][2]}px;height:{w["rect"][3]}px"></div>' for w in cadres)
     principal = {"duree": total, "visageY": r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
-                 "broll": brolls,
+                 "broll": brolls, "cadres": [{k: v for k, v in w.items() if k not in ("rect", "centre")} for w in cadres],
                  "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
 
@@ -587,7 +654,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     <div id="root" data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
       <div class="fond-scene"></div>
-      <div id="prise">{prise}{fond_html}</div>{personne}{bloc_broll}{musique}{hotes_blocs}{mots_html}{hote('sous-titres', 3)}{hote('habillage', 4)}
+      <div id="prise">{prise}{fond_html}</div>{bords}{personne}{bloc_broll}{musique}{hotes_blocs}{mots_html}{hote('sous-titres', 3)}{hote('habillage', 4)}
       {extras}
     </div>
     <script>

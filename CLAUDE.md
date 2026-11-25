@@ -33,4 +33,7 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
 - Pas de promesses juridiques ou financières fermes : on renvoie vers un pro si besoin.
 
 ## Ce qu'on a appris (à compléter chaque semaine)
-- (vide pour l'instant : colle ici les hooks et formats qui ont le mieux marché)
+- Montage (25/11/2026) : pas de détourage de la personne, le rendu a été jugé affreux. Les
+  animations prennent tout l'écran (`mise_en_scene: plein`) ; variante acceptée : la personne dans
+  un cadre en bas, l'animation au-dessus (`cadre`).
+- (colle ici les hooks et formats qui ont le mieux marché)

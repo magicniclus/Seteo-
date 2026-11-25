@@ -100,7 +100,8 @@ Les décisions à prendre, dans cet ordre :
 3. **Chiffres** : chaque prix ou pourcentage prononcé mérite sa carte, calée sur les mots qui le disent.
    Toujours des fourchettes réalistes (règle de `CLAUDE.md`), jamais un chiffre que la vidéo ne dit pas.
 4. **Blocs** (animations) : dès que la personne énumère, compare ou chiffre, remplace la prise par une
-   animation plein écran pendant qu'elle parle. Voir « Les blocs » ci-dessous.
+   animation plein écran pendant qu'elle parle (ou garde-la dans un cadre en bas : « deux mises en
+   scène », plus bas). Voir « Les blocs » ci-dessous.
 5. **Plans de coupe** : des images réelles sur ce qui est dit (étape 3 bis). `carte` laisse le visage
    visible, `plein` le remplace.
 6. **Mots forts** (`emphase`) : 3 à 6 dans la vidéo, pas plus. Les chiffres et le mot-clé le sont déjà.
@@ -132,53 +133,42 @@ Détail des champs : `references/plan.md`.
 - Pas de carte de chiffre ni de plan de coupe `carte` pendant un bloc plein écran.
 - Besoin d'une animation qui n'existe pas : `references/hyperframes.md` (« Ajouter un bloc »).
 
-### Détourer la personne : deux styles au choix
+### Pendant une animation : deux mises en scène au choix
 
-Pendant une animation, deux mises en scène existent. Le réglage par défaut est `personne_devant`
-dans `config/da.yaml` ; le plan d'une vidéo peut décider autrement avec `"detourage"`.
+Le réglage par défaut est `mise_en_scene` dans `config/da.yaml` ; le plan d'une vidéo peut décider
+autrement avec `"mise_en_scene"`.
 
-- **L'animation remplace l'image** (`personne_devant: false`, ou `"detourage": false`) : le bloc
-  occupe tout l'écran, on ne voit plus la personne quelques secondes. Net, rapide à calculer.
-- **La personne reste devant** (`personne_devant: true`, ou `"detourage": {"blocs": "derriere"}`) :
-  elle est découpée de son décor, rétrécit vers le bas, et le fond de l'univers avec l'animation
-  monte derrière elle. On ne la perd jamais de vue : c'est le style à proposer quand la personne
-  est le sujet de la vidéo.
+- **`plein`** (par défaut) : l'animation remplace l'image, on ne voit plus la personne quelques
+  secondes. Les textes sont à leur plus grande taille. À garder court : 3 à 8 s par bloc.
+- **`cadre`** : la personne reste à l'écran dans un cadre arrondi en bas, l'animation s'affiche
+  au-dessus. À proposer quand les blocs sont longs ou nombreux (on ne la perd jamais de vue plus de
+  la moitié de la vidéo). Rien n'est détouré : l'image est simplement recadrée dans le cadre.
 
-Avec le détourage, on peut aussi :
-- faire passer un **plan de coupe derrière elle** (`"mode": "derriere"` dans `broll`) : l'image
-  remplit l'écran, elle reste devant. Plusieurs plans peuvent s'enchaîner sans trou (le suivant
-  commence exactement où le précédent finit) : elle ne bouge pas entre deux.
-- glisser un **mot géant derrière sa tête** (`"mots_derriere"`) : le mot dit à ce moment-là, en un
-  ou deux mots, en capitales. Très bon sur un plan « derriere » pour nommer ce qu'on montre.
-- changer son décor pour toute la vidéo : `"fond": "flou"` (décor flouté et assombri, pardonne
-  beaucoup) ou `"fond": "univers"` (le fond de la DA tout du long ; les contours se voient
-  davantage, à vérifier de près).
+Comment se règle le cadre :
+- Cadrage normal (tête et épaules) : un grand cadre, la tête en haut, les sous-titres restent à
+  leur place, sur le buste.
+- Visage en gros plan : un cadre plus petit, que le visage remplit ; les sous-titres montent
+  d'eux-mêmes entre l'animation et le cadre.
+- La position du visage décide de tout : si la personne bouge d'un passage à l'autre, donne
+  `"visage_y"` sur le bloc concerné (hauteur des yeux à ce moment-là, de 0 à 1).
+- L'animation prend toute seule la plus grande taille qui tient au-dessus du cadre : un bloc court
+  grossit un peu, un bloc chargé se resserre. La place est comptée : 3 lignes courtes et un titre de
+  4 à 5 mots, pas plus. Si un texte devient difficile à lire sur la planche, raccourcis-le.
+- Deux blocs séparés de moins de 0,8 s partagent le même passage : le cadre reste en place.
+- Fais finir le bloc sur un changement d'écran de sous-titres : la personne reprend tout l'écran
+  0,6 s avant la fin du bloc, et un sous-titre en cours à ce moment-là se retrouve sur son visage.
 
-L'animation prend toute seule la plus grande taille qui tient au-dessus de la tête : un bloc court
-grossit un peu, un bloc chargé se resserre. Elle reste donc lisible, mais la place est comptée :
-3 lignes courtes et un titre de 4 à 5 mots, pas plus.
+Dans les deux mises en scène :
+- Une ligne doit rester à l'écran au moins une seconde avant que le bloc reparte : si la dernière
+  est dite à la toute fin, fais-la apparaître au début de sa phrase ou prolonge le bloc.
+- Un bloc qui va jusqu'à la dernière image y reste (pas de sortie) : la vidéo se termine sur lui.
+  Bien pour une liste récapitulative quand il n'y a pas d'appel à l'action.
 
-Avec un visage en gros plan, la personne doit rétrécir beaucoup pour laisser de la place : les
-sous-titres montent alors d'eux-mêmes entre l'animation et le haut de sa tête, et l'animation est
-plus petite que dans le premier style. Si elle devient difficile à lire sur la planche, raccourcis
-ses textes, ou propose le premier style pour cette vidéo.
-
-Une ligne de liste doit rester à l'écran au moins une seconde avant que le bloc reparte : si la
-dernière est dite à la toute fin, fais-la apparaître au début de sa phrase et prolonge le bloc.
-
-Règles de cette mise en scène :
-- La position du visage décide de tout (taille de la personne, place laissée à l'animation). Si la
-  personne bouge d'un passage à l'autre, donne `"visage_y"` sur le bloc ou le plan concerné
-  (hauteur des yeux à ce moment-là, de 0 à 1) : regarde `cadrage.jpg` ou une image de la prise.
-- Laisse au moins 0,8 s entre un bloc derrière elle et un plan « derriere » : elle doit reprendre
-  sa place entre les deux.
-- Le détourage se calcule sur la machine (rien n'est envoyé ailleurs), seulement sur les passages
-  qui en ont besoin, et il est gardé en réserve : changer un texte ne le relance pas, changer le
-  début ou la fin d'un passage si. Compte environ 20 s par seconde de vidéo sans carte graphique,
-  et préviens avant de lancer un long calcul.
-- Il marche bien sur une personne nette devant un décor qui contraste. Il peine sur les cheveux fins
-  devant un fond chargé, les gestes rapides, les objets tenus en main ou posés devant elle (bureau,
-  ordinateur). Regarde les contours sur la planche ; s'ils sont laids, reviens au premier style.
+**Le détourage (découper la silhouette pour faire passer l'animation derrière elle) : on ne le
+propose pas.** Essayé en novembre 2026, le résultat a été jugé affreux : contours qui bavent,
+tête qui flotte, et 20 s de calcul par seconde de vidéo. Le code existe encore (`"detourage"` dans
+le plan : `references/plan.md`), mais ne s'utilise que si on le redemande expressément, en
+prévenant que la qualité dépend d'un outil de découpe meilleur que celui de la machine.
 
 ### Demandes de clients
 
@@ -227,7 +217,7 @@ python machine/broll.py importer chemin/vers/clip.mp4 --debut 12 --duree 4   # u
     le fichier) qui se règle, à l'image près. Regarde l'extrait image par image avant de choisir.
 - `carte` : pendant que la carte occupe le haut, la prise rétrécit et descend dessous, le visage
   reste visible. `plein` : l'extrait remplace toute l'image, les sous-titres restent.
-  `derriere` : l'extrait remplit l'écran derrière la personne détourée (voir « Détourer la personne »).
+  (`derriere` existe aussi, derrière la personne détourée : il demande le détourage, qu'on ne propose pas.)
 - **Choisir l'image** : elle doit montrer exactement ce que dit la phrase, au moment où elle le dit
   (il dit « le bois », on voit une scie dans du bois). Une image seulement drôle ou jolie, sans
   rapport direct, distrait. Pour une référence que tout le monde connaît (mème, scène culte,

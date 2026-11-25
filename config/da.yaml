@@ -48,12 +48,11 @@ rythme:
   tete_y: 0              # haut de la tête ; 0 = déduit des yeux (visage de taille normale)
   menton_y: 0            # bas du menton ; 0 = déduit des yeux. À donner pour un visage en gros plan
 
-# Pendant une animation plein écran (liste, barres, comparaison...) ou un plan de coupe "derriere" :
-#   false = l'animation remplace l'image, on ne te voit plus quelques secondes (rapide à calculer)
-#   true  = tu restes à l'écran, détouré, et l'animation passe derrière toi
-#           (plus long : environ 20 s de calcul par seconde d'animation, sans carte graphique)
-# Le plan d'une vidéo peut décider autrement avec "detourage".
-personne_devant: false
+# Pendant une animation plein écran (liste, barres, comparaison...) :
+#   plein = l'animation remplace l'image, on ne te voit plus quelques secondes
+#   cadre = tu restes à l'écran dans un cadre arrondi en bas, l'animation s'affiche au-dessus
+# Le plan d'une vidéo peut décider autrement avec "mise_en_scene".
+mise_en_scene: plein
 
 habillage:
   barre_progression: true   # fine barre en haut : les gens restent pour voir la fin
