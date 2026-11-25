@@ -36,6 +36,12 @@ def entete(b: dict, c: dict) -> str:
 
 
 def scene(c: dict, contenu: str) -> str:
+    # "devant" : la personne détourée reste au premier plan, le contenu tient au-dessus de sa tête
+    dv = c.get("devant")
+    if dv:
+        return (f'\n    <div id="{c["id"]}-scene" class="scene scene--devant" '
+                f'style="--devant-k:{dv["k"]};--devant-hauteur:{dv["hauteur"]}px">'
+                f'<div class="scene__contenu">{contenu}</div></div>')
     return f'\n    <div id="{c["id"]}-scene" class="scene"><div class="scene__contenu">{contenu}</div></div>'
 
 

@@ -44,6 +44,13 @@ rythme:
   zoom_intervalle_min: 1.6
   visage_y: 0.38         # hauteur du visage dans l'image (0 = haut, 1 = bas) : centre des zooms
 
+# Pendant une animation plein écran (liste, barres, comparaison...) ou un plan de coupe "derriere" :
+#   false = l'animation remplace l'image, on ne te voit plus quelques secondes (rapide à calculer)
+#   true  = tu restes à l'écran, détouré, et l'animation passe derrière toi
+#           (plus long : environ 20 s de calcul par seconde d'animation, sans carte graphique)
+# Le plan d'une vidéo peut décider autrement avec "detourage".
+personne_devant: false
+
 habillage:
   barre_progression: true   # fine barre en haut : les gens restent pour voir la fin
   signature: false          # le nom de la marque en haut à gauche : non, on voit déjà la personne

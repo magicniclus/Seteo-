@@ -14,6 +14,13 @@
   height: calc(var(--st-centre) - var(--zone-haut) - 150px);
   display: flex; flex-direction: column; justify-content: center;
 }
+/* La personne détourée reste devant : le contenu se resserre dans la place au-dessus de sa tête */
+.scene--devant .scene__contenu {
+  left: 50%; right: auto; width: calc((var(--largeur) - 2 * var(--zone-cotes)) / var(--devant-k));
+  margin-left: calc((var(--largeur) - 2 * var(--zone-cotes)) / var(--devant-k) / -2);
+  height: calc(var(--devant-hauteur) / var(--devant-k));
+  transform: scale(var(--devant-k)); transform-origin: 50% 0%;
+}
 .sur-titre {
   align-self: flex-start; padding: 10px 24px 8px; border-radius: 999px;
   background: var(--accent); color: var(--sur-accent);

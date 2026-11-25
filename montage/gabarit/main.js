@@ -26,7 +26,18 @@
     tl.set(mot, { autoAlpha: 0 }, m.f);
   });
 
-  const prise = document.getElementById("prise");
+  // la prise et la personne détourée bougent toujours ensemble
+  const personne = document.getElementById("personne");
+  const cadres = [document.getElementById("prise"), personne].filter(Boolean);
+
+  // Blocs qui passent derrière la personne : le fond monte derrière elle, elle rétrécit vers le bas
+  // pour laisser la place à l'animation, puis reprend sa taille juste avant que le fond reparte.
+  // (un bloc met un instant à monter et à repartir ; un plan de coupe « derriere » change d'un coup)
+  if (personne) D.devant.forEach((w) => {
+    const bloc = w.genre !== "plan";
+    va(personne, { scale: 1 }, { scale: w.echelle }, 0.42, w.d + (bloc ? 0.26 : 0.02), "power3.out");
+    va(personne, { scale: w.echelle }, { scale: 1 }, 0.34, w.f - (bloc ? 0.72 : 0.36), "power3.inOut");
+  });
 
   // 2. Plans de coupe
   D.broll.forEach((b) => {
@@ -37,10 +48,11 @@
       va(boite, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -50 }, 0.22, b.f - 0.22, "power2.in");
       // la prise descend et rétrécit sous la carte (le visage reste visible), puis reprend sa place
       const grand = { scale: 1, borderRadius: 0 }, petit = { scale: D.reduit, borderRadius: 64 };
-      va(prise, grand, petit, 0.4, b.d, "power3.out");
-      va(prise, petit, grand, 0.32, b.f - 0.32, "power3.inOut");
+      va(cadres, grand, petit, 0.4, b.d, "power3.out");
+      va(cadres, petit, grand, 0.32, b.f - 0.32, "power3.inOut");
     } else {
-      tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.1, ease: "none" }, b.d);
+      // plein écran ou derrière la personne : apparition nette (deux plans « derriere » s'enchaînent sans trou)
+      tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: b.mode === "derriere" ? 0.02 : 0.1, ease: "none" }, b.d);
     }
     tl.fromTo(cadre, { scale: 1.09 }, { scale: 1, duration: b.f - b.d, ease: "none" }, b.d);
     tl.set(boite, { autoAlpha: 0 }, b.f);

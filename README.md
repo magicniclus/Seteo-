@@ -180,9 +180,10 @@ python machine/monter.py 2026-11-30-3 --rendu      # -> montages/2026-11-30-3.mp
 python machine/yeux.py 2026-11-30-3                # relecture
 ```
 
-**Détourage** : sur demande, la personne est découpée de son décor (décor flouté ou remplacé par le
-fond de ta DA, mot géant qui passe derrière elle). Le calcul se fait sur ta machine, compte environ
-20 s par seconde de vidéo sans carte graphique.
+**Deux styles d'animation**, au choix (`personne_devant` dans `config/da.yaml`, ou vidéo par vidéo) :
+l'animation remplace l'image quelques secondes, ou bien tu restes à l'écran, détouré, et l'animation,
+les plans de coupe et des mots géants passent derrière toi. Le détourage se calcule sur ta machine,
+compte environ 20 s par seconde détourée sans carte graphique.
 
 **Clients** : une demande de travaux se montre soit en fiche redessinée (bloc `demande`), soit en
 filmant ton outil avec `broll.py ecran --prive --flouter ...`. Dans les deux cas le nom, l'adresse,

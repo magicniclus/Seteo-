@@ -112,23 +112,41 @@ Détail des champs : `references/plan.md`.
 - Pas de carte de chiffre ni de plan de coupe `carte` pendant un bloc plein écran.
 - Besoin d'une animation qui n'existe pas : `references/hyperframes.md` (« Ajouter un bloc »).
 
-### Détourer la personne
+### Détourer la personne : deux styles au choix
 
-Le plan peut demander de découper la personne de son décor (`"detourage"`, voir `references/plan.md`).
-Ça sert à trois choses, à utiliser avec mesure :
-- `"fond": "flou"` : le décor est flouté et assombri, la personne reste nette. Utile quand la pièce
-  est en désordre ou distrait. C'est le réglage à proposer en premier.
-- `"fond": "univers"` : le décor est remplacé par le fond de la DA. Plus « studio », mais les
-  contours se voient davantage : à vérifier de près sur la planche avant de valider.
-- `"mots_derriere"` : un mot géant passe derrière la personne (le mot-clé, un chiffre). Un seul par
-  vidéo, deux au plus : c'est un effet, pas un habillage.
+Pendant une animation, deux mises en scène existent. Le réglage par défaut est `personne_devant`
+dans `config/da.yaml` ; le plan d'une vidéo peut décider autrement avec `"detourage"`.
 
-Le détourage se fait sur la machine (rien n'est envoyé ailleurs) et il est lent sans carte graphique :
-environ 20 s par seconde de vidéo. Préviens avant de le lancer, et ne le lance que si on le demande
-ou si le décor pose vraiment problème. Il marche bien sur une personne nette devant un décor qui
-contraste ; il peine sur les cheveux fins devant un fond chargé, les gestes rapides, et un objet
-tenu en main peut disparaître. Regarde les contours sur la planche : s'ils scintillent, reviens à
-`"fond": "flou"` (qui pardonne beaucoup) ou enlève le détourage.
+- **L'animation remplace l'image** (`personne_devant: false`, ou `"detourage": false`) : le bloc
+  occupe tout l'écran, on ne voit plus la personne quelques secondes. Net, rapide à calculer.
+- **La personne reste devant** (`personne_devant: true`, ou `"detourage": {"blocs": "derriere"}`) :
+  elle est découpée de son décor, rétrécit vers le bas, et le fond de l'univers avec l'animation
+  monte derrière elle. On ne la perd jamais de vue : c'est le style à proposer quand la personne
+  est le sujet de la vidéo.
+
+Avec le détourage, on peut aussi :
+- faire passer un **plan de coupe derrière elle** (`"mode": "derriere"` dans `broll`) : l'image
+  remplit l'écran, elle reste devant. Plusieurs plans peuvent s'enchaîner sans trou (le suivant
+  commence exactement où le précédent finit) : elle ne bouge pas entre deux.
+- glisser un **mot géant derrière sa tête** (`"mots_derriere"`) : le mot dit à ce moment-là, en un
+  ou deux mots, en capitales. Très bon sur un plan « derriere » pour nommer ce qu'on montre.
+- changer son décor pour toute la vidéo : `"fond": "flou"` (décor flouté et assombri, pardonne
+  beaucoup) ou `"fond": "univers"` (le fond de la DA tout du long ; les contours se voient
+  davantage, à vérifier de près).
+
+Règles de cette mise en scène :
+- La position du visage décide de tout (taille de la personne, place laissée à l'animation). Si la
+  personne bouge d'un passage à l'autre, donne `"visage_y"` sur le bloc ou le plan concerné
+  (hauteur des yeux à ce moment-là, de 0 à 1) : regarde `cadrage.jpg` ou une image de la prise.
+- Laisse au moins 0,8 s entre un bloc derrière elle et un plan « derriere » : elle doit reprendre
+  sa place entre les deux.
+- Le détourage se calcule sur la machine (rien n'est envoyé ailleurs), seulement sur les passages
+  qui en ont besoin, et il est gardé en réserve : changer un texte ne le relance pas, changer le
+  début ou la fin d'un passage si. Compte environ 20 s par seconde de vidéo sans carte graphique,
+  et préviens avant de lancer un long calcul.
+- Il marche bien sur une personne nette devant un décor qui contraste. Il peine sur les cheveux fins
+  devant un fond chargé, les gestes rapides, les objets tenus en main ou posés devant elle (bureau,
+  ordinateur). Regarde les contours sur la planche ; s'ils sont laids, reviens au premier style.
 
 ### Demandes de clients
 
@@ -177,6 +195,11 @@ python machine/broll.py importer chemin/vers/clip.mp4 --debut 12 --duree 4   # u
     le fichier) qui se règle, à l'image près. Regarde l'extrait image par image avant de choisir.
 - `carte` : pendant que la carte occupe le haut, la prise rétrécit et descend dessous, le visage
   reste visible. `plein` : l'extrait remplace toute l'image, les sous-titres restent.
+  `derriere` : l'extrait remplit l'écran derrière la personne détourée (voir « Détourer la personne »).
+- **Choisir l'image** : elle doit montrer exactement ce que dit la phrase, au moment où elle le dit
+  (il dit « le bois », on voit une scie dans du bois). Une image seulement drôle ou jolie, sans
+  rapport direct, distrait. Pour une référence que tout le monde connaît (mème, scène culte,
+  tendance du moment), demande l'extrait : c'est la personne qui sait ce qui parle à son public.
 
 ## 4. Monter et regarder les images clés
 
