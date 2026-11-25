@@ -14,12 +14,15 @@
   height: calc(var(--st-centre) - var(--zone-haut) - 150px);
   display: flex; flex-direction: column; justify-content: center;
 }
-/* La personne détourée reste devant : le contenu se resserre dans la place au-dessus de sa tête */
-.scene--devant .scene__contenu {
-  left: 50%; right: auto; width: calc((var(--largeur) - 2 * var(--zone-cotes)) / var(--devant-k));
-  margin-left: calc((var(--largeur) - 2 * var(--zone-cotes)) / var(--devant-k) / -2);
-  height: calc(var(--devant-hauteur) / var(--devant-k));
-  transform: scale(var(--devant-k)); transform-origin: 50% 0%;
+/* La personne détourée reste devant : le contenu tient dans la place au-dessus de sa tête.
+   commun.js cherche la plus grande taille qui tient (un bloc court reste grand), et la mise en page
+   se resserre : moins d'air entre les lignes, pour garder des textes lisibles sur un téléphone. */
+.scene--devant .scene__contenu { height: auto; transform-origin: 0 0; }
+.scene--devant .titre { font-size: 84px; margin-top: 18px; }
+/* une lueur au pied de l'image, pour asseoir la personne sur le fond */
+.scene--devant::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 46%;
+  background: radial-gradient(60% 100% at 50% 100%, color-mix(in srgb, var(--accent) 26%, transparent) 0%, transparent 100%);
 }
 .sur-titre {
   align-self: flex-start; padding: 10px 24px 8px; border-radius: 999px;

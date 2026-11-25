@@ -157,6 +157,44 @@ def detourer(source: Path, cible: Path) -> None:
         sys.exit(f"Le détourage a échoué :\n{(r.stdout + r.stderr)[-1200:]}")
 
 
+PAS = 0.02   # le son est mesuré par tranches de 20 ms
+
+
+def ecouter(rush) -> tuple:
+    """Le niveau du son du rush, tranche par tranche, et le seuil sous lequel c'est un silence.
+    Le seuil s'adapte à la prise : on mesure le bruit de fond de la pièce et le niveau de la voix,
+    et un silence est ce qui reste près du bruit de fond (une pièce bruyante n'a jamais de « vrai » silence).
+    Rend (None, None) quand la voix se détache mal du fond (musique, vent) : on ne se fie alors qu'aux mots."""
+    brut = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(rush), "-vn", "-ac", "1", "-ar", "16000",
+                           "-f", "s16le", "-"], capture_output=True).stdout
+    import numpy as np   # ici seulement : les autres outils de l'atelier n'en ont pas besoin
+    n = round(16000 * PAS)
+    son = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768
+    if len(son) < n * 50:
+        return None, None
+    tranches = son[:len(son) // n * n].reshape(-1, n)
+    niveau = 20 * np.log10(np.sqrt((tranches ** 2).mean(axis=1)) + 1e-6)
+    niveau = np.convolve(niveau, np.ones(3) / 3, mode="same")   # lissé sur 60 ms
+    fond, voix = np.percentile(niveau, 5), np.percentile(niveau, 90)
+    if voix - fond < 12:
+        return None, None
+    return niveau, fond + min(8.0, 0.3 * (voix - fond))
+
+
+def silences_du_son(niveau, seuil: float, minimum: float) -> list[tuple[float, float]]:
+    """Les vrais silences du rush, mesurés sur le son.
+    Les moteurs de transcription étirent parfois un mot sur un blanc : le son, lui, ne ment pas."""
+    silences, depart = [], None
+    for k, calme in enumerate(list(niveau < seuil) + [False]):
+        if calme and depart is None:
+            depart = k
+        elif not calme and depart is not None:
+            if (k - depart) * PAS >= minimum:
+                silences.append((round(depart * PAS, 2), round(k * PAS, 2)))
+            depart = None
+    return silences
+
+
 def phrases(mots: list[dict], silence: float = 0.6) -> list[list[dict]]:
     """Regroupe les mots en phrases (ponctuation forte ou blanc) pour les relire facilement."""
     groupes, courant = [], []

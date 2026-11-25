@@ -81,6 +81,12 @@ mouvements. Puis écris le bloc chez nous, en trois fichiers :
    `BLOCS` (`"plein"` = scène plein écran, enveloppée par `scene()` ; `"calque"` = par-dessus la prise).
    Tous les `id` commencent par `c["id"]` ; tout texte passe par `e()` et `c["typo"]()`.
 
+Un bloc plein écran doit aussi marcher quand la personne détourée reste devant lui (classe
+`.scene--devant`) : `commun.js` met alors son contenu en page sur une largeur variable et le met à
+la plus grande taille qui tient au-dessus de la tête. Donc pas de hauteur fixe ni de position
+absolue calée sur l'écran dans le contenu : il doit se replier tout seul (flex, marges). Si la
+place manque, ajoute au CSS du bloc une variante resserrée sous `.scene--devant` (voir `liste.css`).
+
 Ne garde ni CDN, ni police, ni logo d'une plateforme venus du catalogue. Pas d'emoji dans les textes
 (leur dessin change d'une machine à l'autre) : une icône se dessine en SVG.
 Teste avec un plan d'essai puis `python machine/monter.py <id> --apercu` : zéro erreur au contrôle,

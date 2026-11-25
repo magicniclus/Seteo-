@@ -42,6 +42,7 @@ en 2 semaines avec cette boucle :
 | `serveur/app.py` | Commentaire -> DM, réponses IA aux DM, pages d'inscription, stats, studio, prompteur |
 | `.claude/skills/montage-video/` | Le skill que Claude Code utilise pour monter tes vidéos |
 | `config/da.yaml` + `config/univers/` | Ta DA : couleurs, police, sous-titres, rythme. Lue par tous les montages |
+| `machine/reparer.py` | Répare une vidéo arrivée coupée à l'envoi, quand il ne lui manque que la fin |
 | `machine/transcrire.py` | Rush → texte mot par mot (ElevenLabs Scribe, ou Whisper en local) |
 | `machine/couper.py` | Enlève les blancs et les prises ratées, met la vidéo au format et la voix au bon niveau |
 | `machine/broll.py` | Plans de coupe : Pexels (libre de droits), page web filmée, fichiers à toi |

@@ -15,3 +15,6 @@
 /* 4 lignes : on resserre pour tenir au-dessus des sous-titres */
 .liste--dense { gap: 24px; margin-top: 40px; }
 .liste--dense .liste__signe { width: 92px; height: 92px; border-radius: 26px; padding: 19px; font-size: 50px; }
+/* la personne reste devant : la place est comptée, on resserre */
+.scene--devant .liste { margin-top: 34px; gap: 22px; }
+.scene--devant .liste__signe { width: 96px; height: 96px; border-radius: 26px; padding: 20px; font-size: 52px; }

@@ -16,6 +16,10 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 /* La prise : on zoome l'enveloppe #plan, jamais la vidéo elle-même */
 #plan { position: absolute; inset: 0; z-index: 1; will-change: transform; }
 #plan video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* .decale : l'image remontée ou descendue d'un bloc (rythme.decalage_y), quand le visage est mal placé.
+   Son bord bas se fond dans le fond de l'univers, sous l'interface des réseaux. */
+.decale { position: absolute; inset: 0; }
+#plan .decale--fondu { -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 110px), transparent 100%); mask-image: linear-gradient(180deg, #000 calc(100% - 110px), transparent 100%); }
 /* Personne détourée (plan.json : "detourage") : la même image sans son décor, posée AU-DESSUS des
    blocs. Entre la prise et elle, on peut flouter le décor, le remplacer par le fond de l'univers,
    glisser un mot géant ou une animation entière. Ses bords gauche, droit et bas fondent en douceur :

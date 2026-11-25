@@ -269,6 +269,77 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     reseau = plan.get("reseau", "instagram")
     mots = corriger(mots_bruts, plan.get("corrections", {}))
 
+    # ----- Détourage : la consigne du plan, sinon le réglage de la DA
+    #   "detourage": {"fond": "origine" | "flou" | "univers", "blocs": "derriere",
+    #                 "mots_derriere": [{"de", "a", "texte"}]}
+    if "detourage" in plan:
+        det = plan["detourage"]
+    else:
+        det = {"blocs": "derriere"} if charte.get("personne_devant") else False
+    a_roll = dossier / "assets" / "a-roll.mp4"
+    detourage = a_roll.exists() and det is not False
+    det = {} if det in (True, False, None) else det
+    fond = det.get("fond", "origine")
+    if fond not in ("origine", "flou", "univers"):
+        sys.exit(f"plan.json : detourage.fond inconnu « {fond} » (origine, flou ou univers).")
+    blocs_derriere = detourage and det.get("blocs") == "derriere"
+
+    # ----- Où est le visage dans l'image (une fois l'image décalée, si elle l'est) : les yeux, le haut
+    # de la tête, le menton, en fraction de la hauteur. Tout le reste de la mise en scène en découle.
+    H = fmt["hauteur"]
+    yeux = r["visage_y"]
+    tete_y = r.get("tete_y") or yeux - 0.115
+    menton_y = r.get("menton_y") or yeux + 0.09
+    normale = st["centre_y"] - zs["haut"] - 150    # la hauteur d'un bloc quand il a tout l'écran
+
+    def mise_en_scene(element: dict) -> dict:
+        """Quand la personne reste DEVANT un bloc ou un plan, elle rétrécit vers le bas et ce qui est
+        derrière elle occupe la place libérée au-dessus de sa tête. "visage_y" sur l'élément : la
+        hauteur des yeux à ce moment-là, si elle a bougé."""
+        bouge = float(element.get("visage_y", yeux)) - yeux
+        tete_px, menton_px = (tete_y + bouge) * H, (menton_y + bouge) * H
+        # A. Cadrage normal : le menton se pose juste au-dessus des sous-titres, qui ne bougent pas.
+        echelle = min(0.9, (H - (st["centre_y"] - 65)) / (H - menton_px))
+        haut_tete = H - (H - tete_px) * echelle
+        place, centre = haut_tete - 30 - (zs["haut"] + 30), None   # la place libre au-dessus des cheveux
+        if place < 0.64 * normale - 100:
+            # B. Visage en gros plan : il faut rétrécir bien plus pour libérer de la place. Les
+            # sous-titres montent alors entre l'animation et le haut de la tête.
+            place = 0.64 * normale
+            centre = round(zs["haut"] + 30 + place + 140)
+            haut_tete = centre + 145
+            echelle = (H - haut_tete) / (H - tete_px)
+        return {"echelle": round(max(0.35, echelle), 3), "tete": haut_tete, "hauteur": round(place), "centre": centre}
+
+    # ----- Les passages où la personne reste devant quelque chose (blocs plein écran, plans « derriere »)
+    scenes, devant = {}, []
+    for k, b in enumerate(plan.get("blocs", []), 1):
+        fiche = bibliotheque.BLOCS.get(b.get("bloc"))
+        if fiche and blocs_derriere and fiche[1] == "plein":
+            d = T(b["de"])
+            scenes["bloc", k] = mise_en_scene(b)
+            devant.append((d, min(T(b["a"], fin=True) if "a" in b else d + fiche[2], total), "bloc", scenes["bloc", k]))
+    for k, b in enumerate(plan.get("broll", []), 1):
+        if b.get("mode") == "derriere":
+            if not detourage:
+                sys.exit('plan.json : un plan de coupe en mode "derriere" demande "detourage" dans le plan.')
+            scenes["plan", k] = mise_en_scene(b)
+            devant.append((T(b["de"]), T(b["a"], fin=True), "plan", scenes["plan", k]))
+    passages = []
+    for d, f, genre, scene_ in sorted(devant, key=lambda x: x[0]):
+        if passages and genre == "plan" and passages[-1]["genre"] == "plan" and d - passages[-1]["f"] <= 0.06:
+            passages[-1]["f"] = round(f, 3)  # des plans qui se suivent sans trou : un seul passage
+            continue
+        if passages and d - passages[-1]["f"] < 0.8:
+            sys.exit(f"plan.json : à {d:.1f} s, laisse au moins 0,8 s après le passage précédent où la personne "
+                     "est devant (bloc et plans « derriere » ne se collent pas : elle doit reprendre sa place).")
+        passages.append({"d": round(d, 3), "f": round(f, 3), "genre": genre, "echelle": scene_["echelle"],
+                         "tete": scene_["tete"], "centre": scene_["centre"]})
+
+    def centre_sous_titres(t: float):
+        """Le milieu des sous-titres à l'instant t : remonté quand la personne, en gros plan, est rétrécie."""
+        return next((p["centre"] for p in passages if p["centre"] and p["d"] + 0.45 <= t < p["f"] - 0.5), None)
+
     # ----- Carton de fin
     fin, bloc_fin = None, ""
     cf = plan.get("carton_fin", {})
@@ -311,7 +382,10 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     bloc_st = ""
     for p in pages:
         spans = " ".join(f'<span id="{p["id"]}-{j}" class="st__mot">{e(m["t"])}</span>' for j, m in enumerate(p["mots"]))
-        style = f' style="font-size:{round(st["taille"] * p["echelle"])}px"' if p["echelle"] < 1 else ""
+        regles = [f'font-size:{round(st["taille"] * p["echelle"])}px'] if p["echelle"] < 1 else []
+        if centre_sous_titres(p["d"]):
+            regles.append(f'top:{centre_sous_titres(p["d"]) - 170}px')
+        style = f' style="{";".join(regles)}"' if regles else ""
         bloc_st += (f'\n    <div id="{p["id"]}" class="st{" st--majuscules" if charte.get("majuscules") else ""}"{style}>'
                     f'<span class="st__ligne">{spans}</span></div>')
     calque(dossier, "sous-titres", fmt, bloc_st, gabarit("sous-titres.css"), gabarit("sous-titres.js", {
@@ -371,29 +445,19 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             media = f'<img id="broll-{k}-image" class="clip" src="{e(src)}" alt="" {minutage}>'
         else:
             media = f'<video id="broll-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>'
-        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "element": b})
+        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode})
         if mode == "carte" and f - d < 1.2:
             sys.exit(f"plan.json : le plan de coupe n° {k} en carte dure {f - d:.1f} s, il lui faut au moins 1,2 s.")
         bloc_broll += f'\n      <div id="broll-{k}" class="broll broll--{mode}"><div class="broll__cadre">{media}</div></div>'
 
-    # ----- La prise. Le détourage de la personne se prépare plus bas, une fois les blocs connus.
-    #   "detourage": {"fond": "origine" | "flou" | "univers", "blocs": "derriere",
-    #                 "mots_derriere": [{"de", "a", "texte"}]}
-    if "detourage" in plan:
-        det = plan["detourage"]
-    else:  # pas de consigne dans le plan : c'est le réglage de la DA qui décide
-        det = {"blocs": "derriere"} if charte.get("personne_devant") else False
-    a_roll = dossier / "assets" / "a-roll.mp4"
-    detourage = a_roll.exists() and det is not False
-    det = {} if det in (True, False, None) else det
-    fond = det.get("fond", "origine")
-    if fond not in ("origine", "flou", "univers"):
-        sys.exit(f"plan.json : detourage.fond inconnu « {fond} » (origine, flou ou univers).")
-    blocs_derriere = detourage and det.get("blocs") == "derriere"
+    # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
+    # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.
+    decalage = round(r.get("decalage_y") or 0)
+    decale = f'<div class="decale{" decale--fondu" if decalage else ""}" style="transform:translateY({decalage}px)">'
     if a_roll.exists():
         flou = ' class="plan--flou"' if detourage and fond == "flou" else ""
-        prise = (f'<div id="plan"{flou}><video id="a-roll" src="assets/a-roll.mp4" data-start="0" '
-                 f'data-duration="{total}" data-track-index="0" data-has-audio="true" playsinline></video></div>')
+        prise = (f'<div id="plan"{flou}>{decale}<video id="a-roll" src="assets/a-roll.mp4" data-start="0" '
+                 f'data-duration="{total}" data-track-index="0" data-has-audio="true" playsinline></video></div></div>')
     else:
         prise = '<div id="plan" class="plan--fond"></div>'
     musique = ""
@@ -431,23 +495,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         f'data-start="{round(debut, 3)}" data-duration="{round(duree, 3)}" data-track-index="{piste}" '
         f'data-width="{fmt["largeur"]}" data-height="{fmt["hauteur"]}"></div>')
 
-    # ----- Mise en scène quand la personne reste DEVANT un bloc ou un plan : elle rétrécit vers le bas,
-    # son menton se pose juste au-dessus des sous-titres, et ce qui est derrière elle occupe la place
-    # libérée au-dessus de sa tête. Tout part de la hauteur du visage : celle de la vidéo
-    # (reglages.visage_y), ou celle donnée sur le bloc / le plan si la personne a bougé ("visage_y").
-    H = fmt["hauteur"]
-    normale = st["centre_y"] - zs["haut"] - 150    # la hauteur d'un bloc quand il a tout l'écran
-
-    def mise_en_scene(element: dict) -> dict:
-        visage = float(element.get("visage_y", r["visage_y"]))
-        echelle = min(0.9, max(0.55, (H - (st["centre_y"] - 65)) / (H - (visage + 0.09) * H)))
-        tete = H - (H - (visage - 0.115) * H) * echelle   # le haut de sa tête, une fois rétrécie
-        place = tete + 70 - (zs["haut"] + 30)             # le bloc glisse un peu derrière les cheveux
-        return {"echelle": round(echelle, 3), "tete": tete, "hauteur": round(place),
-                "k": round(min(1, max(0.6, place / normale)), 3)}
-
     # ----- Blocs : animations prêtes à l'emploi (machine/blocs.py), une sous-composition chacun
-    hotes_blocs, fenetres_blocs, fenetres_devant = "", [], []
+    hotes_blocs, fenetres_blocs = "", []
     for k, b in enumerate(plan.get("blocs", []), 1):
         genre = b.get("bloc")
         if genre not in bibliotheque.BLOCS:
@@ -457,39 +506,19 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         f = min(T(b["a"], fin=True) if "a" in b else d + duree_defaut, total)
         if f - d < 1.5:
             sys.exit(f"plan.json : le bloc « {genre} » n° {k} dure {f - d:.1f} s, il lui faut au moins 1,5 s.")
-        devant = mise_en_scene(b) if blocs_derriere and mode == "plein" else None
-        contexte = {"id": f"bloc-{k}", "debut": d, "duree": round(f - d, 3), "T": T, "typo": typo, "devant": devant,
+        contexte = {"id": f"bloc-{k}", "debut": d, "duree": round(f - d, 3), "T": T, "typo": typo,
+                    "devant": scenes.get(("bloc", k)),
                     "mot_cle": mot_cle, "marque": sig,
                     "media": lambda fichier, nom_media: preparer_media(fichier, dossier, nom_media, 0, 0)}
         balises, infos = fabrique(b, contexte)
-        css, js = code_bloc(genre, {**infos, "id": contexte["id"], "duree": contexte["duree"]})
+        place_bloc = contexte["devant"]["hauteur"] if contexte["devant"] else 0   # 0 : le bloc a tout l'écran
+        css, js = code_bloc(genre, {**infos, "id": contexte["id"], "duree": contexte["duree"], "place": place_bloc})
         calque(dossier, contexte["id"], fmt, balises, css, js, f"montage/blocs/{genre}.*")
         hotes_blocs += hote(contexte["id"], 5, d, f - d, f' class="bloc bloc--{mode}"')
         fenetres_blocs.append((d, f))
-        if devant:
-            fenetres_devant.append((d, f, "bloc", devant))
 
     # Plan de coupe en carte : la prise rétrécit vers le bas, le menton se pose au-dessus des sous-titres.
-    menton = (r["visage_y"] + 0.09) * H
-    reduit = round(min(0.86, max(0.6, (H - (st["centre_y"] - 115)) / (H - menton))), 3)
-
-    # ----- Les passages où la personne reste devant quelque chose (un bloc, ou des plans « derriere »)
-    for b in brolls:
-        b["scene"] = mise_en_scene(b.pop("element")) if b["mode"] == "derriere" else None
-    plans_derriere = [b for b in brolls if b["mode"] == "derriere"]
-    if plans_derriere and not detourage:
-        sys.exit('plan.json : un plan de coupe en mode "derriere" demande "detourage" dans le plan.')
-    passages = []
-    for d, f, genre, scene_ in sorted(fenetres_devant + [(b["d"], b["f"], "plan", b["scene"]) for b in plans_derriere],
-                                      key=lambda x: x[0]):
-        if passages and genre == "plan" and passages[-1]["genre"] == "plan" and d - passages[-1]["f"] <= 0.06:
-            passages[-1]["f"] = round(f, 3)  # des plans qui se suivent sans trou : un seul passage
-            continue
-        if passages and d - passages[-1]["f"] < 0.8:
-            sys.exit(f"plan.json : à {d:.1f} s, laisse au moins 0,8 s après le passage précédent où la personne "
-                     "est devant (bloc et plans « derriere » ne se collent pas : elle doit reprendre sa place).")
-        passages.append({"d": round(d, 3), "f": round(f, 3), "genre": genre, "echelle": scene_["echelle"],
-                         "tete": scene_["tete"]})
+    reduit = round(min(0.86, max(0.45, (H - (st["centre_y"] - 115)) / (H - menton_y * H))), 3)
 
     # ----- La personne détourée : posée au-dessus des blocs, pour que le décor et les animations
     # passent derrière elle. On ne la découpe que là où c'est utile (c'est le calcul le plus long).
@@ -503,7 +532,10 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             taille = min(420, int(980 / (0.74 * max(len(texte), 2))))  # des capitales : larges
             # le bas du mot se glisse derrière la tête : plus bas quand la personne est rétrécie
             passage = next((p for p in passages if p["d"] - 0.1 <= d and f <= p["f"] + 0.1), None)
-            haut = round((passage["tete"] if passage else (r["visage_y"] - 0.115) * H) - taille * 0.7)
+            if passage and passage["centre"]:   # gros plan : les sous-titres sont au-dessus de la tête, le mot au-dessus d'eux
+                haut = round(passage["centre"] - 120 - taille)
+            else:
+                haut = round((passage["tete"] if passage else tete_y * H) - taille * 0.7)
             haut = max(haut, zs["haut"] + 20)
             mots_derriere.append({"id": f"derriere-{k}", "d": round(d, 3), "f": round(f, 3)})
             mots_html += (f'\n      <div id="derriere-{k}" class="derriere" style="top:{haut}px"><span class="derriere__mot" '
@@ -524,11 +556,12 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             src = decouper_personne(dossier, a_roll, d, f, total)
             videos += (f'<video id="detoure-{k}" src="{src}" data-start="{round(d, 3)}" data-duration="{round(f - d, 3)}" '
                        f'data-track-index="0" muted playsinline></video>')
-        personne = f'\n      <div id="personne"><div id="plan-detoure">{videos}</div></div>'
+        personne = (f'\n      <div id="personne"><div id="plan-detoure">'
+                    f'<div class="decale" style="transform:translateY({decalage}px)">{videos}</div></div></div>')
 
     principal = {"duree": total, "visageY": r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
-                 "broll": [{k: v for k, v in b.items() if k != "scene"} for b in brolls],
-                 "devant": [{k: v for k, v in p.items() if k != "tete"} for p in passages],
+                 "broll": brolls,
+                 "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
 
     (dossier / "index.html").write_text(f"""<!doctype html>

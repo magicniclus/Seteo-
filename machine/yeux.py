@@ -27,7 +27,8 @@ from pathlib import Path
 
 import requests
 
-from atelier import MONTAGES, RACINE, da, duree, ecrire, ffmpeg, identifiant, lire, projet
+from atelier import (MONTAGES, RACINE, da, duree, ecouter, ecrire, ffmpeg, identifiant, lire, projet,
+                     silences_du_son)
 
 API = "https://generativelanguage.googleapis.com"
 
@@ -71,16 +72,16 @@ def planche(video: Path, sortie: Path, total: float) -> None:
 
 
 def mesurer_son(video: Path, total: float) -> dict:
-    """Niveau moyen (LUFS), crête, et blancs de plus de 0,6 s restés dans le montage."""
+    """Niveau moyen (LUFS), crête, et blancs de plus de 0,6 s restés dans le montage
+    (mesurés comme à la coupe : par rapport au bruit de fond de la prise)."""
     r = subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-i", str(video), "-af",
-                        "ebur128=peak=true,silencedetect=noise=-38dB:d=0.6", "-f", "null", "-"],
-                       capture_output=True, text=True)
+                        "ebur128=peak=true", "-f", "null", "-"], capture_output=True, text=True)
     journal = r.stderr
     resume = journal[journal.rfind("Summary:"):] if "Summary:" in journal else ""
     lufs = re.search(r"I:\s+(-?[\d.]+) LUFS", resume)
     crete = re.search(r"Peak:\s+(-?[\d.]+) dBFS", resume)
-    blancs = [{"debut": float(d), "duree": float(l)} for d, l in
-              zip(re.findall(r"silence_start: (-?[\d.]+)", journal), re.findall(r"silence_duration: ([\d.]+)", journal))]
+    niveau, seuil = ecouter(video)
+    blancs = [{"debut": d, "duree": round(f - d, 2)} for d, f in silences_du_son(niveau, seuil, 0.6)] if niveau is not None else []
     blancs = [b for b in blancs if b["debut"] + b["duree"] < total - 0.3]  # le gel de fin est voulu
     return {"niveau_lufs": float(lufs.group(1)) if lufs else None,
             "crete_dbfs": float(crete.group(1)) if crete else None, "blancs": blancs}

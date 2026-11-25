@@ -12,3 +12,6 @@
 .barres--dense .barre__nom { font-size: 44px; }
 .barres--dense .barre__valeur { font-size: 54px; }
 .barres--dense .barre__piste { height: 44px; margin-top: 12px; }
+/* la personne reste devant : la place est comptée, on resserre */
+.scene--devant .barres { margin-top: 34px; gap: 24px; }
+.scene--devant .barre__piste { height: 46px; margin-top: 10px; }

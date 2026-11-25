@@ -42,7 +42,11 @@ rythme:
   zoom_coupe: 1.10       # à chaque coupe on alterne plan large / plan serré (cache le raccord)
   zoom_lent: 0.03        # léger zoom continu entre deux coupes (l'image ne reste jamais figée)
   zoom_intervalle_min: 1.6
-  visage_y: 0.38         # hauteur du visage dans l'image (0 = haut, 1 = bas) : centre des zooms
+  visage_y: 0.38         # hauteur des yeux dans l'image (0 = haut, 1 = bas) : centre des zooms
+  # Les trois réglages suivants se donnent plutôt vidéo par vidéo ("reglages" du plan), d'après cadrage.jpg :
+  decalage_y: 0          # remonte (négatif) ou descend l'image, en pixels, si le visage est mal placé
+  tete_y: 0              # haut de la tête ; 0 = déduit des yeux (visage de taille normale)
+  menton_y: 0            # bas du menton ; 0 = déduit des yeux. À donner pour un visage en gros plan
 
 # Pendant une animation plein écran (liste, barres, comparaison...) ou un plan de coupe "derriere" :
 #   false = l'animation remplace l'image, on ne te voit plus quelques secondes (rapide à calculer)

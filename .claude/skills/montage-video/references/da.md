@@ -63,7 +63,8 @@ en foncé ; sur des cartes claires, un accent trop clair est remplacé par l'enc
 | `sous_titres.centre_y` | Hauteur des sous-titres. À descendre si tu te filmes de plus loin, à monter si le menton est bas. |
 | `rythme.silence_max` | Blanc maximum toléré. 0,35 = dynamique ; 0,5 = plus posé. |
 | `rythme.zoom_coupe`, `zoom_intervalle_min` | Force et fréquence de l'alternance plan large / plan serré. `zoom_coupe: 1` = aucun zoom. |
-| `rythme.visage_y` | Où se trouve le visage dans l'image : c'est le centre des zooms. |
+| `rythme.visage_y` | Hauteur des yeux dans l'image (0 = haut, 1 = bas) : centre des zooms, et point de départ de toute la mise en scène. |
+| `rythme.decalage_y`, `tete_y`, `menton_y` | Pour un visage mal placé ou en gros plan : décalage de l'image en pixels, haut de la tête, menton. Se règlent vidéo par vidéo, dans les `reglages` du plan. |
 | `rythme.gel_fin` | Temps où la dernière image reste, pour lire le carton. |
 | `habillage.barre_progression` | La fine barre de progression en haut. |
 | `habillage.signature` | Le nom de la marque en haut à gauche. Éteint (`false`) : sur une vidéo où la personne est à l'écran, on n'affiche pas de logo en haut. Le nom reste sur le carton de fin. |

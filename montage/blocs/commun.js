@@ -19,6 +19,34 @@
 
   // Scène plein écran : elle monte d'un bloc, puis repart par le haut
   const scene = el("scene");
+  if (scene && D.place) {
+    // La personne reste devant : on cherche la plus grande taille du contenu qui tient dans la hauteur
+    // libre au-dessus de sa tête (D.place), et on le centre dans cette hauteur.
+    const contenu = scene.firstElementChild;
+    const large = contenu.offsetWidth;   // la largeur utile, entre les marges de côté
+    const ajuster = () => {
+      // à la taille k, le contenu se met en page sur large / k : plus on réduit, plus les lignes sont longues.
+      // Il « tient » s'il ne dépasse ni en hauteur ni en largeur (un mot trop long pour sa ligne). Un décor
+      // qui déborde exprès (le cadre du bon choix) dépasse autant à toutes les tailles : on le décompte.
+      const depasse = () => contenu.scrollWidth - contenu.offsetWidth;
+      contenu.style.width = (large / 0.45).toFixed(1) + "px";
+      const decor = depasse();
+      const tient = (k) => {
+        contenu.style.width = (large / k).toFixed(1) + "px";
+        return contenu.offsetHeight * k <= D.place && depasse() <= decor + 1;
+      };
+      let k = 1.2;   // un bloc court grossit un peu pour occuper la place, jamais plus
+      if (!tient(k)) {
+        let bas = 0.45, haut = k;
+        for (let i = 0; i < 8; i++) { const m = (bas + haut) / 2; if (tient(m)) bas = m; else haut = m; }
+        k = bas;
+        tient(k);
+      }
+      contenu.style.transform = "translateY(" + Math.round((D.place - contenu.offsetHeight * k) / 2) + "px) scale(" + k.toFixed(3) + ")";
+    };
+    ajuster();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajuster);  // même mesure une fois la police chargée
+  }
   if (scene) {
     tl.fromTo(scene, { autoAlpha: 1, yPercent: 100 }, { autoAlpha: 1, yPercent: 0, duration: 0.45, ease: "power4.out" }, 0);
     va(scene, { yPercent: 0 }, { yPercent: -100 }, 0.36, D.duree - 0.36, "power3.in");

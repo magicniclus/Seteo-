@@ -34,6 +34,11 @@ Il faut aussi `pip install -r requirements.txt -r requirements-montage.txt`.
 - Donnée par un lien : télécharge-la dans `rushs/` avec `curl -L -o rushs/<nom>.mp4 "<lien>"`.
   Dropbox : remplace `dl=0` par `dl=1`. Google Drive : `https://drive.google.com/uc?export=download&id=<ID>`.
   Vérifie avec `ffprobe` que c'est bien une vidéo (une page web téléchargée à la place = lien non direct).
+- Commence par `ffprobe <fichier>`. S'il répond « error reading header » ou « moov atom not found »,
+  la pièce jointe est arrivée coupée (les envois trop lourds sont tronqués, vers 3 Mo dans
+  l'appli). Essaie `python machine/reparer.py <fichier> rushs/<nom>.mp4` : ça marche quand il ne
+  manque que la toute fin. Sinon, demande la vidéo par un lien. Dans tous les cas, dis-le : une
+  vidéo compressée à 3 Mo donne une image molle, l'original par un lien donnera bien mieux.
 - Tous les formats de téléphone passent (MP4, MOV, HEVC, HDR, 4K, 60 i/s, horizontal) : `couper.py`
   remet tout en 1080x1920, 30 i/s, couleurs normales. Une vidéo horizontale est rognée au centre :
   si la personne n'y est pas, recadre d'abord le fichier avec ffmpeg (`crop`) avant de transcrire.
@@ -59,6 +64,12 @@ python machine/couper.py <id> --retirer 5.4-10.9 31.2-33
 
 - Les blancs partent tout seuls. Toi, tu donnes les prises ratées (`--retirer DEBUT-FIN`, temps du
   rush) : on garde toujours la DERNIÈRE version d'une phrase répétée.
+- Les blancs sont mesurés sur le son, avec un seuil qui s'adapte au bruit de fond de la pièce, et
+  chaque coupe se pose à l'instant le plus calme près du mot (pas au milieu d'une syllabe qui traîne).
+- Whisper n'écrit pas les « euh ». Une plage `--retirer` qui ne contient aucun mot est coupée telle
+  quelle : c'est comme ça qu'on enlève une hésitation restée entre deux mots.
+- Tu ne peux pas écouter la vidéo : dis-le, et demande à la personne de vérifier les raccords à
+  l'oreille. Si un mot est mangé ou s'il reste un « euh », elle te donne l'endroit et tu recoupes.
 - Le script affiche le texte final avec le numéro de chaque mot (`12:devis`). Ces numéros servent de
   repères dans le plan (`"m12"`). Si tu recoupes, les numéros changent : refais le plan après.
 - **Ouvre `montage/projets/<id>/cadrage.jpg`** : trois moments de la prise avec les repères de la DA.
@@ -67,6 +78,15 @@ python machine/couper.py <id> --retirer 5.4-10.9 31.2-33
   dans le plan : `"reglages": {"visage_y": 0.45, "centre_y": 1330}` (`visage_y` = hauteur des yeux
   de 0 à 1 ; `centre_y` = milieu des sous-titres en pixels, 1380 au plus pour rester hors de la bande basse).
   Si la personne est filmée de trop loin ou mal centrée, dis-le : c'est au tournage que ça se règle.
+- **Visage en gros plan** (selfie tenu à bout de bras : le menton tombe dans le jaune ou plus bas) :
+  remonte l'image avec `"decalage_y"` (en pixels, négatif = vers le haut ; la bande vide du bas tombe
+  sous l'interface des réseaux), puis donne les trois hauteurs du visage TELLES QU'ELLES SONT APRÈS le
+  décalage : `"visage_y"` (les yeux), `"tete_y"` (le haut des cheveux), `"menton_y"` (le menton).
+  Exemple : yeux à 0,50, cheveux à 0,23, menton à 0,74 sur `cadrage.jpg` ; avec
+  `"decalage_y": -280` (280 / 1920 = 0,145), on écrit `"visage_y": 0.345, "tete_y": 0.085,
+  "menton_y": 0.59`. Baisse aussi les zooms (`"zoom_coupe": 1.05`) : sur un visage déjà gros, ils
+  agressent. Et dis à la personne de se filmer d'un peu plus loin la prochaine fois (le visage sur
+  un tiers de la hauteur) : il y aura plus de place pour les animations.
 
 ## 3. Écrire le plan de montage
 
@@ -133,6 +153,18 @@ Avec le détourage, on peut aussi :
 - changer son décor pour toute la vidéo : `"fond": "flou"` (décor flouté et assombri, pardonne
   beaucoup) ou `"fond": "univers"` (le fond de la DA tout du long ; les contours se voient
   davantage, à vérifier de près).
+
+L'animation prend toute seule la plus grande taille qui tient au-dessus de la tête : un bloc court
+grossit un peu, un bloc chargé se resserre. Elle reste donc lisible, mais la place est comptée :
+3 lignes courtes et un titre de 4 à 5 mots, pas plus.
+
+Avec un visage en gros plan, la personne doit rétrécir beaucoup pour laisser de la place : les
+sous-titres montent alors d'eux-mêmes entre l'animation et le haut de sa tête, et l'animation est
+plus petite que dans le premier style. Si elle devient difficile à lire sur la planche, raccourcis
+ses textes, ou propose le premier style pour cette vidéo.
+
+Une ligne de liste doit rester à l'écran au moins une seconde avant que le bloc reparte : si la
+dernière est dite à la toute fin, fais-la apparaître au début de sa phrase et prolonge le bloc.
 
 Règles de cette mise en scène :
 - La position du visage décide de tout (taille de la personne, place laissée à l'animation). Si la

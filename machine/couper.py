@@ -15,12 +15,10 @@ Usage :
 """
 
 import argparse
-import re
-import subprocess
 import sys
 
-from atelier import (REC709, RACINE, a_du_son, afficher_phrases, cadrage, da, duree, ecrire, est_hdr, ffmpeg,
-                     lire, projet)
+from atelier import (PAS, REC709, RACINE, a_du_son, afficher_phrases, cadrage, da, duree, ecouter, ecrire, est_hdr,
+                     ffmpeg, lire, projet, silences_du_son)
 
 
 def plages_a_garder(mots: list[dict], retirer: list[tuple], r: dict, duree_rush: float) -> list[dict]:
@@ -45,21 +43,35 @@ def plages_a_garder(mots: list[dict], retirer: list[tuple], r: dict, duree_rush:
     return plages
 
 
-def silences_du_son(rush, minimum: float) -> list[tuple[float, float]]:
-    """Les vrais silences du rush, mesurés sur le son (35 dB sous les crêtes de la voix).
-    Les moteurs de transcription étirent parfois un mot sur un blanc : le son, lui, ne ment pas."""
-    mesure = subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-i", str(rush), "-vn", "-af", "volumedetect",
-                             "-f", "null", "-"], capture_output=True, text=True).stderr
-    crete = re.search(r"max_volume: (-?[\d.]+) dB", mesure)
-    if not crete:
-        return []
-    seuil = float(crete.group(1)) - 35
-    journal = subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-i", str(rush), "-vn", "-af",
-                              f"silencedetect=noise={seuil:.1f}dB:d={minimum}", "-f", "null", "-"],
-                             capture_output=True, text=True).stderr
-    debuts = [float(x) for x in re.findall(r"silence_start: (-?[\d.]+)", journal)]
-    fins = [float(x) for x in re.findall(r"silence_end: (-?[\d.]+)", journal)]
-    return list(zip(debuts, fins))
+def ne_pas_mordre(plages: list[dict], mots: list[dict], niveau, seuil: float, duree_rush: float) -> None:
+    """La transcription donne parfois la fin d'un mot trop tôt (une syllabe qui traîne) ou son début
+    trop tard : couper là mord sur la voix. Si le son est encore fort à l'endroit d'une coupe, on la
+    déplace vers l'instant calme le plus proche (0,3 s au plus), à défaut vers le creux le plus bas :
+    c'est là qu'un raccord s'entend le moins. On ne déborde jamais sur un autre mot ni sur la plage d'à côté."""
+    place = {m["i"]: k for k, m in enumerate(mots)}
+    rang = lambda t: min(max(int(round(t / PAS)), 0), len(niveau) - 1)
+
+    def instant_calme(depart: float, limite: float, replis: float) -> float:
+        """De `depart` vers `limite` : le premier instant sous le seuil, sinon le plus calme (en
+        comptant aussi le petit repli `replis` de l'autre côté du départ)."""
+        if niveau[rang(depart)] < seuil:
+            return depart
+        sens = 1 if limite >= depart else -1
+        rangs = list(range(rang(depart), rang(limite) + sens, sens))
+        for k in rangs:
+            if niveau[k] < seuil:
+                return k * PAS
+        rangs += list(range(rang(depart), rang(replis), -sens))
+        return min(rangs, key=lambda k: niveau[k]) * PAS
+
+    for k, p in enumerate(plages):
+        avant, apres = place[p["mots"][0]["i"]] - 1, place[p["mots"][-1]["i"]] + 1
+        borne = max(mots[avant]["f"] + 0.02 if avant >= 0 else 0.0, plages[k - 1]["fin"] if k else 0.0)
+        if p["debut"] > borne:
+            p["debut"] = round(max(instant_calme(p["debut"], max(p["debut"] - 0.3, borne), p["debut"] + 0.04), borne), 3)
+        borne = mots[apres]["d"] - 0.02 if apres < len(mots) else duree_rush
+        if p["fin"] < borne:
+            p["fin"] = round(min(instant_calme(p["fin"], min(p["fin"] + 0.3, borne), p["fin"] - 0.06), borne), 3)
 
 
 def retirer_silences(plages: list[dict], silences: list[tuple], r: dict) -> list[tuple[float, float]]:
@@ -101,7 +113,14 @@ def main() -> None:
 
     plages = plages_a_garder(trans["mots"], retirer, rythme, trans["duree"])
     son = a_du_son(rush)
-    silences = silences_du_son(rush, max(rythme["silence_max"], 0.3)) if son else []
+    niveau, seuil = ecouter(rush) if son else (None, None)
+    silences = []
+    if niveau is not None:
+        ne_pas_mordre(plages, trans["mots"], niveau, seuil, trans["duree"])
+        silences = silences_du_son(niveau, seuil, max(rythme["silence_max"], 0.3))
+    # Une plage à retirer sans aucun mot dedans (un « euh » que la transcription n'a pas écrit) se coupe
+    # comme un silence, exactement aux temps donnés.
+    silences = sorted(silences + [(d - rythme["marge_apres"], f + rythme["marge_avant"]) for d, f in retirer])
     segments = retirer_silences(plages, silences, rythme)
 
     # Un seul passage ffmpeg : chaque segment est découpé, puis tout est recollé et mis au format

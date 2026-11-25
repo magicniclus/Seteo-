@@ -79,9 +79,11 @@ def recoller(mots: list[dict]) -> list[dict]:
         avant = propres[-1] if propres else None
         apostrophe = m["t"][0] in "'’" or (avant and avant["t"][-1] in "'’")
         milliers = avant and re.fullmatch(r"\d{1,3}", avant["t"].split("\u00a0")[-1]) and re.fullmatch(r"\d{3}", m["t"])
-        if avant and (apostrophe or milliers):
-            avant["t"] += ("\u00a0" if milliers else "") + m["t"]
-            avant["f"] = m["f"]
+        seule = re.fullmatch(r"[?!:;.,…»]+", m["t"])   # une ponctuation isolée appartient au mot d'avant
+        if avant and (apostrophe or milliers or seule):
+            avant["t"] += ("\u00a0" if milliers or (seule and m["t"][0] in "?!:;") else "") + m["t"]
+            if not seule:
+                avant["f"] = m["f"]
         else:
             propres.append(dict(m))
     for m in propres:
