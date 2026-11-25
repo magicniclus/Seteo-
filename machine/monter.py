@@ -558,16 +558,33 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     # ----- Plans de coupe : l'enveloppe n'est pas minutée, seule la vidéo l'est (règle HyperFrames)
     brolls, bloc_broll = [], ""
+    # Fenêtres des plans et des blocs plein écran : pour qu'aucune image ne tombe entre deux contenus
+    fen_plans = [(T(x["de"]), T(x["a"], fin=True), x.get("mode", "plein")) for x in plan.get("broll", [])]
+    fen_blocs = []
+    for x in plan.get("blocs", []):
+        fiche = bibliotheque.BLOCS.get(x.get("bloc"))
+        if fiche and fiche[1] == "plein":
+            dx = T(x["de"])
+            fen_blocs.append((dx, min(T(x["a"], fin=True) if "a" in x else dx + fiche[2], total)))
     for k, b in enumerate(plan.get("broll", []), 1):
         d, f = T(b["de"]), T(b["a"], fin=True)
+        # Un plan plein écran suivi bout à bout d'un autre (ou, en coin, d'un bloc qui monte par-dessus)
+        # reste un peu plus longtemps dessous : la première image du suivant n'est jamais un trou.
+        reste = 0.0
+        if b.get("mode", "plein") == "plein":
+            if any(m2 == "plein" and abs(d2 - f) < 0.1 for d2, _, m2 in fen_plans):
+                reste = 0.3
+            if coin and any(abs(d2 - f) < 0.15 for d2, _ in fen_blocs):
+                reste = 0.5
+            reste = min(reste, max(0.0, total - f))
         mode = b.get("mode", "plein")
         if mode not in ("plein", "carte", "derriere"):
             sys.exit(f"plan.json : mode de plan de coupe inconnu « {mode} » (plein, carte ou derriere).")
         # la carte fait 940 x 700 avec 10 px de bord : son image intérieure fait 920 x 680
         cadre = (920, 680) if mode == "carte" else (fmt["largeur"], fmt["hauteur"])
-        src = preparer_media(b["fichier"], dossier, f"broll-{k}", float(b.get("debut", 0)), f - d, cadre,
+        src = preparer_media(b["fichier"], dossier, f"broll-{k}", float(b.get("debut", 0)), f - d + reste, cadre,
                              float(b.get("ancre_x", 0.5)))
-        minutage = f'data-start="{round(d, 3)}" data-duration="{round(f - d, 3)}" data-track-index="1"'
+        minutage = f'data-start="{round(d, 3)}" data-duration="{round(f - d + reste, 3)}" data-track-index="1"'
         if Path(src).suffix in IMAGES:
             media = f'<img id="broll-{k}-image" class="clip" src="{e(src)}" alt="" {minutage}>'
         else:
@@ -575,7 +592,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         # "cadre" : la personne est déjà dans son cadre sous la carte, inutile de la rétrécir en plus
         brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre or bool(coin),
                        # "zoom": false : pas de lent zoom arrière sur l'image (une maquette 3D bouge déjà)
-                       "zoom": b.get("zoom", True)})
+                       "zoom": b.get("zoom", True), "cache": round(f + reste, 3)})
         # Deux plans de même mode bout à bout : on passe de l'un à l'autre en coupe franche, sans sortie ni entrée animées
         if mode in ("carte", "plein") and len(brolls) > 1 and brolls[-2]["mode"] == mode and abs(brolls[-2]["f"] - d) < 0.1:
             brolls[-2]["suite"] = True
@@ -647,6 +664,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         fabrique, mode, duree_defaut = bibliotheque.BLOCS[genre]
         d = T(b["de"])
         f = min(T(b["a"], fin=True) if "a" in b else d + duree_defaut, total)
+        if coin and mode == "plein" and any(abs(d2 - f) < 0.15 for d2, _, _ in fen_plans):
+            f = min(f + 0.4, total)       # il remonte par-dessus le plan suivant, déjà là
         if f - d < 1.5:
             sys.exit(f"plan.json : le bloc « {genre} » n° {k} dure {f - d:.1f} s, il lui faut au moins 1,5 s.")
         contexte = {"id": f"bloc-{k}", "debut": d, "duree": round(f - d, 3), "T": T, "typo": typo,
