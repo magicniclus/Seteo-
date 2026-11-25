@@ -193,11 +193,23 @@ Dans `montage/projets/<id>/plan.json`, clé `"broll"`, au moment où le chantier
 {"de": "m24", "a": "m38", "fichier": "broll/chantiers/salle-de-bain-6m2-piece-salle-de-bain.mp4", "mode": "carte"}
 ```
 
-- `carte` : la maquette en haut, la personne visible dessous. C'est le mode normal. Pour une vue
+- `carte` : la maquette en haut, la personne visible dessous. C'est le mode normal. Écris sur la
+  carte ce qu'on voit et son budget (`"legende": "Cuisine · *17 000 €*"`) et signale que c'est une
+  illustration (`"mention": "Illustration 3D"`) : un artisan ne doit pas la prendre pour le vrai plan. Pour une vue
   filmée en `"format": "vertical"`, utilise `"mode": "plein"` (la maquette prend tout l'écran).
 - Fais durer la vue autant que la phrase qui décrit le chantier (3 à 5 s) et filme-la à cette
   durée : une vidéo plus courte que sa fenêtre se fige sur sa dernière image.
 - Enchaîne du large au serré quand il y a plusieurs vues : `exterieur`, puis `large`, puis `piece`.
+  Deux cartes bout à bout passent de l'une à l'autre en coupe franche.
+
+**Une vidéo existante + un projet à présenter** (« ajoute le projet n°2114 à ma vidéo ») : quand la
+personne ne parle pas du projet, pose-le là où son propos s'y prête (le plus souvent à la fin : « quand
+t'as un lead, tu l'appelles tout de suite » → voici un projet), dans cet ordre : bloc `demande` (numéro,
+ville, travaux, budgets donnés, client en `"flou": true`), puis une carte 3D par pièce avec son budget en
+légende, puis le carton de fin avec `"mot"` / `"verbe"` / `"suite"` pour l'appel (« Projet / N°2114 /
+Propose ton devis, c'est gratuit. Lien dans la bio »). Allonge la fin (`"reglages": {"gel_fin": 3.4}`,
+puis `couper.py`) pour qu'on ait le temps de lire le carton. Une copie du projet de montage
+(`montage/projets/<id>-projet-<n>`) garde la vidéo d'origine intacte.
 
 Ce qui va bien autour, avec les blocs de `montage-video` :
 - **la demande du client** : bloc `demande` (projet, surface, budget ; nom, téléphone, adresse en

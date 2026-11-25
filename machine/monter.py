@@ -431,7 +431,10 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # ----- Carton de fin
     fin, bloc_fin = None, ""
     cf = plan.get("carton_fin", {})
-    if mot_cle and cf is not False:
+    # Le carton de fin affiche le mot-clé ; le plan peut le remplacer ("mot"), ainsi que la phrase du
+    # dessus ("verbe") et celle du dessous ("suite") : « Projet / N°2114 / Lien dans la bio ».
+    mot_fin = (cf.get("mot") or mot_cle) if isinstance(cf, dict) else mot_cle
+    if mot_fin and cf is not False:
         if "de" in cf:
             debut_fin = T(cf["de"])
         else:
@@ -444,7 +447,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         fin = {"d": round(debut_fin, 3)}
         variante = next((v for v in charte["carton_fin"].values() if reseau in v["reseaux"]),
                         charte["carton_fin"]["commente"])
-        taille = 150 if len(mot_cle) <= 6 else 120 if len(mot_cle) <= 9 else 92
+        taille = 150 if len(mot_fin) <= 6 else 120 if len(mot_fin) <= 9 else 92
         logo = charte.get("logo")
         if logo and (RACINE / logo).exists():
             shutil.copyfile(RACINE / logo, dossier / "assets" / Path(logo).name)
@@ -453,8 +456,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             marque = f'<span class="fin__marque">{signature}</span>'
         bloc_fin = f"""
     <div id="fin" class="fin"><div class="fin__fond">
-      <span class="fin__verbe">{e(variante['verbe'])}</span>
-      <span id="fin-mot" class="fin__mot" style="font-size:{taille}px">{e(mot_cle)}</span>
+      <span class="fin__verbe">{e(typo(cf.get('verbe') or variante['verbe']))}</span>
+      <span id="fin-mot" class="fin__mot" style="font-size:{taille}px">{e(typo(mot_fin))}</span>
       <span class="fin__suite">{e(typo(cf.get('suite') or variante['suite']))}</span>
       {marque}
     </div></div>"""
@@ -536,10 +539,23 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             media = f'<video id="broll-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>'
         # "cadre" : la personne est déjà dans son cadre sous la carte, inutile de la rétrécir en plus
         brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre})
+        # Deux cartes bout à bout : on passe de l'une à l'autre en coupe franche, sans sortie ni entrée animées
+        if mode == "carte" and len(brolls) > 1 and brolls[-2]["mode"] == "carte" and abs(brolls[-2]["f"] - d) < 0.1:
+            brolls[-2]["suite"] = True
+            brolls[-1]["apres"] = True
         if mode == "carte" and f - d < 1.2:
             sys.exit(f"plan.json : le plan de coupe n° {k} en carte dure {f - d:.1f} s, il lui faut au moins 1,2 s.")
         petite = ' style="height:660px"' if k in cartes_cadre else ""
-        bloc_broll += f'\n      <div id="broll-{k}" class="broll broll--{mode}"{petite}><div class="broll__cadre">{media}</div></div>'
+        # Légende posée sur l'image (ce qu'on montre, un prix entre *astérisques* en couleur) et petite
+        # mention dans l'autre coin (« Illustration 3D », « Extrait : @compte »)
+        dessus = ""
+        if b.get("legende"):
+            texte = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(b["legende"])))
+            dessus += f'<span class="broll__legende">{texte}</span>'
+        if b.get("mention"):
+            dessus += f'<span class="broll__mention">{e(typo(b["mention"]))}</span>'
+        bloc_broll += (f'\n      <div id="broll-{k}" class="broll broll--{mode}"{petite}>'
+                       f'<div class="broll__cadre">{media}</div>{dessus}</div>')
 
     # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
     # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.

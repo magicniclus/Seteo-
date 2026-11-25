@@ -62,6 +62,19 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
   border-radius: 44px; border: 10px solid var(--papier); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
+/* Légende et mention posées sur un plan de coupe (clé "legende" / "mention" du plan) */
+.broll__legende {
+  position: absolute; left: 22px; top: 22px; max-width: calc(100% - 300px); padding: 10px 22px 12px;
+  border-radius: 999px; background: color-mix(in srgb, var(--nuit) 88%, transparent); color: var(--blanc);
+  font-weight: var(--graisse-titres); font-size: 40px; line-height: 1.1; letter-spacing: -0.01em;
+}
+.broll__legende em { font-style: normal; color: var(--accent); }
+.broll__mention {
+  position: absolute; right: 22px; top: 30px; padding: 6px 14px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86); color: var(--encre);
+  font-weight: var(--graisse-texte); font-size: 22px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
 /* Blocs (montage/blocs/) : « plein » couvre la prise, « calque » se pose au-dessus de tout */
 .bloc { position: absolute; inset: 0; }
 .bloc--plein { z-index: 3; }

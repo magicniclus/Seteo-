@@ -101,6 +101,12 @@ def main() -> None:
     rythme = dict(charte["rythme"])
     if a.silence is not None:
         rythme["silence_max"] = a.silence
+    # Réglages de rythme propres à cette vidéo (plan.json, "reglages") : gel_fin, silence_max, marges
+    if (dossier / "plan.json").exists():
+        propres = lire(dossier / "plan.json").get("reglages", {})
+        rythme.update({k: v for k, v in propres.items() if k in rythme})
+        if a.silence is not None:
+            rythme["silence_max"] = a.silence
     trans = lire(dossier / "transcription.json")
     rush = RACINE / trans["rush"]
     if not rush.exists():
