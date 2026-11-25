@@ -7,6 +7,11 @@ html, body { width: var(--largeur); height: var(--hauteur); overflow: hidden; ba
 body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialiased; }
 #root { position: relative; width: var(--largeur); height: var(--hauteur); overflow: hidden; isolation: isolate; }
 
+/* #prise contient tout ce qui montre la personne. Il rétrécit vers le bas quand une carte occupe le
+   haut de l'écran ; derrière lui, le fond de l'univers apparaît autour. */
+.fond-scene { position: absolute; inset: 0; z-index: 0; background-color: var(--nuit); background-image: var(--fond-image); background-size: var(--fond-taille); }
+#prise { position: absolute; inset: 0; z-index: 1; overflow: hidden; transform-origin: 50% 100%; will-change: transform; }
+
 /* La prise : on zoome l'enveloppe #plan, jamais la vidéo elle-même */
 #plan { position: absolute; inset: 0; z-index: 1; will-change: transform; }
 #plan video { width: 100%; height: 100%; object-fit: cover; display: block; }

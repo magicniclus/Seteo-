@@ -76,7 +76,7 @@ def pexels(a) -> None:
             with tempfile.TemporaryDirectory() as tmp:
                 brut = Path(tmp) / "brut.mp4"
                 telecharger(choix["link"], brut)
-                normaliser_clip(brut, cible, 0, a.duree)
+                normaliser_clip(brut, cible, 0, a.duree, (1080, 1920))
             auteur, page = x["user"]["name"], x["url"]
         ecrire(base.with_suffix(".json"), {"source": "Pexels", "auteur": auteur, "page": page,
                                            "recherche": a.recherche, "licence": "https://www.pexels.com/license/"})
@@ -148,7 +148,7 @@ def main() -> None:
     im.add_argument("fichier")
     im.add_argument("--nom")
     im.add_argument("--debut", type=float, default=0)
-    im.add_argument("--duree", type=float, default=8)
+    im.add_argument("--duree", type=float, default=8, help="durée gardée (s) ; l'extrait garde sa forme d'origine")
     im.set_defaults(action=importer)
     sous.add_parser("liste", help="ce qui est disponible").set_defaults(action=liste)
     a = p.parse_args()

@@ -35,7 +35,8 @@ Il faut aussi `pip install -r requirements.txt -r requirements-montage.txt`.
   Dropbox : remplace `dl=0` par `dl=1`. Google Drive : `https://drive.google.com/uc?export=download&id=<ID>`.
   Vérifie avec `ffprobe` que c'est bien une vidéo (une page web téléchargée à la place = lien non direct).
 - Tous les formats de téléphone passent (MP4, MOV, HEVC, HDR, 4K, 60 i/s, horizontal) : `couper.py`
-  remet tout en 1080x1920, 30 i/s, couleurs normales. Une vidéo horizontale est rognée au centre.
+  remet tout en 1080x1920, 30 i/s, couleurs normales. Une vidéo horizontale est rognée au centre :
+  si la personne n'y est pas, recadre d'abord le fichier avec ffmpeg (`crop`) avant de transcrire.
 
 ## 1. Transcrire
 
@@ -153,16 +154,29 @@ python machine/broll.py liste                                   # ce qu'on a dé
 python machine/broll.py pexels "carrelage salle de bain" -n 3   # libre de droits (PEXELS_API_KEY)
 python machine/broll.py ecran https://france-renov.gouv.fr      # une page web filmée en vertical
 python machine/broll.py ecran <url de l'outil> --prive --flouter ".client"   # avec des données de clients
-python machine/broll.py importer chemin/vers/clip.mp4           # un fichier fourni (téléphone, IA vidéo)
+python machine/broll.py importer chemin/vers/clip.mp4 --debut 12 --duree 4   # un fichier fourni, un extrait de film
 ```
 
 - Pexels : cherche en anglais si le français ne donne rien. Ouvre l'image ou une vignette avant de
   choisir : un plan hors sujet fait plus de mal que pas de plan.
 - Écran web : pour montrer une source officielle, un simulateur, et le site de la marque quand il
   sera en ligne (`python machine/ecrans.py`, pages listées dans `config/marque.yaml`).
-- On n'utilise que des images dont on a les droits. Pas d'extraits de films, de séries ou de vidéos
-  d'autres créateurs, même courts : c'est la règle de `CLAUDE.md`, et un retrait pour droits d'auteur
-  pénalise le compte. Si on te le demande, explique-le et propose un plan Pexels ou un bloc à la place.
+- **Extraits de films, d'émissions, de vidéos d'autres comptes** : c'est un bon ressort (une image
+  drôle ou connue posée sur une phrase), à manier selon la source.
+  - Film du domaine public (Internet Archive : muets, burlesques, vieux films d'entreprise) : libre.
+    Télécharge le film, repère l'instant, puis `broll.py importer <film> --debut <s> --duree <s>`.
+  - Film ou série récents, vidéo d'un autre compte (Instagram, TikTok, YouTube) : ne les télécharge
+    pas toi-même. Les plateformes l'interdisent, et c'est le genre de pratique qui fait retirer une
+    vidéo ou pénaliser un compte. Si on te fournit le fichier (un enregistrement d'écran du
+    téléphone suffit), tu peux l'insérer : dis une fois, simplement, que l'extrait appartient à
+    quelqu'un d'autre et qu'il peut entraîner un retrait, puis fais ce qui est demandé. Garde
+    l'extrait court (2 à 4 s) et, pour la vidéo d'un autre compte, laisse son nom visible.
+  - Un extrait horizontal se montre en `carte` (toute son image tient) ; en `plein` il est rogné aux
+    côtés : choisis ce qu'on garde avec `"ancre_x"` (0 = la gauche, 0.5 = le centre, 1 = la droite).
+  - Cale l'instant fort de l'extrait sur le mot qui le justifie : c'est `"debut"` (où commencer dans
+    le fichier) qui se règle, à l'image près. Regarde l'extrait image par image avant de choisir.
+- `carte` : pendant que la carte occupe le haut, la prise rétrécit et descend dessous, le visage
+  reste visible. `plein` : l'extrait remplace toute l'image, les sous-titres restent.
 
 ## 4. Monter et regarder les images clés
 

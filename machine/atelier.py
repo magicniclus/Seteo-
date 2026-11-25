@@ -101,20 +101,30 @@ HDR_VERS_SDR = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap
 
 
 # Filtre ffmpeg : remplit un cadre vertical 1080x1920 sans déformer (rogne ce qui dépasse)
-def cadrage(largeur: int, hauteur: int, ips: int, hdr: bool = False) -> str:
+# ancre_x : quelle partie garder quand l'image est trop large (0 = la gauche, 0.5 = le centre, 1 = la droite)
+def cadrage(largeur: int, hauteur: int, ips: int, hdr: bool = False, ancre_x: float = 0.5) -> str:
     return (f"scale={largeur}:{hauteur}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={largeur}:{hauteur},fps={ips},{HDR_VERS_SDR if hdr else ''}setsar=1,format=yuv420p")
+            f"crop={largeur}:{hauteur}:(iw-{largeur})*{ancre_x}:(ih-{hauteur})/2,fps={ips},"
+            f"{HDR_VERS_SDR if hdr else ''}setsar=1,format=yuv420p")
 
 
 REC709 = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709"]
 
 
-def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: float = 8) -> None:
-    """Met un plan de coupe au format de la DA (vertical, 30 i/s, sans son, court)."""
-    f = da()["format"]
+def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: float = 8,
+                     cadre: tuple[int, int] | None = None, ancre_x: float = 0.5) -> None:
+    """Prépare un plan de coupe : 30 i/s, sans son, court, couleurs normales.
+    cadre=(largeur, hauteur) : l'image remplit ce cadre (ce qui dépasse est rogné).
+    cadre=None : on garde la forme d'origine (un extrait horizontal reste horizontal), c'est au
+    montage qu'on choisit comment le montrer (plein écran vertical ou carte)."""
+    ips = da()["format"]["ips"]
     cible.parent.mkdir(parents=True, exist_ok=True)
-    ffmpeg("-ss", debut, "-t", duree_max, "-i", source, "-an", "-vf",
-           cadrage(f["largeur"], f["hauteur"], f["ips"], est_hdr(source)),
+    if cadre:
+        filtre = cadrage(cadre[0], cadre[1], ips, est_hdr(source), ancre_x)
+    else:
+        filtre = (f"scale='min(1920,iw)':'min(1920,ih)':force_original_aspect_ratio=decrease:flags=lanczos,"
+                  f"scale=trunc(iw/2)*2:trunc(ih/2)*2,fps={ips},{HDR_VERS_SDR if est_hdr(source) else ''}setsar=1,format=yuv420p")
+    ffmpeg("-ss", debut, "-t", duree_max, "-i", source, "-an", "-vf", filtre,
            "-c:v", "libx264", "-crf", "18", "-preset", "medium", *REC709, "-movflags", "+faststart", cible)
 
 

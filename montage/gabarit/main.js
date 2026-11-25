@@ -26,6 +26,8 @@
     tl.set(mot, { autoAlpha: 0 }, m.f);
   });
 
+  const prise = document.getElementById("prise");
+
   // 2. Plans de coupe
   D.broll.forEach((b) => {
     const boite = document.getElementById(b.id);
@@ -33,6 +35,10 @@
     if (b.mode === "carte") {
       tl.fromTo(boite, { autoAlpha: 0, y: -70, rotate: -2 }, { autoAlpha: 1, y: 0, rotate: 0, duration: 0.4, ease: "back.out(1.7)" }, b.d);
       va(boite, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -50 }, 0.22, b.f - 0.22, "power2.in");
+      // la prise descend et rétrécit sous la carte (le visage reste visible), puis reprend sa place
+      const grand = { scale: 1, borderRadius: 0 }, petit = { scale: D.reduit, borderRadius: 64 };
+      va(prise, grand, petit, 0.4, b.d, "power3.out");
+      va(prise, petit, grand, 0.32, b.f - 0.32, "power3.inOut");
     } else {
       tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.1, ease: "none" }, b.d);
     }

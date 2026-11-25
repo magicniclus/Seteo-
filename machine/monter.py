@@ -132,8 +132,10 @@ def calculer_zooms(mots: list[dict], coupes: list[float], total: float, r: dict)
     return zooms
 
 
-def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_utile: float) -> str:
-    """Copie un plan de coupe dans le projet, au bon format et à la bonne longueur."""
+def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_utile: float,
+                   cadre: tuple[int, int] = (1080, 1920), ancre_x: float = 0.5) -> str:
+    """Copie un plan de coupe dans le projet, à la bonne longueur et à la forme du cadre qui le montre
+    (tout l'écran, ou la carte : un extrait horizontal y garde presque toute son image)."""
     chemin = (RACINE / source) if not Path(source).is_absolute() else Path(source)
     if not chemin.exists():
         sys.exit(f"plan.json : fichier introuvable : {source}")
@@ -141,10 +143,10 @@ def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_uti
         cible = dossier / "assets" / f"{nom}{chemin.suffix.lower()}"
         shutil.copyfile(chemin, cible)
         return f"assets/{cible.name}"
-    empreinte = hashlib.md5(f"{chemin}{chemin.stat().st_mtime}{debut}{duree_utile:.2f}".encode()).hexdigest()[:8]
+    empreinte = hashlib.md5(f"{chemin}{chemin.stat().st_mtime}{debut}{duree_utile:.2f}{cadre}{ancre_x}".encode()).hexdigest()[:8]
     cible = dossier / "assets" / f"{nom}-{empreinte}.mp4"
     if not cible.exists():
-        normaliser_clip(chemin, cible, debut, duree_utile + 0.2)
+        normaliser_clip(chemin, cible, debut, duree_utile + 0.2, cadre, ancre_x)
     return f"assets/{cible.name}"
 
 
@@ -342,13 +344,18 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         mode = b.get("mode", "plein")
         if mode not in ("plein", "carte"):
             sys.exit(f"plan.json : mode de plan de coupe inconnu « {mode} » (plein ou carte).")
-        src = preparer_media(b["fichier"], dossier, f"broll-{k}", float(b.get("debut", 0)), f - d)
+        # la carte fait 940 x 700 avec 10 px de bord : son image intérieure fait 920 x 680
+        cadre = (920, 680) if mode == "carte" else (fmt["largeur"], fmt["hauteur"])
+        src = preparer_media(b["fichier"], dossier, f"broll-{k}", float(b.get("debut", 0)), f - d, cadre,
+                             float(b.get("ancre_x", 0.5)))
         minutage = f'data-start="{round(d, 3)}" data-duration="{round(f - d, 3)}" data-track-index="1"'
         if Path(src).suffix in IMAGES:
             media = f'<img id="broll-{k}-image" class="clip" src="{e(src)}" alt="" {minutage}>'
         else:
             media = f'<video id="broll-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>'
         brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode})
+        if mode == "carte" and f - d < 1.2:
+            sys.exit(f"plan.json : le plan de coupe n° {k} en carte dure {f - d:.1f} s, il lui faut au moins 1,2 s.")
         bloc_broll += f'\n      <div id="broll-{k}" class="broll broll--{mode}"><div class="broll__cadre">{media}</div></div>'
 
     # ----- La prise, et la personne détourée si le plan le demande
@@ -437,7 +444,12 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         hotes_blocs += hote(contexte["id"], 5, d, f - d, f' class="bloc bloc--{mode}"')
         fenetres_blocs.append((d, f))
 
-    principal = {"duree": total, "visageY": r["visage_y"], "broll": brolls, "derriere": mots_derriere,
+    # Pendant un plan de coupe en carte, la prise rétrécit vers le bas pour que le visage reste visible
+    # sous la carte : on vise le menton juste au-dessus des sous-titres.
+    H = fmt["hauteur"]
+    menton = (r["visage_y"] + 0.09) * H
+    reduit = round(min(0.86, max(0.6, (H - (st["centre_y"] - 115)) / (H - menton))), 3)
+    principal = {"duree": total, "visageY": r["visage_y"], "broll": brolls, "derriere": mots_derriere, "reduit": reduit,
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
 
     (dossier / "index.html").write_text(f"""<!doctype html>
@@ -462,7 +474,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
-      {prise}{detoure}{bloc_broll}{musique}{hotes_blocs}{hote('sous-titres', 3)}{hote('habillage', 4)}
+      <div class="fond-scene"></div>
+      <div id="prise">{prise}{detoure}</div>{bloc_broll}{musique}{hotes_blocs}{hote('sous-titres', 3)}{hote('habillage', 4)}
       {extras}
     </div>
     <script>

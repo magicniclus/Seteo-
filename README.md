@@ -190,9 +190,10 @@ le téléphone et l'e-mail sont masqués avant d'entrer dans la vidéo.
 
 **Voix** : la machine n'ajoute jamais de voix. La seule voix d'une vidéo est la tienne.
 
-**Droits** : la machine ne va chercher que des images libres (Pexels), des pages web filmées ou tes
-propres fichiers. Pas d'extraits de films ni de vidéos d'autres créateurs : un retrait pour droits
-d'auteur pénalise ton compte.
+**Extraits et droits** : la machine va chercher elle-même des images libres (Pexels, films du
+domaine public sur Internet Archive) et filme des pages web. Un extrait de film récent ou la vidéo
+d'un autre compte, c'est toi qui le fournis (un enregistrement d'écran suffit) : elle l'insère, mais
+ne le télécharge pas à ta place, et te rappelle qu'un retrait pour droits d'auteur pénalise un compte.
 
 ## Brancher les inscrits sur Portail Travaux
 
