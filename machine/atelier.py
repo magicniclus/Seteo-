@@ -130,6 +130,23 @@ def hyperframes(*args, cwd: Path | None = None, verifier: bool = True) -> subpro
     return r
 
 
+def detourer(source: Path, cible: Path) -> None:
+    """Découpe la personne de son décor (fond transparent), avec le modèle local de HyperFrames.
+    Rien ne quitte la machine. Lent sans carte graphique : compter ~20 s par seconde de vidéo."""
+    def essai():
+        return hyperframes("remove-background", source, "-o", cible, "--json", verifier=False)
+    r = essai()
+    manque = re.search(r'npm install (onnxruntime-node@[\d.]+) --prefix \\?"([^"\\]+)', r.stdout + r.stderr)
+    if r.returncode != 0 and manque:
+        # Le moteur du modèle ne s'est pas installé seul (son module pour carte graphique NVIDIA échoue
+        # souvent au téléchargement) : on l'installe sans ce module, comme son message le propose.
+        lancer(["npm", "install", manque.group(1), "--prefix", manque.group(2),
+                "--onnxruntime-node-install-cuda=skip", "--no-fund", "--no-audit"])
+        r = essai()
+    if r.returncode != 0 or not cible.exists():
+        sys.exit(f"Le détourage a échoué :\n{(r.stdout + r.stderr)[-1200:]}")
+
+
 def phrases(mots: list[dict], silence: float = 0.6) -> list[list[dict]]:
     """Regroupe les mots en phrases (ponctuation forte ou blanc) pour les relire facilement."""
     groupes, courant = [], []

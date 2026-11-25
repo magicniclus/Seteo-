@@ -10,6 +10,7 @@ Usage :
     python machine/broll.py pexels "carrelage salle de bain" -n 3
     python machine/broll.py pexels "artisan plombier" --photos
     python machine/broll.py ecran https://france-renov.gouv.fr --nom france-renov
+    python machine/broll.py ecran http://localhost:3000/demandes/42 --prive --flouter ".client" "#adresse"
     python machine/broll.py importer ~/Videos/chantier.mov --debut 4 --duree 6
     python machine/broll.py liste
 
@@ -92,7 +93,8 @@ def ecran(a) -> None:
     ecrans.DOSSIER.mkdir(exist_ok=True)
     with sync_playwright() as p:
         navigateur = p.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
-        ecrans.filmer(navigateur, {"nom": nom, "url": a.url, "cliquer": a.cliquer})
+        ecrans.filmer(navigateur, {"nom": nom, "url": a.url, "cliquer": a.cliquer,
+                                   "flouter": a.flouter, "prive": a.prive})
         navigateur.close()
 
 
@@ -137,6 +139,10 @@ def main() -> None:
     ec.add_argument("url")
     ec.add_argument("--nom")
     ec.add_argument("--cliquer", nargs="*", default=[], help="textes des boutons à cliquer, dans l'ordre")
+    ec.add_argument("--flouter", nargs="*", default=[], metavar="SELECTEUR",
+                    help="sélecteurs CSS des zones à masquer (nom, adresse, e-mail du client...)")
+    ec.add_argument("--prive", action="store_true",
+                    help="masque aussi tout e-mail et tout numéro de téléphone trouvés dans la page")
     ec.set_defaults(action=ecran)
     im = sous.add_parser("importer", help="mettre un fichier à toi au bon format")
     im.add_argument("fichier")

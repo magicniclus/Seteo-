@@ -13,6 +13,14 @@ La chaîne : **récupérer → transcrire → couper → planifier → monter �
 Chaque étape est un script de `machine/`. Ton travail à toi, ce sont les décisions de monteur :
 quoi couper, quoi mettre à l'écran et à quel moment.
 
+Trois règles qui ne se discutent pas :
+- **La seule voix est celle de la vidéo.** On n'ajoute jamais de voix off, de voix de synthèse ni de
+  doublage. De la musique seulement si on la demande et qu'on fournit le fichier.
+- **On ne fait pas dire à la personne ce qu'elle n'a pas dit** : sous-titres fidèles, pas de chiffre
+  ni de promesse ajoutés à l'écran.
+- **Aucune donnée d'un client en clair** (nom, adresse, téléphone, e-mail) dans une vidéo : voir
+  « Demandes de clients » plus bas.
+
 Avant de commencer : relis `CLAUDE.md` (ton, règles). Si la vidéo vient du calendrier, lis le post
 dans `sorties/<semaine>/calendrier.json` (accroche, script, mot-clé, réseau). Sinon, demande le
 mot-clé à commenter et le réseau visé s'ils ne sont pas dits dans la vidéo.
@@ -93,6 +101,7 @@ Détail des champs : `references/plan.md`.
 | `barres` | répartition d'un budget, qui coûte quoi : 2 à 4 barres | plein écran |
 | `comparaison` | deux devis, deux solutions, avant/après en chiffres ; le bon choix s'encadre | plein écran |
 | `avant_apres` | deux photos d'un chantier : celle d'après balaie celle d'avant | plein écran |
+| `demande` | la fiche d'une demande de travaux reçue : projet, surface, budget... et le client flouté | plein écran |
 | `commentaire` | à l'appel à l'action : une bulle où le mot-clé se tape, puis la réponse | par-dessus, visage visible |
 | `nom` | dans les premières secondes : qui parle (nom + rôle) | par-dessus, visage visible |
 
@@ -102,12 +111,48 @@ Détail des champs : `references/plan.md`.
 - Pas de carte de chiffre ni de plan de coupe `carte` pendant un bloc plein écran.
 - Besoin d'une animation qui n'existe pas : `references/hyperframes.md` (« Ajouter un bloc »).
 
+### Détourer la personne
+
+Le plan peut demander de découper la personne de son décor (`"detourage"`, voir `references/plan.md`).
+Ça sert à trois choses, à utiliser avec mesure :
+- `"fond": "flou"` : le décor est flouté et assombri, la personne reste nette. Utile quand la pièce
+  est en désordre ou distrait. C'est le réglage à proposer en premier.
+- `"fond": "univers"` : le décor est remplacé par le fond de la DA. Plus « studio », mais les
+  contours se voient davantage : à vérifier de près sur la planche avant de valider.
+- `"mots_derriere"` : un mot géant passe derrière la personne (le mot-clé, un chiffre). Un seul par
+  vidéo, deux au plus : c'est un effet, pas un habillage.
+
+Le détourage se fait sur la machine (rien n'est envoyé ailleurs) et il est lent sans carte graphique :
+environ 20 s par seconde de vidéo. Préviens avant de le lancer, et ne le lance que si on le demande
+ou si le décor pose vraiment problème. Il marche bien sur une personne nette devant un décor qui
+contraste ; il peine sur les cheveux fins devant un fond chargé, les gestes rapides, et un objet
+tenu en main peut disparaître. Regarde les contours sur la planche : s'ils scintillent, reviens à
+`"fond": "flou"` (qui pardonne beaucoup) ou enlève le détourage.
+
+### Demandes de clients
+
+Montrer une vraie demande de travaux est un très bon contenu, à une condition : on ne voit rien qui
+permette de reconnaître le client.
+- **Fiche redessinée** (le plus sûr, le plus lisible) : le bloc `demande`. On y met le projet, la
+  surface, le budget, la ville si elle est grande ; le nom, le téléphone, l'e-mail et l'adresse sont
+  des champs `"flou": true`. Un champ flou n'est jamais écrit dans la vidéo, même si le plan
+  contient sa valeur : n'écris pas la vraie valeur dans le plan, ce n'est pas nécessaire.
+- **Écran filmé** de l'outil : `python machine/broll.py ecran <url> --prive --flouter "<sélecteur>" ...`.
+  `--prive` masque tout e-mail et tout numéro de téléphone ; `--flouter` désigne les zones du nom et
+  de l'adresse (ouvre la page et lis son code pour trouver les bons sélecteurs). Le masquage se fait
+  dans la page avant son premier affichage : la vraie valeur n'est dans aucune image.
+- Dans les deux cas, regarde chaque image de la planche avant de livrer. Un nom lisible dans un coin,
+  une photo de façade reconnaissable, une plaque de rue : on reprend. En cas de doute, on masque.
+- Le texte libre du client (sa description) peut contenir son nom ou son adresse : résume-le au lieu
+  de le recopier.
+
 ### 3 bis. Plans de coupe
 
 ```bash
 python machine/broll.py liste                                   # ce qu'on a déjà
 python machine/broll.py pexels "carrelage salle de bain" -n 3   # libre de droits (PEXELS_API_KEY)
 python machine/broll.py ecran https://france-renov.gouv.fr      # une page web filmée en vertical
+python machine/broll.py ecran <url de l'outil> --prive --flouter ".client"   # avec des données de clients
 python machine/broll.py importer chemin/vers/clip.mp4           # un fichier fourni (téléphone, IA vidéo)
 ```
 

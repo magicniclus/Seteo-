@@ -158,12 +158,34 @@ def nom(b: dict, c: dict):
     return balises, {}
 
 
+def demande(b: dict, c: dict):
+    """La fiche d'une demande de travaux : 2 à 6 champs {nom, valeur}. Un champ {"flou": true} est
+    masqué : sa vraie valeur n'entre jamais dans la vidéo, même si elle est donnée dans le plan."""
+    champs = b["champs"]
+    if not 2 <= len(champs) <= 6:
+        sys.exit("plan.json : un bloc « demande » prend 2 à 6 champs.")
+    rangs = ""
+    for k, ch in enumerate(champs):
+        if ch.get("flou"):
+            # texte de remplacement : même silhouette (lettres -> x, chiffres -> 0), rien de réel
+            modele = str(ch.get("valeur") or "Xxxxxxx Xxxxxxxx")
+            faux = re.sub(r"[^\W\d_]", "x", re.sub(r"\d", "0", modele))[:22]
+            valeur = f'<span class="fiche__valeur fiche__valeur--floue">{e(faux)}</span>'
+        else:
+            valeur = f'<span class="fiche__valeur">{accent(str(ch["valeur"]), c)}</span>'
+        rangs += (f'<div id="{c["id"]}-ch{k}" class="fiche__champ"><span class="fiche__nom">{e(c["typo"](ch["nom"]))}</span>'
+                  f'{valeur}</div>')
+    balises = scene(c, entete(b, c) + f'<div id="{c["id"]}-fiche" class="fiche">{rangs}</div>')
+    return balises, {"champs": [{"t": t} for t in instants(champs, c, 0.7, 0.3)]}
+
+
 # nom du bloc -> (fabrique, type, durée par défaut en secondes)
 BLOCS = {
     "liste": (liste, "plein", 7.0),
     "barres": (barres, "plein", 6.0),
     "comparaison": (comparaison, "plein", 6.0),
     "avant_apres": (avant_apres, "plein", 5.0),
+    "demande": (demande, "plein", 6.0),
     "commentaire": (commentaire, "calque", 4.0),
     "nom": (nom, "calque", 3.5),
 }

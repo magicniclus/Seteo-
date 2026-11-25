@@ -46,7 +46,7 @@ en 2 semaines avec cette boucle :
 | `machine/couper.py` | Enlève les blancs et les prises ratées, met la vidéo au format et la voix au bon niveau |
 | `machine/broll.py` | Plans de coupe : Pexels (libre de droits), page web filmée, fichiers à toi |
 | `machine/monter.py` | Plan de montage + DA → vidéo (HyperFrames : du HTML animé rendu en MP4) |
-| `machine/blocs.py` + `montage/blocs/` | Animations prêtes à l'emploi, reprises du catalogue HyperFrames et refaites dans ta DA : liste à cocher, barres, comparaison, avant/après, bulle de commentaire, bandeau nom |
+| `machine/blocs.py` + `montage/blocs/` | Animations prêtes à l'emploi, reprises du catalogue HyperFrames et refaites dans ta DA : liste à cocher, barres, comparaison, avant/après, fiche de demande client (infos privées floutées), bulle de commentaire, bandeau nom |
 | `machine/yeux.py` | Relit la vidéo finie : planche d'images, mesures du son, critique de Gemini |
 | `montage/` | L'atelier : HyperFrames, le gabarit des vidéos, les polices, un dossier par vidéo |
 | `.github/workflows/hebdo.yml` | Lance outliers + tendances chaque matin et la semaine chaque dimanche, tout seul |
@@ -179,6 +179,16 @@ python machine/monter.py 2026-11-30-3 --apercu     # images clés à vérifier
 python machine/monter.py 2026-11-30-3 --rendu      # -> montages/2026-11-30-3.mp4
 python machine/yeux.py 2026-11-30-3                # relecture
 ```
+
+**Détourage** : sur demande, la personne est découpée de son décor (décor flouté ou remplacé par le
+fond de ta DA, mot géant qui passe derrière elle). Le calcul se fait sur ta machine, compte environ
+20 s par seconde de vidéo sans carte graphique.
+
+**Clients** : une demande de travaux se montre soit en fiche redessinée (bloc `demande`), soit en
+filmant ton outil avec `broll.py ecran --prive --flouter ...`. Dans les deux cas le nom, l'adresse,
+le téléphone et l'e-mail sont masqués avant d'entrer dans la vidéo.
+
+**Voix** : la machine n'ajoute jamais de voix. La seule voix d'une vidéo est la tienne.
 
 **Droits** : la machine ne va chercher que des images libres (Pexels), des pages web filmées ou tes
 propres fichiers. Pas d'extraits de films ni de vidéos d'autres créateurs : un retrait pour droits

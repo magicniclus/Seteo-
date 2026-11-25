@@ -40,6 +40,7 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
                 {"texte": "Les finitions", "detail": "joints, plinthes, peinture"}]},
     {"bloc": "commentaire", "de": "m62"}
   ],
+  "detourage": {"fond": "flou", "mots_derriere": [{"de": "m62", "a": "m64", "texte": "DEVIS"}]},
   "reglages": {"visage_y": 0.45, "centre_y": 1330},
   "carton_fin": {"suite": "et je t'envoie ma checklist en DM"},
   "musique": "musique/fond-calme.mp3"
@@ -59,6 +60,7 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
 | `chiffres` | Cartes en haut de l'écran : `de`, `a` (défaut 2,6 s), `texte`, `legende`. Un nombre seul (`"12 000 €"`) défile jusqu'à sa valeur ; `"compter": false` pour l'empêcher. |
 | `broll` | Plans de coupe : `de`, `a`, `fichier` (vidéo ou image, chemin depuis la racine du dépôt), `mode` (`plein` = tout l'écran, les sous-titres restent ; `carte` = cadre arrondi en haut, le visage reste), `debut` (où commencer dans le fichier, en secondes). |
 | `blocs` | Animations prêtes à l'emploi : voir « Les blocs » ci-dessous. |
+| `detourage` | Découpe la personne de son décor : `{"fond": "flou"}` (décor flouté), `{"fond": "univers"}` (décor remplacé par le fond de la DA) ou `{"fond": "origine"}` (décor intact) ; `"mots_derriere": [{"de", "a", "texte"}]` fait passer un mot géant derrière elle. Lent : ~20 s de calcul par seconde de vidéo. |
 | `reglages` | Réglages de la DA pour CETTE vidéo seulement, mêmes noms que dans `config/da.yaml` (`rythme` et `sous_titres`) : `visage_y`, `centre_y`, `taille`, `mots_max`, `zoom_coupe`, `zoom_intervalle_min`... |
 | `carton_fin` | `de` (défaut : au dernier « commente » / « tape » prononcé), `suite` (la ligne sous le mot-clé). `false` pour ne pas en mettre. |
 | `sous_titres` | `false` pour une vidéo sans sous-titres (rare). |
@@ -76,6 +78,7 @@ passent en couleur d'accent). Styles et animations : `montage/blocs/` ; fabrique
 | `barres` | `lignes` : 2 à 4 `{"nom", "valeur" (nombre), "texte" (affiché, ex. "45 %"), "quand"}` ; `fort` : n° de la barre en accent (défaut : la plus grande) | 6 s |
 | `comparaison` | `gauche` (carte du haut) et `droite` (carte du bas) : `{"titre", "valeur", "note"}` ; `gagnant` : `"gauche"`, `"droite"` ou rien ; `badge` (défaut « Le bon choix ») ; `verdict` : l'instant où il tombe | 6 s |
 | `avant_apres` | `avant`, `apres` : deux images (chemins depuis la racine) ; `quand` : l'instant de la bascule ; `etiquette_avant`, `etiquette_apres` | 5 s |
+| `demande` | `champs` : 2 à 6 `{"nom", "valeur", "quand"}` ; `"flou": true` masque le champ (sa valeur n'est jamais écrite dans la vidéo : inutile de la donner) | 6 s |
 | `commentaire` | `texte` (défaut : le mot-clé), `pseudo` (défaut « toi »), `reponse` (défaut « Je t'envoie ça en DM ») | 4 s |
 | `nom` | `nom`, `role` | 3,5 s |
 

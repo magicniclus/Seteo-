@@ -10,11 +10,20 @@
     tl.fromTo(cible, de, Object.assign({ duration: duree, ease: ease || "power3.out", immediateRender: false }, a), t);
 
   // 1. La prise : plan large / plan serré à chaque coupe, avec un léger zoom continu
-  const plan = document.getElementById("plan");
+  // (la personne détourée, si elle existe, suit exactement les mêmes zooms que la prise)
+  const plan = [document.getElementById("plan"), document.getElementById("plan-detoure")].filter(Boolean);
   gsap.set(plan, { transformOrigin: "50% " + D.visageY * 100 + "%" });
   D.zooms.forEach((z, k) => {
     if (k === 0) tl.fromTo(plan, { scale: z.de }, { scale: z.a, duration: z.duree, ease: "none" }, z.t);
     else va(plan, { scale: z.de }, { scale: z.a }, z.duree, z.t, "none");
+  });
+
+  // Mots derrière la personne : un mot géant passe entre le décor et elle
+  D.derriere.forEach((m) => {
+    const mot = document.getElementById(m.id);
+    tl.fromTo(mot, { autoAlpha: 0, scale: 0.7, y: 80 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.4)" }, m.d);
+    va(mot, { autoAlpha: 1, scale: 1 }, { autoAlpha: 0, scale: 1.08 }, 0.3, m.f - 0.3, "power2.in");
+    tl.set(mot, { autoAlpha: 0 }, m.f);
   });
 
   // 2. Plans de coupe

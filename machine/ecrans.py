@@ -12,6 +12,7 @@ Usage :
     python machine/ecrans.py accueil       # une seule page
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -24,6 +25,51 @@ from commun import RACINE, config
 
 DOSSIER = RACINE / "ecrans"
 
+# Masquage des données privées, exécuté dans la page AVANT son premier affichage et à chaque changement.
+# Les éléments désignés (et, en mode privé, tout e-mail ou numéro de téléphone) voient leurs lettres
+# remplacées par des « x » et leurs chiffres par des « 0 », puis sont floutés : la vraie valeur
+# n'est jamais dessinée, donc elle n'est dans aucune image de la vidéo.
+MASQUAGE = r"""
+(() => {
+  const SELECTEURS = __SELECTEURS__, PRIVE = __PRIVE__;
+  const COORD = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+|(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}/g;
+  const masque = (t) => t.replace(/\p{L}/gu, "x").replace(/\d/g, "0");
+  const style = document.createElement("style");
+  style.textContent = (SELECTEURS.length ? SELECTEURS.join(",") + "{filter:blur(11px)!important;}" : "") +
+    (SELECTEURS.length ? SELECTEURS.map((s) => s + " input," + s + " textarea," + "input" + s + ",textarea" + s).join(",") +
+      "{-webkit-text-security:disc!important;}" : "") + "[data-masque]{filter:blur(11px)!important;}";
+  const textes = (racine) => {
+    const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT), liste = [];
+    while (w.nextNode()) liste.push(w.currentNode);
+    return liste;
+  };
+  const passer = () => {
+    if (!style.isConnected && document.documentElement) (document.head || document.documentElement).appendChild(style);
+    if (!document.body) return;
+    for (const s of SELECTEURS) for (const zone of document.querySelectorAll(s)) for (const n of textes(zone)) {
+      const m = masque(n.nodeValue);
+      if (m !== n.nodeValue) n.nodeValue = m;
+    }
+    if (!PRIVE) return;
+    for (const n of textes(document.body)) {
+      if (n.parentElement && (n.parentElement.closest("[data-masque],script,style"))) continue;
+      COORD.lastIndex = 0;
+      const t = COORD.exec(n.nodeValue);
+      if (!t) continue;
+      const suite = n.splitText(t.index), reste = suite.splitText(t[0].length);
+      const span = document.createElement("span");
+      span.dataset.masque = "1";
+      span.textContent = masque(t[0]);
+      suite.replaceWith(span);
+      void reste;
+    }
+  };
+  new MutationObserver(passer).observe(document, { childList: true, subtree: true, characterData: true });
+  document.addEventListener("DOMContentLoaded", passer);
+  passer();
+})();
+"""
+
 
 def filmer(navigateur, page_cfg: dict) -> None:
     contexte = navigateur.new_context(
@@ -35,6 +81,9 @@ def filmer(navigateur, page_cfg: dict) -> None:
         record_video_dir=str(DOSSIER / "tmp"),
         record_video_size={"width": 540, "height": 960},
     )
+    if page_cfg.get("flouter") or page_cfg.get("prive"):
+        contexte.add_init_script(MASQUAGE.replace("__SELECTEURS__", json.dumps(page_cfg.get("flouter") or []))
+                                 .replace("__PRIVE__", "true" if page_cfg.get("prive") else "false"))
     page = contexte.new_page()
     debut_film = time.monotonic()  # l'enregistrement démarre ici, page encore blanche
     page.goto(page_cfg["url"], wait_until="networkidle")

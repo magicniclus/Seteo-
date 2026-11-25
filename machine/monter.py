@@ -26,8 +26,8 @@ import unicodedata
 from pathlib import Path
 
 import blocs as bibliotheque
-from atelier import (MONTAGE, MONTAGES, RACINE, da, ecrire, ffmpeg, hyperframes, identifiant, lire,
-                     normaliser_clip, projet)
+from atelier import (MONTAGE, MONTAGES, RACINE, da, detourer, duree, ecrire, ffmpeg, hyperframes, identifiant,
+                     lire, normaliser_clip, projet)
 
 GABARIT = MONTAGE / "gabarit"
 BLOCS = MONTAGE / "blocs"
@@ -351,10 +351,35 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode})
         bloc_broll += f'\n      <div id="broll-{k}" class="broll broll--{mode}"><div class="broll__cadre">{media}</div></div>'
 
-    # ----- La prise et la musique
+    # ----- La prise, et la personne détourée si le plan le demande
+    #   "detourage": {"fond": "flou" | "univers" | "origine", "mots_derriere": [{"de", "a", "texte"}]}
+    det = plan.get("detourage") or {}
+    if det is True:
+        det = {}
+    detoure, mots_derriere = "", []
     if (dossier / "assets" / "a-roll.mp4").exists():
-        prise = (f'<div id="plan"><video id="a-roll" src="assets/a-roll.mp4" data-start="0" '
+        flou = ' class="plan--flou"' if det.get("fond") == "flou" else ""
+        prise = (f'<div id="plan"{flou}><video id="a-roll" src="assets/a-roll.mp4" data-start="0" '
                  f'data-duration="{total}" data-track-index="0" data-has-audio="true" playsinline></video></div>')
+        if "detourage" in plan and plan["detourage"] is not False:
+            fond = det.get("fond", "origine")
+            if fond not in ("origine", "flou", "univers"):
+                sys.exit(f"plan.json : detourage.fond inconnu « {fond} » (origine, flou ou univers).")
+            source, decoupe = dossier / "assets" / "a-roll.mp4", dossier / "assets" / "a-roll-detoure.webm"
+            if not decoupe.exists() or decoupe.stat().st_mtime < source.stat().st_mtime:
+                print(f"Détourage de la personne ({duree(source):.0f} s de vidéo, plusieurs minutes sans carte graphique)...")
+                detourer(source, decoupe)
+            if fond == "univers":
+                detoure += '\n      <div id="fond-univers" class="fond-univers"></div>'
+            for k, m in enumerate(det.get("mots_derriere", []), 1):
+                d, f = T(m["de"]), T(m["a"], fin=True) if "a" in m else T(m["de"]) + 2.5
+                texte = typo(m["texte"])
+                taille = min(420, int(1000 / (0.6 * max(len(texte), 2))))
+                mots_derriere.append({"id": f"derriere-{k}", "d": round(d, 3), "f": round(f, 3)})
+                detoure += (f'\n      <div id="derriere-{k}" class="derriere"><span class="derriere__mot" '
+                            f'style="font-size:{taille}px">{e(texte)}</span></div>')
+            detoure += (f'\n      <div id="plan-detoure"><video id="a-roll-detoure" src="assets/a-roll-detoure.webm" '
+                        f'data-start="0" data-duration="{total}" data-track-index="0" muted playsinline></video></div>')
     else:
         prise = '<div id="plan" class="plan--fond"></div>'
     musique = ""
@@ -412,7 +437,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         hotes_blocs += hote(contexte["id"], 5, d, f - d, f' class="bloc bloc--{mode}"')
         fenetres_blocs.append((d, f))
 
-    principal = {"duree": total, "visageY": r["visage_y"], "broll": brolls,
+    principal = {"duree": total, "visageY": r["visage_y"], "broll": brolls, "derriere": mots_derriere,
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
 
     (dossier / "index.html").write_text(f"""<!doctype html>
@@ -437,7 +462,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
-      {prise}{bloc_broll}{musique}{hotes_blocs}{hote('sous-titres', 3)}{hote('habillage', 4)}
+      {prise}{detoure}{bloc_broll}{musique}{hotes_blocs}{hote('sous-titres', 3)}{hote('habillage', 4)}
       {extras}
     </div>
     <script>
@@ -450,7 +475,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     ecrire(dossier / "hyperframes.json", {"paths": {"blocks": "compositions", "assets": "assets"}})
 
     # Les instants à regarder : première image, chaque carte, chaque plan de coupe, trois sous-titres, la fin
-    reperes = [0.0] + [round((x["d"] + x["f"]) / 2, 2) for x in cartes + brolls]
+    reperes = [0.0] + [round((x["d"] + x["f"]) / 2, 2) for x in cartes + brolls + mots_derriere]
     reperes += [round(p["mots"][-1]["d"] + 0.1, 2) for p in pages[1::max(len(pages) // 3, 1)]][:3]
     for d, f in fenetres_blocs:  # un bloc se juge au milieu de sa construction et une fois complet
         reperes += [round(d + (f - d) * 0.45, 2), round(f - 0.6, 2)]

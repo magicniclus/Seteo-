@@ -65,4 +65,6 @@ en foncé ; sur des cartes claires, un accent trop clair est remplacé par l'enc
 | `rythme.zoom_coupe`, `zoom_intervalle_min` | Force et fréquence de l'alternance plan large / plan serré. `zoom_coupe: 1` = aucun zoom. |
 | `rythme.visage_y` | Où se trouve le visage dans l'image : c'est le centre des zooms. |
 | `rythme.gel_fin` | Temps où la dernière image reste, pour lire le carton. |
-| `habillage.barre_progression`, `signature` | Barre en haut, rappel du nom. |
+| `habillage.barre_progression` | La fine barre de progression en haut. |
+| `habillage.signature` | Le nom de la marque en haut à gauche. Éteint (`false`) : sur une vidéo où la personne est à l'écran, on n'affiche pas de logo en haut. Le nom reste sur le carton de fin. |
+| `son.debruitage` | 0 = rien ; 8 à 12 pour atténuer un souffle derrière la voix. |

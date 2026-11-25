@@ -10,6 +10,15 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 /* La prise : on zoome l'enveloppe #plan, jamais la vidéo elle-même */
 #plan { position: absolute; inset: 0; z-index: 1; will-change: transform; }
 #plan video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Personne détourée (plan.json : "detourage") : la même image, sans son décor, posée par-dessus.
+   Entre les deux, on peut flouter le décor, le remplacer par le fond de l'univers, ou glisser un mot. */
+#plan-detoure { position: absolute; inset: 0; z-index: 1; will-change: transform; }
+#plan-detoure video { width: 100%; height: 100%; object-fit: cover; display: block; }
+#plan.plan--flou video { filter: blur(22px) brightness(0.62) saturate(0.9); }
+.fond-univers { position: absolute; inset: 0; z-index: 1; background-color: var(--nuit); background-image: var(--fond-image); background-size: var(--fond-taille); }
+.derriere { position: absolute; z-index: 1; left: 0; right: 0; top: calc(var(--zone-haut) + 60px); text-align: center; opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.derriere__mot { display: inline-block; font-weight: var(--graisse-titres); line-height: 0.9; letter-spacing: -0.03em; color: var(--blanc); text-transform: uppercase; white-space: nowrap; text-shadow: 0 10px 60px rgba(0, 0, 0, 0.45); }
+
 /* Pas de prise (vidéo sans visage, planche de style) : le fond de l'univers */
 #plan.plan--fond { background-color: var(--nuit); background-image: var(--fond-image); background-size: var(--fond-taille); }
 

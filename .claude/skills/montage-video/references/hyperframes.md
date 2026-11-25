@@ -11,7 +11,7 @@ index.html                    composition principale : la prise, les plans de co
 compositions/sous-titres.html calque des sous-titres (sa propre timeline)
 compositions/habillage.html   calque accroche / chiffres / carton de fin / signature / barre
 compositions/bloc-N.html      un fichier par bloc du plan (liste, barres, comparaison...)
-assets/                       a-roll.mp4, plans de coupe, polices
+assets/                       a-roll.mp4, plans de coupe, polices (+ a-roll-detoure.webm si détourage)
 lib/gsap.min.js               GSAP en local (aucun appel réseau pendant le rendu)
 ```
 
@@ -87,7 +87,7 @@ Teste avec un plan d'essai puis `python machine/monter.py <id> --apercu` : zéro
 et le bloc lisible sur la planche à la taille d'un téléphone. Documente-le dans `references/plan.md`
 et dans le tableau des blocs de `SKILL.md`.
 
-Les six blocs existants viennent de là : `liste` (Marker Checklist Card, Specs List), `barres`
+Les blocs existants viennent de là (`demande` est une création maison) : `liste` (Marker Checklist Card, Specs List), `barres`
 (Chart Story), `comparaison` (Split Tilt Cards, Comparison Split), `avant_apres` (Before After Wipe),
 `commentaire` (YT Comment Card, Chat Message), `nom` (Kicker + Name).
 

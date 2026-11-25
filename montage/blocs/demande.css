@@ -1,0 +1,16 @@
+/* Demande de travaux : la fiche d'une demande client, champs privés masqués.
+   Un champ marqué "flou" n'est JAMAIS écrit en clair : on dessine un texte de remplacement, flouté. */
+.fiche {
+  margin-top: 46px; padding: 18px 44px; border-radius: 44px;
+  background-color: var(--carte-fond); background-image: var(--carte-image); background-size: var(--carte-taille);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.fiche__champ {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 30px; padding: 22px 0;
+  border-bottom: 3px solid rgba(128, 128, 128, 0.22); opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.fiche__champ:last-child { border-bottom: 0; }
+.fiche__nom { flex: none; font-weight: var(--graisse-texte); font-size: 36px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--carte-texte); opacity: 0.6; }
+.fiche__valeur { font-weight: var(--graisse-titres); font-size: 48px; line-height: 1.12; text-align: right; color: var(--carte-texte); text-wrap: balance; }
+.fiche__valeur em { font-style: normal; color: var(--carte-accent); }
+.fiche__valeur--floue { filter: blur(13px); user-select: none; white-space: nowrap; }

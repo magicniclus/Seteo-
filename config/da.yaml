@@ -14,7 +14,7 @@ format:
   hauteur: 1920
   ips: 30
 
-# Le nom écrit en petit en haut de la vidéo et sur le carton de fin.
+# Le nom écrit sur le carton de fin (et en haut de la vidéo si habillage.signature vaut true).
 # Le 2e mot prend la couleur d'accent. Logo : un SVG ou PNG transparent (600 px de large minimum),
 # par exemple "montage/da/logo.png" ; vide = le nom en lettres.
 signature: ["PORTAIL", "TRAVAUX"]
@@ -46,7 +46,7 @@ rythme:
 
 habillage:
   barre_progression: true   # fine barre en haut : les gens restent pour voir la fin
-  signature: true
+  signature: false          # le nom de la marque en haut à gauche : non, on voit déjà la personne
 
 son:
   volume_cible_lufs: -14    # niveau standard des réseaux
