@@ -73,3 +73,11 @@ recherches_youtube:
 #     url: "https://ton-site.fr/artisans"
 #     cliquer: ["Trouver un artisan"]
 pages_ecran: []
+
+# --- Le site en local (machine/site_local.py) : une copie du site sur cette machine, avec des données
+# fictives, pour filmer l'outil Dessin et les maquettes 3D des chantiers (skill video-chantier).
+site_local:
+  depot: "magicniclus/portail-habitat-v2"     # le dépôt GitHub du site
+  branche: "claude/relaxed-meitner-lxsu0r"    # la branche qui contient le code (pas seulement les documents)
+  dossier: "../magicniclus/portail-habitat-v2"  # où il est rangé, depuis la racine de ce dépôt
+  port: 3200

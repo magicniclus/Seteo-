@@ -104,7 +104,8 @@ Les décisions à prendre, dans cet ordre :
    scène », plus bas). Voir « Les blocs » ci-dessous.
 5. **Plans de coupe et ponctuations** : des images réelles sur ce qui est dit, et deux ou trois
    extraits courts pour relancer l'attention (étape 3 bis). `carte` laisse le visage
-   visible, `plein` le remplace.
+   visible, `plein` le remplace. Quand la vidéo parle d'un chantier précis, sa maquette 3D faite
+   dans l'outil Dessin du site se prépare avec le skill `video-chantier`.
 6. **Mots forts** (`emphase`) : 3 à 6 dans la vidéo, pas plus. Les chiffres et le mot-clé le sont déjà.
 7. **Carton de fin** : automatique dès que « commente » ou « tape » est dit. Adapte `suite` à la ressource
    promise (« et je t'envoie la checklist en DM »).

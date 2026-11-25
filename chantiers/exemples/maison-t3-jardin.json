@@ -1,0 +1,25 @@
+{
+ "nom": "maison-t3-jardin",
+ "maison": "t3",
+ "toit": "quatre_pans",
+ "exterieur": {
+  "terrasse": true,
+  "piscine": true,
+  "allee": true,
+  "arbres": 3,
+  "cloture": "grillage"
+ },
+ "vues": [
+  {
+   "plan": "exterieur",
+   "tour": 50
+  },
+  {
+   "plan": "large"
+  },
+  {
+   "plan": "piece",
+   "piece": "sejour"
+  }
+ ]
+}

@@ -46,6 +46,8 @@ en 2 semaines avec cette boucle :
 | `machine/transcrire.py` | Rush → texte mot par mot (ElevenLabs Scribe, ou Whisper en local) |
 | `machine/couper.py` | Enlève les blancs et les prises ratées, met la vidéo au format et la voix au bon niveau |
 | `machine/broll.py` | Plans de coupe : vieux films du domaine public, Pexels, page web filmée, fichiers à toi ; et la banque de ponctuations (`montage/ponctuations/`) |
+| `machine/site_local.py` | Lance une copie du site Portail Travaux sur la machine (émulateurs Firebase, données fictives) pour filmer son outil Dessin |
+| `machine/chantier3d.py` | Maquette 3D d'un chantier faite avec l'outil Dessin du site (agencement selon les règles d'usage), filmée en zoom sur une pièce, en vue large ou en vue extérieure |
 | `machine/monter.py` | Plan de montage + DA → vidéo (HyperFrames : du HTML animé rendu en MP4) |
 | `machine/blocs.py` + `montage/blocs/` | Animations prêtes à l'emploi, reprises du catalogue HyperFrames et refaites dans ta DA : liste à cocher, barres, comparaison, avant/après, fiche de demande client (infos privées floutées), bulle de commentaire, bandeau nom |
 | `machine/yeux.py` | Relit la vidéo finie : planche d'images, mesures du son, critique de Gemini |
@@ -190,6 +192,12 @@ cette phrase »*) : deux ou trois extraits de 2 à 3 s par vidéo (un gag de vie
 phrase), piochés dans la banque `montage/ponctuations/` (`python machine/broll.py banque`). Claude va
 chercher lui-même les films du domaine public. Pour un extrait d'Instagram ou d'un film récent, c'est
 toi qui lui donnes le fichier : un enregistrement d'écran suffit.
+
+**Vidéo de chantier en 3D** (skill `video-chantier` : *« voilà un chantier : salle de bains de 6 m²,
+douche à l'italienne, double vasque ; fais-moi un zoom sur la pièce »*) : Claude construit la maquette
+avec l'outil Dessin de ton site (`python machine/site_local.py demarrer` le lance sur la machine,
+avec des données fictives), l'aménage selon les règles d'usage et la filme selon le plan que tu
+choisis : zoom sur une pièce, vue large de l'intérieur, ou vue extérieure avec le toit et le jardin.
 
 **Clients** : une demande de travaux se montre soit en fiche redessinée (bloc `demande`), soit en
 filmant ton outil avec `broll.py ecran --prive --flouter ...`. Dans les deux cas le nom, l'adresse,

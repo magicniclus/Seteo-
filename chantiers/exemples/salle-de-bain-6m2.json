@@ -1,0 +1,22 @@
+{
+ "nom": "salle-de-bain-6m2",
+ "piece": {
+  "type": "salle_de_bain",
+  "largeur": 2.6,
+  "profondeur": 2.4,
+  "equipements": [
+   "douche-italienne",
+   "double-vasque",
+   "wc-suspendu",
+   "seche-serviettes"
+  ]
+ },
+ "vues": [
+  {
+   "plan": "piece",
+   "piece": "salle_de_bain",
+   "tour": 40,
+   "duree": 4
+  }
+ ]
+}

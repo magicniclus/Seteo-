@@ -1,0 +1,30 @@
+{
+ "nom": "cuisine-ilot-20m2",
+ "piece": {
+  "type": "cuisine",
+  "largeur": 5,
+  "profondeur": 4,
+  "fenetre": "fenetre_double",
+  "equipements": [
+   "colonne-frigo",
+   "meuble-bas-60",
+   "evier-120",
+   "lave-vaisselle",
+   "meuble-bas-60",
+   "plaque-60",
+   "hotte-60",
+   "meuble-bas-80",
+   "meuble-haut-60",
+   "meuble-haut-60",
+   "ilot"
+  ]
+ },
+ "vues": [
+  {
+   "plan": "piece",
+   "piece": "cuisine",
+   "tour": 45,
+   "duree": 4
+  }
+ ]
+}
