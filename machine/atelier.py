@@ -88,10 +88,25 @@ def a_du_son(fichier: Path) -> bool:
     return bool(r.stdout.strip())
 
 
+def est_hdr(fichier: Path) -> bool:
+    """Les téléphones récents filment souvent en HDR (HLG ou PQ) : sans conversion, l'image sort délavée."""
+    r = lancer(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=color_transfer",
+                "-of", "csv=p=0", fichier])
+    return r.stdout.strip() in ("smpte2084", "arib-std-b67")
+
+
+# HDR -> couleurs normales (SDR, Rec. 709), celles que tous les téléphones et réseaux affichent pareil
+HDR_VERS_SDR = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,"
+                "zscale=t=bt709:m=bt709:r=tv,")
+
+
 # Filtre ffmpeg : remplit un cadre vertical 1080x1920 sans déformer (rogne ce qui dépasse)
-def cadrage(largeur: int, hauteur: int, ips: int) -> str:
+def cadrage(largeur: int, hauteur: int, ips: int, hdr: bool = False) -> str:
     return (f"scale={largeur}:{hauteur}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={largeur}:{hauteur},fps={ips},setsar=1,format=yuv420p")
+            f"crop={largeur}:{hauteur},fps={ips},{HDR_VERS_SDR if hdr else ''}setsar=1,format=yuv420p")
+
+
+REC709 = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709"]
 
 
 def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: float = 8) -> None:
@@ -99,8 +114,8 @@ def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: floa
     f = da()["format"]
     cible.parent.mkdir(parents=True, exist_ok=True)
     ffmpeg("-ss", debut, "-t", duree_max, "-i", source, "-an", "-vf",
-           cadrage(f["largeur"], f["hauteur"], f["ips"]),
-           "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-movflags", "+faststart", cible)
+           cadrage(f["largeur"], f["hauteur"], f["ips"], est_hdr(source)),
+           "-c:v", "libx264", "-crf", "18", "-preset", "medium", *REC709, "-movflags", "+faststart", cible)
 
 
 def hyperframes(*args, cwd: Path | None = None, verifier: bool = True) -> subprocess.CompletedProcess:

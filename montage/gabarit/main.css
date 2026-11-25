@@ -23,6 +23,11 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
   border-radius: 44px; border: 10px solid var(--papier); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
+/* Blocs (montage/blocs/) : « plein » couvre la prise, « calque » se pose au-dessus de tout */
+.bloc { position: absolute; inset: 0; }
+.bloc--plein { z-index: 3; }
+.bloc--calque { z-index: 6; }
+
 /* Les deux calques posés par-dessus (sous-compositions) */
 #sous-titres, #habillage { position: absolute; inset: 0; }
 #sous-titres { z-index: 5; }

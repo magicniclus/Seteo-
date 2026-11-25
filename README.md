@@ -46,6 +46,7 @@ en 2 semaines avec cette boucle :
 | `machine/couper.py` | Enlève les blancs et les prises ratées, met la vidéo au format et la voix au bon niveau |
 | `machine/broll.py` | Plans de coupe : Pexels (libre de droits), page web filmée, fichiers à toi |
 | `machine/monter.py` | Plan de montage + DA → vidéo (HyperFrames : du HTML animé rendu en MP4) |
+| `machine/blocs.py` + `montage/blocs/` | Animations prêtes à l'emploi, reprises du catalogue HyperFrames et refaites dans ta DA : liste à cocher, barres, comparaison, avant/après, bulle de commentaire, bandeau nom |
 | `machine/yeux.py` | Relit la vidéo finie : planche d'images, mesures du son, critique de Gemini |
 | `montage/` | L'atelier : HyperFrames, le gabarit des vidéos, les polices, un dossier par vidéo |
 | `.github/workflows/hebdo.yml` | Lance outliers + tendances chaque matin et la semaine chaque dimanche, tout seul |
@@ -153,13 +154,14 @@ cherche les outliers chaque matin et prépare la semaine chaque dimanche.
 
 ## Le montage automatique
 
-Tu dis à Claude Code *« Monte le post 3 »* (ou tu lui donnes un fichier vidéo). Il enchaîne :
+Tu te filmes au téléphone (à la verticale), tu donnes la vidéo à Claude Code (*« Monte cette vidéo,
+mot-clé DEVIS »*, ou *« Monte le post 3 »* si elle vient du prompteur). Il enchaîne :
 
 | Étape | Outil | Ce qui se passe |
 |---|---|---|
 | 1. Transcrire | `transcrire.py` : ElevenLabs Scribe ou Whisper | Chaque mot avec son début et sa fin |
 | 2. Couper | `couper.py` : ffmpeg | Blancs et prises ratées enlevés, format vertical, voix au niveau des réseaux |
-| 3. Planifier | Claude écrit `plan.json` | Corrections, accroche, chiffres, plans de coupe, mots forts |
+| 3. Planifier | Claude écrit `plan.json` | Corrections, accroche, chiffres, animations (blocs), plans de coupe, mots forts |
 | 3 bis. Plans de coupe | `broll.py` : Pexels, Playwright | Vidéos libres de droits, pages web filmées, tes propres clips |
 | 4. Monter | `monter.py` : HyperFrames | Sous-titres mot à mot, cartes, zooms, carton de fin, dans ta DA |
 | 5. Regarder | `yeux.py` : planche d'images + Gemini | La vidéo est relue ; ce qui cloche est corrigé puis rendu de nouveau |

@@ -1,0 +1,14 @@
+/* Bandeau nom (d'après « Kicker + Name » du catalogue) : qui parle, en début de vidéo.
+   Posé sous les sous-titres, au-dessus de la bande basse des réseaux. */
+.bandeau { position: absolute; left: var(--zone-cotes); bottom: calc(var(--zone-bas) + 14px); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.bandeau__cache { overflow: hidden; }
+.bandeau__role {
+  display: inline-block; padding: 6px 16px 4px; background: var(--accent); color: var(--sur-accent);
+  font-weight: var(--graisse-titres); font-size: 26px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+  will-change: transform;
+}
+.bandeau__nom {
+  font-weight: var(--graisse-titres); font-size: 62px; line-height: 1; letter-spacing: -0.015em; color: var(--blanc); white-space: nowrap;
+  -webkit-text-stroke: 10px var(--nuit); paint-order: stroke fill; opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.bandeau__trait { height: 6px; width: 100%; border-radius: 3px; background: var(--accent); transform-origin: 0% 50%; will-change: transform; }

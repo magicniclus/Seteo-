@@ -1,0 +1,14 @@
+/* Barres (d'après « Chart Story » du catalogue) : où part le budget, qui coûte quoi */
+.barres { margin-top: 54px; display: flex; flex-direction: column; gap: 40px; }
+.barre { opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.barre__tete { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+.barre__nom { font-weight: var(--graisse-texte); font-size: 52px; line-height: 1.12; color: var(--blanc); }
+.barre__valeur { flex: none; display: inline-block; font-weight: var(--graisse-titres); font-size: 66px; line-height: 1; color: var(--blanc); will-change: transform; }
+.barre--forte .barre__valeur { color: var(--accent); }
+.barre__piste { margin-top: 16px; height: 60px; border-radius: 30px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.barre__plein { height: 100%; border-radius: 30px; background: rgba(255, 255, 255, 0.55); transform-origin: 0 50%; will-change: transform; }
+.barre--forte .barre__plein { background: var(--accent); }
+.barres--dense { gap: 28px; margin-top: 40px; }
+.barres--dense .barre__nom { font-size: 44px; }
+.barres--dense .barre__valeur { font-size: 54px; }
+.barres--dense .barre__piste { height: 44px; margin-top: 12px; }

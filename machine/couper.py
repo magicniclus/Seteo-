@@ -19,7 +19,8 @@ import re
 import subprocess
 import sys
 
-from atelier import RACINE, a_du_son, afficher_phrases, cadrage, da, duree, ecrire, ffmpeg, lire, projet
+from atelier import (REC709, RACINE, a_du_son, afficher_phrases, cadrage, da, duree, ecrire, est_hdr, ffmpeg,
+                     lire, projet)
 
 
 def plages_a_garder(mots: list[dict], retirer: list[tuple], r: dict, duree_rush: float) -> list[dict]:
@@ -113,12 +114,17 @@ def main() -> None:
                            f"afade=t=in:d=0.012,afade=t=out:st={max(f - d - 0.012, 0):.3f}:d=0.012[a{k}]")
             etiquettes += f"[a{k}]"
     fmt, gel = charte["format"], rythme.get("gel_fin", 0)
+    hdr = est_hdr(rush)
+    if hdr:
+        print("Rush filmé en HDR : conversion en couleurs normales (sinon l'image sort délavée).")
     filtres.append(f"{etiquettes}concat=n={len(segments)}:v=1:a={1 if son else 0}[vc]{'[ac]' if son else ''}")
-    filtres.append(f"[vc]{cadrage(fmt['largeur'], fmt['hauteur'], fmt['ips'])},"
+    filtres.append(f"[vc]{cadrage(fmt['largeur'], fmt['hauteur'], fmt['ips'], hdr)},"
                    f"tpad=stop_mode=clone:stop_duration={gel}[v]")
     sorties = ["-map", "[v]"]
     if son:
-        filtres.append(f"[ac]highpass=f=80,loudnorm=I={charte['son']['volume_cible_lufs']}:TP=-1.5:LRA=11,"
+        bruit = charte["son"].get("debruitage", 0)  # souffle, ventilation : réduction douce, en dB
+        nettoyage = f"afftdn=nr={bruit}:nf=-45," if bruit else ""
+        filtres.append(f"[ac]highpass=f=80,{nettoyage}loudnorm=I={charte['son']['volume_cible_lufs']}:TP=-1.5:LRA=11,"
                        f"apad=pad_dur={gel},aresample=48000[a]")
         sorties += ["-map", "[a]", "-c:a", "aac", "-b:a", "192k"]
 
@@ -126,7 +132,7 @@ def main() -> None:
     cible = dossier / "assets" / "a-roll.mp4"
     print(f"Découpe de {rush.name} : {len(segments)} morceaux gardés...")
     ffmpeg("-i", rush, "-filter_complex", ";".join(filtres), *sorties,
-           "-c:v", "libx264", "-crf", "17", "-preset", "medium", "-g", str(fmt["ips"]),
+           "-c:v", "libx264", "-crf", "17", "-preset", "medium", "-g", str(fmt["ips"]), *REC709,
            "-movflags", "+faststart", cible)
 
     # Recale chaque mot sur la vidéo finale (un temps tombé dans une coupe se cale sur le raccord)
@@ -158,7 +164,19 @@ def main() -> None:
           f"({len(coupes)} coupes, {trans['duree'] - total:.1f} s de gagné).")
     print("Temps de la VIDÉO FINALE, et numéro de chaque mot (« m12 » dans plan.json) :\n")
     afficher_phrases(mots, silence=10, numeros=True)
+    # Image de cadrage : 3 moments de la prise avec les repères de la DA, pour voir où tombe le visage
+    st, zs = charte["sous_titres"], charte["zones_sures"]
+    H = fmt["hauteur"]
+    reperes = (f"drawbox=y=0:w=iw:h={zs['haut']}:color=black@0.45:t=fill,"
+               f"drawbox=y={H - zs['bas']}:w=iw:h={zs['bas']}:color=black@0.45:t=fill,"
+               f"drawbox=y={st['centre_y'] - 110}:w=iw:h=220:color=yellow@0.35:t=fill,"
+               f"drawbox=y={round(rythme['visage_y'] * H) - 3}:w=iw:h=6:color=red@0.9:t=fill")
+    ffmpeg("-i", cible, "-vf", f"fps=3/{max(curseur, 1):.3f},{reperes},scale=360:640,tile=3x1:padding=8",
+           "-frames:v", "1", "-q:v", "3", dossier / "cadrage.jpg")
     print(f"\n-> {cible}\n-> {dossier / 'mots.json'}")
+    print(f"-> {dossier / 'cadrage.jpg'} : bandes sombres = interface des réseaux, bande jaune = sous-titres,\n"
+          f"   trait rouge = centre des zooms. Le visage doit être au-dessus du jaune, les yeux près du rouge ;\n"
+          f"   sinon, règle \"reglages\": {{\"visage_y\": ..., \"centre_y\": ...}} dans plan.json.")
     print(f"Suite : écris {dossier / 'plan.json'} puis  python machine/monter.py {a.id} --apercu")
 
 

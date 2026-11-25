@@ -1,0 +1,12 @@
+/* Avant / après (d'après « Before After Wipe » du catalogue) : la photo d'après balaie celle d'avant */
+.aa { position: relative; margin-top: 44px; flex: 1 1 auto; min-height: 480px; border-radius: 44px; overflow: hidden; border: 10px solid var(--papier); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.aa__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.aa__apres { position: absolute; inset: 0; clip-path: inset(0% 100% 0% 0%); will-change: clip-path; }
+.aa__trait { position: absolute; top: 0; bottom: 0; left: -5px; width: 10px; background: var(--accent); opacity: 0; visibility: hidden; will-change: transform; }
+.aa__etiquette {
+  position: absolute; bottom: 26px; padding: 10px 22px 8px; border-radius: 999px;
+  font-weight: var(--graisse-titres); font-size: 36px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.aa__etiquette--avant { right: 26px; background: var(--nuit); color: var(--blanc); }
+.aa__etiquette--apres { left: 26px; background: var(--accent); color: var(--sur-accent); opacity: 0; visibility: hidden; }

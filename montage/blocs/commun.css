@@ -1,0 +1,27 @@
+/* Commun à tous les blocs (animations inspirées du catalogue HyperFrames, refaites dans la DA).
+   Un bloc « plein » est une scène plein écran : la voix continue, les sous-titres restent.
+   Tout le contenu tient entre la bande haute et les sous-titres. */
+#root { position: absolute; inset: 0; }
+.scene {
+  position: absolute; inset: 0; overflow: hidden;
+  background-color: var(--nuit); background-image: var(--fond-image); background-size: var(--fond-taille);
+  opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.scene::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 14px; background: var(--lisere); }
+/* Le contenu est centré dans la hauteur libre : sous la bande haute, au-dessus des sous-titres */
+.scene__contenu {
+  position: absolute; left: var(--zone-cotes); right: var(--zone-cotes); top: calc(var(--zone-haut) + 30px);
+  height: calc(var(--st-centre) - var(--zone-haut) - 150px);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.sur-titre {
+  align-self: flex-start; padding: 10px 24px 8px; border-radius: 999px;
+  background: var(--accent); color: var(--sur-accent);
+  font-weight: var(--graisse-titres); font-size: 34px; letter-spacing: 0.1em; text-transform: uppercase;
+  opacity: 0; visibility: hidden;
+}
+.titre {
+  margin-top: 22px; font-weight: var(--graisse-titres); font-size: 92px; line-height: 1.04;
+  letter-spacing: -0.02em; color: var(--blanc); text-wrap: balance; opacity: 0; visibility: hidden;
+}
+.titre em { font-style: normal; color: var(--accent); }

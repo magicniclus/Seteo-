@@ -25,10 +25,12 @@ import sys
 import unicodedata
 from pathlib import Path
 
+import blocs as bibliotheque
 from atelier import (MONTAGE, MONTAGES, RACINE, da, ecrire, ffmpeg, hyperframes, identifiant, lire,
                      normaliser_clip, projet)
 
 GABARIT = MONTAGE / "gabarit"
+BLOCS = MONTAGE / "blocs"
 POLICES = MONTAGE / "da" / "polices"
 IMAGES = {".png", ".jpg", ".jpeg", ".webp"}
 UNITES = {"€", "euros", "euro", "%", "ans", "mois", "minutes", "m²", "m2", "k€"}
@@ -199,26 +201,43 @@ def gabarit(nom: str, donnees: dict | None = None) -> str:
     return texte.replace("__DONNEES__", json.dumps(donnees, ensure_ascii=False)) if donnees is not None else texte
 
 
-def calque(dossier: Path, nom: str, fmt: dict, balises: str, donnees: dict) -> None:
+def calque(dossier: Path, ident: str, fmt: dict, balises: str, css: str, js: str, origine: str) -> None:
     """Écrit une sous-composition HyperFrames (un calque posé sur la vidéo) dans compositions/."""
     (dossier / "compositions").mkdir(exist_ok=True)
-    (dossier / "compositions" / f"{nom}.html").write_text(f"""<!-- Généré par machine/monter.py : modifie plan.json ou montage/gabarit/{nom}.* -->
-<template id="{nom}-template">
-  <div id="root" data-composition-id="{nom}" data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}">{balises}
+    (dossier / "compositions" / f"{ident}.html").write_text(f"""<!-- Généré par machine/monter.py : modifie plan.json ou {origine} -->
+<template id="{ident}-template">
+  <div id="root" data-composition-id="{ident}" data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}">{balises}
     <style>
-{gabarit(nom + '.css')}
+{css}
     </style>
     <script>
-{gabarit(nom + '.js', donnees)}
+{js}
     </script>
   </div>
 </template>
 """, encoding="utf-8")
 
 
+def code_bloc(genre: str, donnees: dict) -> tuple[str, str]:
+    """Le CSS et le JS d'un bloc : la partie commune + la sienne (montage/blocs/)."""
+    lire_bloc = lambda nom: (BLOCS / nom).read_text(encoding="utf-8")
+    css = lire_bloc("commun.css") + "\n" + lire_bloc(f"{genre}.css")
+    js = lire_bloc("commun.js").replace("__DONNEES__", json.dumps(donnees, ensure_ascii=False)) \
+        + "\n" + lire_bloc(f"{genre}.js") + lire_bloc("fin.js")
+    return css, js
+
+
 def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     """Écrit la composition HyperFrames du projet et renvoie les instants à regarder."""
-    fmt, c, st, r = charte["format"], charte["couleurs"], charte["sous_titres"], charte["rythme"]
+    fmt, c = charte["format"], charte["couleurs"]
+    # "reglages" du plan : mêmes noms que dans config/da.yaml, pour CETTE vidéo seulement
+    regl = plan.get("reglages", {})
+    inconnus = [k for k in regl if k not in charte["rythme"] and k not in charte["sous_titres"]]
+    if inconnus:
+        sys.exit(f"plan.json : réglage(s) inconnu(s) {inconnus}. Possibles : "
+                 f"{sorted({**charte['rythme'], **charte['sous_titres']})}")
+    r = {**charte["rythme"], **{k: v for k, v in regl.items() if k in charte["rythme"]}}
+    st = {**charte["sous_titres"], **{k: v for k, v in regl.items() if k in charte["sous_titres"]}}
     zs, hab, dv = charte["zones_sures"], charte["habillage"], derives(charte)
     sig = charte["signature"]
     signature = e(sig[0]) + (f" <b>{e(' '.join(sig[1:]))}</b>" if len(sig) > 1 else "")
@@ -275,13 +294,14 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         style = f' style="font-size:{round(st["taille"] * p["echelle"])}px"' if p["echelle"] < 1 else ""
         bloc_st += (f'\n    <div id="{p["id"]}" class="st{" st--majuscules" if charte.get("majuscules") else ""}"{style}>'
                     f'<span class="st__ligne">{spans}</span></div>')
-    calque(dossier, "sous-titres", fmt, bloc_st, {
+    calque(dossier, "sous-titres", fmt, bloc_st, gabarit("sous-titres.css"), gabarit("sous-titres.js", {
         "duree": total, "apparition": st["apparition"], "motEnCours": st["mot_en_cours"],
         "accent": c["accent"], "accentVide": dv["accent_vide"], "accentClair": c["accent_clair"], "blanc": c["blanc"],
         "surAccent": dv["sur_accent"], "contour": c["nuit"], "contourActif": dv["contour_actif"],
         "ombreActive": not claire(c["accent"]),
         "pages": [{"id": p["id"], "d": p["d"], "f": p["f"],
-                   "mots": [{"d": m["d"], "fort": m["fort"]} for m in p["mots"]]} for p in pages]})
+                   "mots": [{"d": m["d"], "fort": m["fort"]} for m in p["mots"]]} for p in pages]}),
+           "montage/gabarit/sous-titres.*")
 
     # ----- Accroche, chiffres, carton de fin, signature, barre (calque « habillage »)
     cartes, bloc_hab = [], ""
@@ -312,7 +332,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         bloc_hab += f'\n    <div id="signature" class="signature">{signature}</div>'
     if hab.get("barre_progression"):
         bloc_hab += '\n    <div id="barre" class="barre"><div id="barre-plein" class="barre__plein"></div></div>'
-    calque(dossier, "habillage", fmt, bloc_hab, {"duree": total, "cartes": cartes, "fin": fin})
+    calque(dossier, "habillage", fmt, bloc_hab, gabarit("habillage.css"),
+           gabarit("habillage.js", {"duree": total, "cartes": cartes, "fin": fin}), "montage/gabarit/habillage.*")
 
     # ----- Plans de coupe : l'enveloppe n'est pas minutée, seule la vidéo l'est (règle HyperFrames)
     brolls, bloc_broll = [], ""
@@ -366,10 +387,31 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     shutil.copyfile(gsap, dossier / "lib" / "gsap.min.js")
     variables = "\n".join(f"        --{nom.replace('_', '-')}: {valeur};" for nom, valeur in
                           {**c, **{k: v for k, v in dv.items() if k not in ("accent_vide", "contour_actif")}}.items())
-    hote = lambda nom, piste: (
-        f'\n      <div id="{nom}" data-composition-id="{nom}" data-composition-src="compositions/{nom}.html" '
-        f'data-start="0" data-duration="{total}" data-track-index="{piste}" '
+    hote = lambda nom, piste, debut=0, duree=total, classe="": (
+        f'\n      <div id="{nom}"{classe} data-composition-id="{nom}" data-composition-src="compositions/{nom}.html" '
+        f'data-start="{round(debut, 3)}" data-duration="{round(duree, 3)}" data-track-index="{piste}" '
         f'data-width="{fmt["largeur"]}" data-height="{fmt["hauteur"]}"></div>')
+
+    # ----- Blocs : animations prêtes à l'emploi (machine/blocs.py), une sous-composition chacun
+    hotes_blocs, fenetres_blocs = "", []
+    for k, b in enumerate(plan.get("blocs", []), 1):
+        genre = b.get("bloc")
+        if genre not in bibliotheque.BLOCS:
+            sys.exit(f"plan.json : bloc inconnu « {genre} ». Disponibles : {', '.join(bibliotheque.BLOCS)}.")
+        fabrique, mode, duree_defaut = bibliotheque.BLOCS[genre]
+        d = T(b["de"])
+        f = min(T(b["a"], fin=True) if "a" in b else d + duree_defaut, total)
+        if f - d < 1.5:
+            sys.exit(f"plan.json : le bloc « {genre} » n° {k} dure {f - d:.1f} s, il lui faut au moins 1,5 s.")
+        contexte = {"id": f"bloc-{k}", "debut": d, "duree": round(f - d, 3), "T": T, "typo": typo,
+                    "mot_cle": mot_cle, "marque": sig,
+                    "media": lambda fichier, nom_media: preparer_media(fichier, dossier, nom_media, 0, 0)}
+        balises, infos = fabrique(b, contexte)
+        css, js = code_bloc(genre, {**infos, "id": contexte["id"], "duree": contexte["duree"]})
+        calque(dossier, contexte["id"], fmt, balises, css, js, f"montage/blocs/{genre}.*")
+        hotes_blocs += hote(contexte["id"], 5, d, f - d, f' class="bloc bloc--{mode}"')
+        fenetres_blocs.append((d, f))
+
     principal = {"duree": total, "visageY": r["visage_y"], "broll": brolls,
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
 
@@ -395,7 +437,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
-      {prise}{bloc_broll}{musique}{hote('sous-titres', 3)}{hote('habillage', 4)}
+      {prise}{bloc_broll}{musique}{hotes_blocs}{hote('sous-titres', 3)}{hote('habillage', 4)}
       {extras}
     </div>
     <script>
@@ -410,6 +452,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # Les instants à regarder : première image, chaque carte, chaque plan de coupe, trois sous-titres, la fin
     reperes = [0.0] + [round((x["d"] + x["f"]) / 2, 2) for x in cartes + brolls]
     reperes += [round(p["mots"][-1]["d"] + 0.1, 2) for p in pages[1::max(len(pages) // 3, 1)]][:3]
+    for d, f in fenetres_blocs:  # un bloc se juge au milieu de sa construction et une fois complet
+        reperes += [round(d + (f - d) * 0.45, 2), round(f - 0.6, 2)]
     if fin:
         reperes.append(round(min(fin["d"] + 1.2, total - 0.1), 2))
     reperes.append(round(total - 0.1, 2))

@@ -1,0 +1,19 @@
+/* Commentaire -> réponse (d'après « YT Comment Card » et « Chat Message » du catalogue).
+   Montre le geste à faire : commenter le mot-clé, recevoir la réponse. Le visage reste visible. */
+.fil { position: absolute; left: var(--zone-cotes); right: var(--zone-cotes); top: calc(var(--zone-haut) + 20px); display: flex; flex-direction: column; gap: 22px; }
+.fil__bulle {
+  display: flex; align-items: center; gap: 22px; max-width: 88%; padding: 24px 40px 24px 24px; border-radius: 60px;
+  background: var(--papier); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  transform-origin: 0% 100%; opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.fil__bulle--marque { align-self: flex-end; background: var(--accent); transform-origin: 100% 100%; }
+.fil__avatar {
+  flex: none; width: 104px; height: 104px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--marque); color: var(--blanc); font-weight: var(--graisse-titres); font-size: 44px;
+}
+.fil__bulle--marque .fil__avatar { background: var(--nuit); }
+.fil__nom { display: block; font-weight: var(--graisse-texte); font-size: 32px; line-height: 1.1; color: var(--encre); opacity: 0.7; }
+.fil__texte { display: block; margin-top: 2px; font-weight: var(--graisse-titres); font-size: 74px; line-height: 1.05; color: var(--encre); }
+.fil__bulle--marque .fil__nom, .fil__bulle--marque .fil__texte { color: var(--sur-accent); }
+.fil__bulle--marque .fil__texte { font-size: 48px; }
+.fil__texte .c { opacity: 0; }

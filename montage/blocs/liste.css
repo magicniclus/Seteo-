@@ -1,0 +1,17 @@
+/* Liste à cocher (d'après « Marker Checklist Card » et « Specs List » du catalogue) */
+.liste { list-style: none; margin-top: 50px; display: flex; flex-direction: column; gap: 34px; }
+.liste__ligne { display: flex; align-items: center; gap: 32px; opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.liste__signe {
+  flex: none; width: 112px; height: 112px; border-radius: 30px; padding: 24px;
+  background: rgba(255, 255, 255, 0.09); border: 3px solid rgba(255, 255, 255, 0.16);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: var(--graisse-titres); font-size: 60px; color: var(--accent);
+}
+.liste__signe svg { width: 100%; height: 100%; overflow: visible; }
+.liste__signe path { fill: none; stroke: var(--accent); stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
+.liste__texte { font-weight: var(--graisse-titres); line-height: 1.08; letter-spacing: -0.01em; color: var(--blanc); }
+.liste__texte em { font-style: normal; color: var(--accent); }
+.liste__detail { display: block; margin-top: 8px; font-weight: var(--graisse-texte); font-size: 0.6em; line-height: 1.2; color: var(--accent-clair); letter-spacing: 0; }
+/* 4 lignes : on resserre pour tenir au-dessus des sous-titres */
+.liste--dense { gap: 24px; margin-top: 40px; }
+.liste--dense .liste__signe { width: 92px; height: 92px; border-radius: 26px; padding: 19px; font-size: 50px; }

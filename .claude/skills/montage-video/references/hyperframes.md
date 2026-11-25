@@ -10,12 +10,14 @@ figée dans `montage/package.json`. Doc : https://hyperframes.heygen.com/llms.tx
 index.html                    composition principale : la prise, les plans de coupe, la musique
 compositions/sous-titres.html calque des sous-titres (sa propre timeline)
 compositions/habillage.html   calque accroche / chiffres / carton de fin / signature / barre
+compositions/bloc-N.html      un fichier par bloc du plan (liste, barres, comparaison...)
 assets/                       a-roll.mp4, plans de coupe, polices
 lib/gsap.min.js               GSAP en local (aucun appel réseau pendant le rendu)
 ```
 
 Ces fichiers sont régénérés à chaque `monter.py` : ne les modifie pas à la main, ce serait perdu.
-On agit sur `plan.json`, sur `extras.html` (une vidéo) ou sur `montage/gabarit/` (toutes les vidéos).
+On agit sur `plan.json`, sur `extras.html` (une vidéo), ou sur `montage/gabarit/` et
+`montage/blocs/` (toutes les vidéos).
 
 ## Les règles du moteur (sinon le rendu est faux)
 
@@ -49,6 +51,45 @@ cd montage/projets/<id>
 ```
 
 Mets `HYPERFRAMES_NO_TELEMETRY=1` devant ces commandes (les scripts de `machine/` le font déjà).
+
+## Ajouter un bloc à partir du catalogue HyperFrames
+
+Le catalogue (https://hyperframes.heygen.com/catalog, 450 éléments) est une mine de mouvements :
+titres, listes, graphiques, bulles de discussion, bandeaux, annotations au marqueur, transitions.
+Ses éléments sont des démonstrations (souvent horizontales, texte fixe, couleurs et polices à eux) :
+on ne les pose pas tels quels, on en reprend le mouvement et on le refait chez nous.
+
+```bash
+cd montage
+HYPERFRAMES_NO_TELEMETRY=1 ./node_modules/.bin/hyperframes catalog --json > /tmp/catalogue.json   # tout lister
+mkdir -p /tmp/bac && cd /tmp/bac && printf '<div id="root" data-composition-id="main"></div>' > index.html
+HYPERFRAMES_NO_TELEMETRY=1 <chemin>/montage/node_modules/.bin/hyperframes add <nom> --dir . --no-clipboard --json
+```
+
+Lis le fichier installé (`compositions/...`) : repère les temps, les courbes (`ease`) et l'ordre des
+mouvements. Puis écris le bloc chez nous, en trois fichiers :
+
+1. `montage/blocs/<nom>.css` : format vertical, **uniquement les variables de la DA** (`--nuit`,
+   `--accent`, `--sur-accent`, `--accent-clair`, `--papier`, `--encre`, `--blanc`, `--carte-fond`,
+   `--carte-texte`, `--police`, `--graisse-titres`, `--graisse-texte`, `--zone-haut`, `--zone-cotes`,
+   `--st-centre`). Un élément révélé par l'animation est caché ici (`opacity: 0; visibility: hidden`).
+2. `montage/blocs/<nom>.js` : seulement le corps de l'animation. `commun.js` fournit déjà `D` (les
+   données), `tl` (la timeline), `el("suffixe")` (l'élément `<id du bloc>-suffixe`), `va()`,
+   `montrer()`, `dessiner()`, et l'entrée / sortie de la scène plein écran. Le temps est local :
+   0 = l'apparition du bloc ; `D.duree` = sa durée.
+3. `machine/blocs.py` : une fabrique `(bloc, contexte) -> (balises, données)` et une ligne dans
+   `BLOCS` (`"plein"` = scène plein écran, enveloppée par `scene()` ; `"calque"` = par-dessus la prise).
+   Tous les `id` commencent par `c["id"]` ; tout texte passe par `e()` et `c["typo"]()`.
+
+Ne garde ni CDN, ni police, ni logo d'une plateforme venus du catalogue. Pas d'emoji dans les textes
+(leur dessin change d'une machine à l'autre) : une icône se dessine en SVG.
+Teste avec un plan d'essai puis `python machine/monter.py <id> --apercu` : zéro erreur au contrôle,
+et le bloc lisible sur la planche à la taille d'un téléphone. Documente-le dans `references/plan.md`
+et dans le tableau des blocs de `SKILL.md`.
+
+Les six blocs existants viennent de là : `liste` (Marker Checklist Card, Specs List), `barres`
+(Chart Story), `comparaison` (Split Tilt Cards, Comparison Split), `avant_apres` (Before After Wipe),
+`commentaire` (YT Comment Card, Chat Message), `nom` (Kicker + Name).
 
 ## extras.html : une animation sur mesure pour UNE vidéo
 
@@ -91,5 +132,4 @@ Utilise les variables de la DA (`--accent`, `--nuit`, `--carte-fond`, `--carte-t
 `--graisse-titres`, `--zone-haut`...) : jamais de couleur écrite en dur. Relance
 `python machine/monter.py <id> --apercu` et regarde le résultat avant de rendre.
 
-Une animation qui resservira (liste, comparaison, avant/après) mérite d'entrer dans le gabarit
-(`montage/gabarit/habillage.*` + une clé dans `plan.json`) plutôt que d'être recopiée.
+Une animation qui resservira mérite de devenir un bloc (section précédente) plutôt que d'être recopiée.
