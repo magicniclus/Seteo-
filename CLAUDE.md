@@ -5,7 +5,8 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
 
 ## Qui on est
 - Marque : Portail Travaux. Voir `config/marque.yaml` pour l'URL, la cible et la promesse.
-- Le site n'est pas encore en ligne (novembre 2026) : pas de plans du site dans les vidéos pour l'instant.
+- Le site n'est pas encore en ligne (novembre 2026) : pour le montrer dans une vidéo, on filme une copie
+  locale (`python machine/site_local.py demarrer`, données fictives seulement), jamais de vraie donnée.
 - On aide les particuliers à réussir leurs projets de logement (travaux, rénovation, achat,
   aides, artisans de confiance).
 - Objectif de chaque contenu : faire gagner des abonnés, puis transformer les abonnés en

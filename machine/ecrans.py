@@ -71,6 +71,25 @@ MASQUAGE = r"""
 """
 
 
+SANS_BANDEAUX = r"""
+(() => {
+  const style = document.createElement("style");
+  style.textContent = "nextjs-portal,[data-nextjs-toast],#__next-build-watcher{display:none!important}";
+  const poser = () => { if (!style.isConnected && document.documentElement) (document.head || document.documentElement).appendChild(style); };
+  // Bandeau de cookies : on le referme (« Tout refuser ») dès qu'il apparaît.
+  const refuser = () => {
+    for (const b of document.querySelectorAll("button")) {
+      const t = (b.textContent || "").trim().toLowerCase();
+      if (t === "tout refuser" || t === "refuser" || t === "continuer sans accepter") { b.click(); return true; }
+    }
+    return false;
+  };
+  new MutationObserver(() => { poser(); refuser(); }).observe(document, { childList: true, subtree: true });
+  poser();
+})();
+"""
+
+
 def filmer(navigateur, page_cfg: dict) -> None:
     contexte = navigateur.new_context(
         viewport={"width": 540, "height": 960},  # écran de téléphone
@@ -84,6 +103,8 @@ def filmer(navigateur, page_cfg: dict) -> None:
     if page_cfg.get("flouter") or page_cfg.get("prive"):
         contexte.add_init_script(MASQUAGE.replace("__SELECTEURS__", json.dumps(page_cfg.get("flouter") or []))
                                  .replace("__PRIVE__", "true" if page_cfg.get("prive") else "false"))
+    # Ni bandeau de cookies ni pastille de développement (copie locale du site) dans le plan filmé
+    contexte.add_init_script(SANS_BANDEAUX)
     page = contexte.new_page()
     debut_film = time.monotonic()  # l'enregistrement démarre ici, page encore blanche
     page.goto(page_cfg["url"], wait_until="networkidle")

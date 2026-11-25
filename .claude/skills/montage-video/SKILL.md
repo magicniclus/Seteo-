@@ -214,8 +214,10 @@ Les autres sources :
   `broll.py importer <fichier> --debut <s> --duree <s>`. Tu ne télécharges pas toi-même ces
   images-là (skill `ponctuations`, « Les droits »).
 - **Pexels** : cherche en anglais si le français ne donne rien.
-- **Écran web** : une source officielle, un simulateur, et le site de la marque quand il sera en
-  ligne (`python machine/ecrans.py`, pages listées dans `config/marque.yaml`).
+- **Écran web** : une source officielle, un simulateur, et le site de la marque. Tant qu'il n'est pas
+  en ligne, on filme sa copie locale : `python machine/site_local.py demarrer`, puis
+  `python machine/broll.py ecran http://localhost:3200/<page> --nom <nom>` (données fictives seulement ;
+  le bandeau de cookies est refermé tout seul).
 
 Comment ils s'affichent :
 - `carte` : l'extrait dans une carte en haut, la personne reste visible dessous. C'est le mode des
