@@ -102,7 +102,8 @@ Les décisions à prendre, dans cet ordre :
 4. **Blocs** (animations) : dès que la personne énumère, compare ou chiffre, remplace la prise par une
    animation plein écran pendant qu'elle parle (ou garde-la dans un cadre en bas : « deux mises en
    scène », plus bas). Voir « Les blocs » ci-dessous.
-5. **Plans de coupe** : des images réelles sur ce qui est dit (étape 3 bis). `carte` laisse le visage
+5. **Plans de coupe et ponctuations** : des images réelles sur ce qui est dit, et deux ou trois
+   extraits courts pour relancer l'attention (étape 3 bis). `carte` laisse le visage
    visible, `plein` le remplace.
 6. **Mots forts** (`emphase`) : 3 à 6 dans la vidéo, pas plus. Les chiffres et le mot-clé le sont déjà.
 7. **Carton de fin** : automatique dès que « commente » ou « tape » est dit. Adapte `suite` à la ressource
@@ -187,41 +188,72 @@ permette de reconnaître le client.
 - Le texte libre du client (sa description) peut contenir son nom ou son adresse : résume-le au lieu
   de le recopier.
 
-### 3 bis. Plans de coupe
+### 3 bis. Plans de coupe et ponctuations
 
 ```bash
-python machine/broll.py liste                                   # ce qu'on a déjà
+python machine/broll.py banque                                  # les ponctuations déjà prêtes (à regarder d'abord)
+python machine/broll.py liste                                   # tout ce qu'on a déjà
+python machine/broll.py films "keaton cops"                     # vieux films du domaine public (Internet Archive)
+python machine/broll.py films --prendre <identifiant>           # télécharger un film dans broll/films/
+python machine/broll.py planche broll/films/<film>.mp4 --de 600 --a 700 --pas 5   # repérer l'instant
+python machine/broll.py importer broll/films/<film>.mp4 --debut 666.2 --duree 3 --nom course-au-telephone
 python machine/broll.py pexels "carrelage salle de bain" -n 3   # libre de droits (PEXELS_API_KEY)
 python machine/broll.py ecran https://france-renov.gouv.fr      # une page web filmée en vertical
 python machine/broll.py ecran <url de l'outil> --prive --flouter ".client"   # avec des données de clients
-python machine/broll.py importer chemin/vers/clip.mp4 --debut 12 --duree 4   # un fichier fourni, un extrait de film
 ```
 
-- Pexels : cherche en anglais si le français ne donne rien. Ouvre l'image ou une vignette avant de
-  choisir : un plan hors sujet fait plus de mal que pas de plan.
-- Écran web : pour montrer une source officielle, un simulateur, et le site de la marque quand il
-  sera en ligne (`python machine/ecrans.py`, pages listées dans `config/marque.yaml`).
-- **Extraits de films, d'émissions, de vidéos d'autres comptes** : c'est un bon ressort (une image
-  drôle ou connue posée sur une phrase), à manier selon la source.
-  - Film du domaine public (Internet Archive : muets, burlesques, vieux films d'entreprise) : libre.
-    Télécharge le film, repère l'instant, puis `broll.py importer <film> --debut <s> --duree <s>`.
-  - Film ou série récents, vidéo d'un autre compte (Instagram, TikTok, YouTube) : ne les télécharge
-    pas toi-même. Les plateformes l'interdisent, et c'est le genre de pratique qui fait retirer une
-    vidéo ou pénaliser un compte. Si on te fournit le fichier (un enregistrement d'écran du
-    téléphone suffit), tu peux l'insérer : dis une fois, simplement, que l'extrait appartient à
-    quelqu'un d'autre et qu'il peut entraîner un retrait, puis fais ce qui est demandé. Garde
-    l'extrait court (2 à 4 s) et, pour la vidéo d'un autre compte, laisse son nom visible.
-  - Un extrait horizontal se montre en `carte` (toute son image tient) ; en `plein` il est rogné aux
-    côtés : choisis ce qu'on garde avec `"ancre_x"` (0 = la gauche, 0.5 = le centre, 1 = la droite).
-  - Cale l'instant fort de l'extrait sur le mot qui le justifie : c'est `"debut"` (où commencer dans
-    le fichier) qui se règle, à l'image près. Regarde l'extrait image par image avant de choisir.
-- `carte` : pendant que la carte occupe le haut, la prise rétrécit et descend dessous, le visage
-  reste visible. `plein` : l'extrait remplace toute l'image, les sous-titres restent.
-  (`derriere` existe aussi, derrière la personne détourée : il demande le détourage, qu'on ne propose pas.)
-- **Choisir l'image** : elle doit montrer exactement ce que dit la phrase, au moment où elle le dit
-  (il dit « le bois », on voit une scie dans du bois). Une image seulement drôle ou jolie, sans
-  rapport direct, distrait. Pour une référence que tout le monde connaît (mème, scène culte,
-  tendance du moment), demande l'extrait : c'est la personne qui sait ce qui parle à son public.
+**Les ponctuations : deux ou trois par vidéo, pas plus.** Une ponctuation est un extrait de 2 à 3 s
+(un gag de film, une image qui fait sourire) posé sur une phrase où l'on ne voit que la personne.
+Elle relance l'attention entre deux animations. Marche à suivre pour chaque vidéo :
+
+1. Repère les passages sans animation de plus de 4 s : ce sont les candidats. Jamais pendant
+   l'accroche (les 3 à 5 premières secondes), jamais pendant un bloc ni pendant l'appel à l'action.
+2. Pour chacun, cherche l'idée de la phrase (« tout le monde veut le même client », « passer pour
+   un lourd ») et regarde d'abord la banque : `python machine/broll.py banque` donne pour chaque
+   extrait l'idée qu'il illustre et les mots qui doivent y faire penser.
+3. Rien dans la banque : cherche un gag dans un vieux film (`films`), télécharge-le, fais une
+   planche large (une image toutes les 15 à 20 s) puis une planche fine (toutes les 0,5 à 1 s)
+   autour du bon moment, et coupe l'extrait (`importer`). Évite les cartons de texte des films muets.
+4. Si l'extrait peut resservir, mets-le dans la banque avec l'idée qu'il illustre :
+   `python machine/broll.py banque --ajouter broll/perso/<nom>.mp4 --idee "..." --mots ... --source "..." --droits "..."`.
+   La banque (`montage/ponctuations/`) est gardée dans le dépôt : n'y mets que des extraits libres
+   (domaine public, Pexels) ou qui appartiennent à la marque.
+5. Pose-le dans le plan (`"broll"`, mode `carte`), en calant l'instant fort du gag sur le mot qui
+   le justifie : c'est `"debut"` qui se règle, ou l'endroit où l'extrait a été coupé.
+6. Laisse respirer : au moins 2 s de visage plein écran entre une ponctuation et l'animation
+   suivante. Exception en mise en scène `cadre` : elles peuvent se toucher (moins de 0,8 s
+   d'écart), le cadre reste alors en place et l'animation prend la suite de la carte. En `plein`,
+   avec un visage en gros plan, garde 0,7 s entre la fin de la carte et le bloc (le script le vérifie).
+
+D'où viennent les extraits :
+- **Vieux films du domaine public** (`films`) : burlesques muets, Keaton, Harold Lloyd, Laurel et
+  Hardy. Un film américain y entre 95 ans après sa sortie (en 2026 : jusqu'à 1930), et le script ne
+  cherche que ceux-là. On ne reprend jamais le son. C'est la source à utiliser sans rien demander.
+- **Film ou série récents, vidéo d'un autre compte (Instagram, TikTok, YouTube)** : ne les
+  télécharge pas toi-même. Les plateformes l'interdisent, ces images appartiennent à quelqu'un, et
+  `CLAUDE.md` dit de ne pas reprendre les images des autres. Si on te fournit le fichier (un
+  enregistrement d'écran du téléphone suffit), tu peux l'insérer : dis une fois, simplement, que
+  l'extrait appartient à quelqu'un d'autre et qu'il peut entraîner un retrait, puis fais ce qui est
+  demandé. Garde-le court (2 à 4 s), laisse visible le nom du compte, et ne le mets pas dans la banque.
+- **Pexels** : cherche en anglais si le français ne donne rien.
+- **Écran web** : une source officielle, un simulateur, et le site de la marque quand il sera en
+  ligne (`python machine/ecrans.py`, pages listées dans `config/marque.yaml`).
+
+Comment ils s'affichent :
+- `carte` : l'extrait dans une carte en haut, la personne reste visible dessous. C'est le mode des
+  ponctuations et de tout extrait horizontal (son image tient en entier). Cadrage normal : la prise
+  rétrécit sous la carte. Visage en gros plan : la personne passe dans son cadre, en bas, et les
+  sous-titres se posent sur le bas de la carte.
+- `plein` : l'extrait remplace toute l'image, les sous-titres restent. Seulement pour une image
+  nette et verticale : un vieux film agrandi plein écran est flou, et un extrait horizontal est
+  rogné aux côtés (`"ancre_x"` : 0 = garder la gauche, 0.5 = le centre, 1 = la droite).
+- (`derriere` existe aussi, derrière la personne détourée : il demande le détourage, qu'on ne propose pas.)
+
+**Choisir l'image** : elle doit montrer exactement ce que dit la phrase, au moment où elle le dit
+(il dit « le bois », on voit une scie dans du bois ; il dit « tu passes pour un lourd », on voit
+le vendeur se faire jeter). Une image seulement drôle ou jolie, sans rapport direct, distrait.
+Ouvre toujours l'extrait ou sa planche avant de le poser. Pour une référence du moment (mème,
+scène culte, tendance), demande l'extrait : c'est la personne qui sait ce qui parle à son public.
 
 ## 4. Monter et regarder les images clés
 

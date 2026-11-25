@@ -61,12 +61,16 @@
     const boite = document.getElementById(b.id);
     const cadre = boite.firstElementChild;
     if (b.mode === "carte") {
-      tl.fromTo(boite, { autoAlpha: 0, y: -70, rotate: -2 }, { autoAlpha: 1, y: 0, rotate: 0, duration: 0.4, ease: "back.out(1.7)" }, b.d);
+      // (quand la personne passe dans son cadre, la carte attend qu'elle ait libéré le haut de l'écran)
+      tl.fromTo(boite, { autoAlpha: 0, y: -70, rotate: -2 }, { autoAlpha: 1, y: 0, rotate: 0, duration: 0.4, ease: "back.out(1.7)" }, b.d + (b.cadre ? 0.22 : 0));
       va(boite, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -50 }, 0.22, b.f - 0.22, "power2.in");
       // la prise descend et rétrécit sous la carte (le visage reste visible), puis reprend sa place
+      // (sauf si elle est déjà dans son cadre, en bas : voir les passages « en cadre » plus haut)
       const grand = { scale: 1, borderRadius: 0 }, petit = { scale: D.reduit, borderRadius: 64 };
-      va(cadres, grand, petit, 0.4, b.d, "power3.out");
-      va(cadres, petit, grand, 0.32, b.f - 0.32, "power3.inOut");
+      if (!b.cadre) {
+        va(cadres, grand, petit, 0.4, b.d, "power3.out");
+        va(cadres, petit, grand, 0.32, b.f - 0.32, "power3.inOut");
+      }
     } else {
       // plein écran ou derrière la personne : apparition nette (deux plans « derriere » s'enchaînent sans trou)
       tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: b.mode === "derriere" ? 0.02 : 0.1, ease: "none" }, b.d);

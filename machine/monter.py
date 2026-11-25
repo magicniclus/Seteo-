@@ -354,24 +354,49 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
                 "clip": f"inset({vue_haut:.1f}px {cote:.1f}px {H - vue_haut - haut_c / s:.1f}px {cote:.1f}px round {52 / s:.1f}px)",
                 "rect": (round((L - large) / 2), round(haut), large, haut_c)}
 
-    # ----- Les passages « en cadre » : un par bloc plein écran (deux blocs qui se suivent de près
-    # partagent le même passage : le cadre reste en place)
-    scenes, cadres = {}, []
+    # ----- Les passages « en cadre » : un par bloc plein écran quand la mise en scène est "cadre", et un
+    # par plan de coupe en carte quand le visage est en gros plan (rétrécie comme d'habitude sous la
+    # carte, la personne aurait la carte sur les yeux). Deux fenêtres qui se suivent de près partagent
+    # le même passage : le cadre reste en place.
+    gros_plan = (menton_y - tete_y) * H > 0.5 * fmt["largeur"]
+    carte_bas = zs["haut"] + 20 + 660          # le bas d'une carte au-dessus du cadre (elle fait 660 px de haut)
+    scenes, fenetres, cartes_cadre = {}, [], set()
     if blocs_cadre:
         for k, b in enumerate(plan.get("blocs", []), 1):
             fiche = bibliotheque.BLOCS.get(b.get("bloc"))
-            if not fiche or fiche[1] != "plein":
-                continue
-            d = T(b["de"])
-            f = min(T(b["a"], fin=True) if "a" in b else d + fiche[2], total)
-            scenes["bloc", k] = g = mise_en_cadre(b)
-            if cadres and d - cadres[-1]["f"] < 0.8:
-                cadres[-1]["f"] = round(f, 3)
-            else:
-                cadres.append({"d": round(d, 3), "f": round(f, 3), "s": g["s"], "y": g["y"], "clip": g["clip"],
-                               "rect": g["rect"], "centre": g["centre"], "bord": f"cadre-bord-{len(cadres) + 1}"})
-        for w in cadres:
-            w["reste"] = w["f"] >= total - 0.05   # jusqu'à la dernière image : la personne ne reprend pas sa place
+            if fiche and fiche[1] == "plein":
+                d = T(b["de"])
+                scenes["bloc", k] = g = mise_en_cadre(b)
+                fenetres.append((d, min(T(b["a"], fin=True) if "a" in b else d + fiche[2], total), g, g["centre"]))
+    if gros_plan and a_roll.exists() and not detourage:
+        for k, b in enumerate(plan.get("broll", []), 1):
+            if b.get("mode", "plein") == "carte":
+                cartes_cadre.add(k)   # les sous-titres se posent sur le bas de la carte
+                # + 0,5 s : la personne ne reprend tout l'écran qu'une fois la carte partie
+                fenetres.append((T(b["de"]), min(T(b["a"], fin=True) + 0.5, total), mise_en_cadre(b), carte_bas - 95))
+    if cartes_cadre and not blocs_cadre:
+        # animations en plein écran : la personne doit avoir repris tout l'écran avant qu'un bloc la couvre
+        for k in cartes_cadre:
+            fin_carte = T(plan["broll"][k - 1]["a"], fin=True)
+            for b in plan.get("blocs", []):
+                fiche = bibliotheque.BLOCS.get(b.get("bloc"))
+                if fiche and fiche[1] == "plein" and fin_carte - 0.05 < T(b["de"]) < fin_carte + 0.65:
+                    sys.exit(f"plan.json : le plan de coupe n° {k} (carte) finit à {fin_carte:.1f} s, trop près du bloc "
+                             f"qui commence à {T(b['de']):.1f} s. Laisse 0,7 s entre les deux, ou passe en mise en scène \"cadre\".")
+    cadres, zones_st = [], []
+    for d, f, g, centre in sorted(fenetres, key=lambda x: x[0]):
+        if cadres and d - cadres[-1]["f"] < 0.8:
+            cadres[-1]["f"] = round(max(f, cadres[-1]["f"]), 3)
+            zones_st[-1]["f"] = d + 0.3        # pas de retour à la place habituelle entre les deux
+            zones_st[-1]["suite"] = True
+        else:
+            cadres.append({"d": round(d, 3), "f": round(f, 3), "s": g["s"], "y": g["y"], "clip": g["clip"],
+                           "rect": g["rect"], "bord": f"cadre-bord-{len(cadres) + 1}"})
+        zones_st.append({"d": d, "f": f, "centre": centre})
+    for w in cadres:
+        w["reste"] = w["f"] >= total - 0.05   # jusqu'à la dernière image : la personne ne reprend pas sa place
+    for z in zones_st:
+        z["suite"] = z.get("suite") or z["f"] >= total - 0.05
 
     # ----- Les passages où la personne reste devant quelque chose (blocs plein écran, plans « derriere »)
     devant = []
@@ -400,8 +425,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     def centre_sous_titres(t: float):
         """Le milieu des sous-titres à l'instant t : remonté quand la personne, en gros plan, est rétrécie."""
-        return next((p["centre"] for p in passages + cadres
-                     if p["centre"] and p["d"] + 0.3 <= t < p["f"] - (0 if p.get("reste") else 0.5)), None)
+        return next((p["centre"] for p in passages + zones_st
+                     if p["centre"] and p["d"] + 0.3 <= t < p["f"] - (0 if p.get("suite") else 0.5)), None)
 
     # ----- Carton de fin
     fin, bloc_fin = None, ""
@@ -509,10 +534,12 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             media = f'<img id="broll-{k}-image" class="clip" src="{e(src)}" alt="" {minutage}>'
         else:
             media = f'<video id="broll-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>'
-        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode})
+        # "cadre" : la personne est déjà dans son cadre sous la carte, inutile de la rétrécir en plus
+        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre})
         if mode == "carte" and f - d < 1.2:
             sys.exit(f"plan.json : le plan de coupe n° {k} en carte dure {f - d:.1f} s, il lui faut au moins 1,2 s.")
-        bloc_broll += f'\n      <div id="broll-{k}" class="broll broll--{mode}"><div class="broll__cadre">{media}</div></div>'
+        petite = ' style="height:660px"' if k in cartes_cadre else ""
+        bloc_broll += f'\n      <div id="broll-{k}" class="broll broll--{mode}"{petite}><div class="broll__cadre">{media}</div></div>'
 
     # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
     # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.
@@ -627,7 +654,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     bords = "".join(f'\n      <div id="{w["bord"]}" class="cadre-bord" style="left:{w["rect"][0]}px;top:{w["rect"][1]}px;'
                     f'width:{w["rect"][2]}px;height:{w["rect"][3]}px"></div>' for w in cadres)
     principal = {"duree": total, "visageY": r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
-                 "broll": brolls, "cadres": [{k: v for k, v in w.items() if k not in ("rect", "centre")} for w in cadres],
+                 "broll": brolls, "cadres": [{k: v for k, v in w.items() if k != "rect"} for w in cadres],
                  "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
 

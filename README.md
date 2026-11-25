@@ -45,7 +45,7 @@ en 2 semaines avec cette boucle :
 | `machine/reparer.py` | Répare une vidéo arrivée coupée à l'envoi, quand il ne lui manque que la fin |
 | `machine/transcrire.py` | Rush → texte mot par mot (ElevenLabs Scribe, ou Whisper en local) |
 | `machine/couper.py` | Enlève les blancs et les prises ratées, met la vidéo au format et la voix au bon niveau |
-| `machine/broll.py` | Plans de coupe : Pexels (libre de droits), page web filmée, fichiers à toi |
+| `machine/broll.py` | Plans de coupe : vieux films du domaine public, Pexels, page web filmée, fichiers à toi ; et la banque de ponctuations (`montage/ponctuations/`) |
 | `machine/monter.py` | Plan de montage + DA → vidéo (HyperFrames : du HTML animé rendu en MP4) |
 | `machine/blocs.py` + `montage/blocs/` | Animations prêtes à l'emploi, reprises du catalogue HyperFrames et refaites dans ta DA : liste à cocher, barres, comparaison, avant/après, fiche de demande client (infos privées floutées), bulle de commentaire, bandeau nom |
 | `machine/yeux.py` | Relit la vidéo finie : planche d'images, mesures du son, critique de Gemini |
@@ -163,7 +163,7 @@ mot-clé DEVIS »*, ou *« Monte le post 3 »* si elle vient du prompteur). Il e
 | 1. Transcrire | `transcrire.py` : ElevenLabs Scribe ou Whisper | Chaque mot avec son début et sa fin |
 | 2. Couper | `couper.py` : ffmpeg | Blancs et prises ratées enlevés, format vertical, voix au niveau des réseaux |
 | 3. Planifier | Claude écrit `plan.json` | Corrections, accroche, chiffres, animations (blocs), plans de coupe, mots forts |
-| 3 bis. Plans de coupe | `broll.py` : Pexels, Playwright | Vidéos libres de droits, pages web filmées, tes propres clips |
+| 3 bis. Plans de coupe | `broll.py` : Internet Archive, Pexels, Playwright | Gags de vieux films (domaine public), vidéos libres de droits, pages web filmées, tes propres clips |
 | 4. Monter | `monter.py` : HyperFrames | Sous-titres mot à mot, cartes, zooms, carton de fin, dans ta DA |
 | 5. Regarder | `yeux.py` : planche d'images + Gemini | La vidéo est relue ; ce qui cloche est corrigé puis rendu de nouveau |
 
@@ -184,6 +184,11 @@ python machine/yeux.py 2026-11-30-3                # relecture
 **Deux mises en scène des animations**, au choix (`mise_en_scene` dans `config/da.yaml`, ou vidéo
 par vidéo) : `plein`, l'animation remplace l'image quelques secondes ; `cadre`, tu restes à l'écran
 dans un cadre arrondi en bas et l'animation s'affiche au-dessus. Rien n'est détouré.
+
+**Ponctuations** : deux ou trois extraits de 2 à 3 s par vidéo (un gag de vieux film posé sur une
+phrase), piochés dans la banque `montage/ponctuations/` (`python machine/broll.py banque`). Claude va
+chercher lui-même les films du domaine public. Pour un extrait d'Instagram ou d'un film récent, c'est
+toi qui lui donnes le fichier : un enregistrement d'écran suffit.
 
 **Clients** : une demande de travaux se montre soit en fiche redessinée (bloc `demande`), soit en
 filmant ton outil avec `broll.py ecran --prive --flouter ...`. Dans les deux cas le nom, l'adresse,

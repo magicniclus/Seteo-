@@ -30,6 +30,7 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
   ],
   "broll": [
     {"de": "m55", "a": "m61", "fichier": "ecrans/france-renov.mp4", "mode": "carte", "debut": 0.5},
+    {"de": "m40", "a": "m46", "fichier": "montage/ponctuations/coup-de-marteau.mp4", "mode": "carte"},
     {"de": "m20", "a": "m27", "fichier": "broll/pexels/bathroom-123.mp4", "mode": "plein"}
   ],
   "blocs": [
@@ -58,7 +59,7 @@ Les numéros de mots sont ceux d'AVANT corrections : une correction ne décale r
 | `accroche` | `texte` (les `*astérisques*` passent en couleur d'accent) et `a` : jusqu'à quand elle reste (défaut 3 s). Elle est à l'écran dès la première image. |
 | `emphase` | Mots forts : numéros (`21`) ou textes (`"gratuit"`, toutes les occurrences). Les mots contenant un chiffre, `€`, `%`, et le mot-clé le sont déjà. |
 | `chiffres` | Cartes en haut de l'écran : `de`, `a` (défaut 2,6 s), `texte`, `legende`. Un nombre seul (`"12 000 €"`) défile jusqu'à sa valeur ; `"compter": false` pour l'empêcher. |
-| `broll` | Plans de coupe : `de`, `a`, `fichier` (vidéo ou image, chemin depuis la racine du dépôt), `mode` (`plein` = tout l'écran, les sous-titres restent ; `carte` = cadre arrondi en haut, la prise rétrécit dessous et le visage reste visible ; 1,2 s au moins ; `derriere` = tout l'écran derrière la personne détourée, demande `detourage`), `visage_y` (mode `derriere` : hauteur des yeux à ce moment-là si elle a bougé), `debut` (où commencer dans le fichier, en secondes), `ancre_x` (pour un extrait plus large que son cadre : 0 = garder la gauche, 0.5 = le centre, 1 = la droite). |
+| `broll` | Plans de coupe : `de`, `a`, `fichier` (vidéo ou image, chemin depuis la racine du dépôt), `mode` (`plein` = tout l'écran, les sous-titres restent ; `carte` = cadre arrondi en haut, la personne reste visible dessous (la prise rétrécit, ou passe dans son cadre si le visage est en gros plan) ; 1,2 s au moins ; `derriere` = tout l'écran derrière la personne détourée, demande `detourage`), `visage_y` (mode `derriere` : hauteur des yeux à ce moment-là si elle a bougé), `debut` (où commencer dans le fichier, en secondes), `ancre_x` (pour un extrait plus large que son cadre : 0 = garder la gauche, 0.5 = le centre, 1 = la droite). |
 | `blocs` | Animations prêtes à l'emploi : voir « Les blocs » ci-dessous. |
 | `mise_en_scene` | Pendant un bloc plein écran : `"plein"` (l'animation remplace l'image) ou `"cadre"` (la personne passe dans un cadre arrondi en bas, l'animation au-dessus). Défaut : celui de `config/da.yaml`. |
 | `detourage` | **À ne pas proposer** (résultat jugé mauvais, calcul très long) ; seulement si on le redemande. Découpe la personne de son décor. `"blocs": "derriere"` : les blocs plein écran passent derrière elle au lieu de la remplacer. `"fond"` : `"origine"` (défaut, décor intact), `"flou"` (décor flouté) ou `"univers"` (décor remplacé par le fond de la DA). `"mots_derriere": [{"de", "a", "texte"}]` : un mot géant passe derrière sa tête. `false` : pas de détourage, même si la DA le demande. Lent : ~20 s de calcul par seconde détourée. |

@@ -1,0 +1,37 @@
+# La banque de ponctuations : voir python machine/broll.py banque
+- nom: foule-derriere-un-homme
+  fichier: montage/ponctuations/foule-derriere-un-homme.mp4
+  duree: 2.8
+  idee: 'Un homme seul, une foule à ses trousses : tout le monde court après le même client'
+  mots:
+  - concurrence
+  - foule
+  - tout le monde
+  - pas le seul
+  source: Seven Chances (Buster Keaton, 1925), Internet Archive
+  droits: domaine public (film américain de 1925)
+- nom: coup-de-marteau
+  fichier: montage/ponctuations/coup-de-marteau.mp4
+  duree: 2.6
+  idee: 'Le vendeur qui sonne une fois de trop se prend un coup de marteau : passer pour un lourd, se faire jeter'
+  mots:
+  - lourd
+  - insister
+  - relance
+  - démarchage
+  - porte
+  source: Big Business (Laurel et Hardy, 1929), Internet Archive
+  droits: domaine public (film américain de 1929)
+- nom: course-au-telephone
+  fichier: montage/ponctuations/course-au-telephone.mp4
+  duree: 3.0
+  idee: 'Deux rivaux se ruent sur les cabines téléphoniques : le premier qui appelle gagne'
+  mots:
+  - appeler
+  - rappeler
+  - premier
+  - téléphone
+  - vite
+  - réactivité
+  source: Number, Please? (Harold Lloyd, 1920), Internet Archive
+  droits: domaine public (film américain de 1920)

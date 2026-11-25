@@ -57,6 +57,7 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 .broll--derriere { inset: 0; z-index: 3; }
 .broll--derriere::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.12) 45%, rgba(0, 0, 0, 0.6) 100%); }
 .broll--carte {
+  z-index: 5;   /* au-dessus de la prise, même quand elle passe dans son cadre (z-index 4) */
   top: calc(var(--zone-haut) + 20px); left: var(--zone-cotes); right: var(--zone-cotes); height: 700px;
   border-radius: 44px; border: 10px solid var(--papier); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
