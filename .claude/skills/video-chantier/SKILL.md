@@ -162,7 +162,7 @@ Chaque entrée de `"vues"` donne une vidéo. Les réglages, tous facultatifs sau
 | `zoom` | 1.3 = plus près, 0.8 = plus loin | 1 |
 | `hauteur` | la caméra plus ou moins haut, en degrés au-dessus de l'horizon | 39 dehors, 45 en large, 52 sur une pièce |
 | `murs` | `"entiers"` : garder les murs de devant (on voit moins dedans) | abaissés |
-| `format` | `carte` (pour une carte dans la vidéo), `vertical` (plein écran), `carre` | `carte` |
+| `format` | `carte` (pour une carte dans la vidéo), `vertical` (plein écran), `carre`, `fond` (plein écran, la pièce dans le haut de l'image : pour la mise en scène `coin`, où la personne occupe le bas ; filmé à 15 images/s, environ 3 min pour 4 s) | `carte` |
 | `nom` | un suffixe, pour filmer deux fois la même vue avec des réglages différents | |
 
 Une rotation lente se regarde mieux qu'un tour complet : 30 à 60° en 3 à 5 secondes.

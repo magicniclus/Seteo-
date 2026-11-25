@@ -51,6 +51,7 @@ rythme:
 # Pendant une animation plein écran (liste, barres, comparaison...) :
 #   plein = l'animation remplace l'image, on ne te voit plus quelques secondes
 #   cadre = tu restes à l'écran dans un cadre arrondi en bas, l'animation s'affiche au-dessus
+#   coin  = toute la vidéo : tu es détouré en bas, d'un côté puis de l'autre, le contenu derrière toi
 # Le plan d'une vidéo peut décider autrement avec "mise_en_scene".
 mise_en_scene: plein
 

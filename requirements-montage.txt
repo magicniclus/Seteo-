@@ -2,3 +2,5 @@
 pillow            # planches d'images clés
 faster-whisper    # transcription locale quand il n'y a pas de clé ElevenLabs
 numpy
+# Détourage RobustVideoMatting (mise en scène « coin ») : PyTorch version processeur, à installer à part :
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu

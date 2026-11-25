@@ -66,7 +66,7 @@ en foncé ; sur des cartes claires, un accent trop clair est remplacé par l'enc
 | `rythme.visage_y` | Hauteur des yeux dans l'image (0 = haut, 1 = bas) : centre des zooms, et point de départ de toute la mise en scène. |
 | `rythme.decalage_y`, `tete_y`, `menton_y` | Pour un visage mal placé ou en gros plan : décalage de l'image en pixels, haut de la tête, menton. Se règlent vidéo par vidéo, dans les `reglages` du plan. |
 | `rythme.gel_fin` | Temps où la dernière image reste, pour lire le carton. |
-| `mise_en_scene` | Pendant une animation plein écran : `plein` (elle remplace l'image) ou `cadre` (la personne reste dans un cadre arrondi en bas). |
+| `mise_en_scene` | Pendant une animation plein écran : `plein` (elle remplace l'image) ou `cadre` (la personne reste dans un cadre arrondi en bas) ; `coin` : la personne détourée en bas pendant toute la vidéo, le contenu derrière elle. |
 | `habillage.barre_progression` | La fine barre de progression en haut. |
 | `habillage.signature` | Le nom de la marque en haut à gauche. Éteint (`false`) : sur une vidéo où la personne est à l'écran, on n'affiche pas de logo en haut. Le nom reste sur le carton de fin. |
 | `son.debruitage` | 0 = rien ; 8 à 12 pour atténuer un souffle derrière la voix. |

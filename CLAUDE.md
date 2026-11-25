@@ -38,7 +38,9 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
 - Pas de promesses juridiques ou financières fermes : on renvoie vers un pro si besoin.
 
 ## Ce qu'on a appris (à compléter chaque semaine)
-- Montage (25/11/2026) : pas de détourage de la personne, le rendu a été jugé affreux. Les
-  animations prennent tout l'écran (`mise_en_scene: plein`) ; variante acceptée : la personne dans
-  un cadre en bas, l'animation au-dessus (`cadre`).
+- Montage (25/11/2026) : le premier détourage (personne rétrécie au milieu, modèle de HyperFrames)
+  a été jugé affreux. Ce qui est demandé ensuite, pour présenter un projet : le contenu derrière
+  la personne pendant toute la vidéo, elle détourée en bas de l'écran comme un présentateur, qui
+  change de côté, avec des zooms (`mise_en_scene: coin`, détourage RobustVideoMatting). Autres
+  versions acceptées : animations plein écran (`plein`) ou personne dans un cadre en bas (`cadre`).
 - (colle ici les hooks et formats qui ont le mieux marché)

@@ -216,6 +216,21 @@ def slug_police(famille: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", famille.lower()).strip("-")
 
 
+def personne_entiere(dossier: Path, a_roll: Path, total: float) -> str:
+    """La personne détourée sur toute la vidéo (assets/personne.webm), refaite si la prise a changé.
+    RobustVideoMatting (machine/detourage.py) s'il est installé : net, cheveux compris, ~0,3 s par
+    image ; sinon le modèle de HyperFrames (plus lent, contours moins propres)."""
+    cible = dossier / "assets" / "personne.webm"
+    if cible.exists() and cible.stat().st_mtime >= a_roll.stat().st_mtime:
+        return "assets/personne.webm"
+    import detourage
+    if detourage.disponible():
+        print(f"Détourage de toute la vidéo avec RVM (~{total * 30 * 0.3 / 60:.0f} min)...")
+        detourage.detourer(a_roll, cible)
+        return "assets/personne.webm"
+    return decouper_personne(dossier, a_roll, 0.0, total, total)
+
+
 def gabarit(nom: str, donnees: dict | None = None) -> str:
     texte = (GABARIT / nom).read_text(encoding="utf-8")
     return texte.replace("__DONNEES__", json.dumps(donnees, ensure_ascii=False)) if donnees is not None else texte
@@ -285,10 +300,12 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     blocs_derriere = detourage and det.get("blocs") == "derriere"
     # ----- Mise en scène des animations plein écran : "plein" (elles remplacent l'image) ou "cadre"
     # (la personne passe dans un cadre arrondi en bas, l'animation au-dessus ; aucun détourage)
+    # "coin" : la personne détourée en bas, d'un côté puis de l'autre, le contenu toujours derrière elle.
     style = plan.get("mise_en_scene", charte.get("mise_en_scene", "plein"))
-    if style not in ("plein", "cadre"):
-        sys.exit(f"mise_en_scene inconnue « {style} » (plein ou cadre).")
+    if style not in ("plein", "cadre", "coin"):
+        sys.exit(f"mise_en_scene inconnue « {style} » (plein, cadre ou coin).")
     blocs_cadre = style == "cadre" and a_roll.exists() and not blocs_derriere
+    en_coin = style == "coin" and a_roll.exists()
 
     # ----- Où est le visage dans l'image (une fois l'image décalée, si elle l'est) : les yeux, le haut
     # de la tête, le menton, en fraction de la hauteur. Tout le reste de la mise en scène en découle.
@@ -298,6 +315,24 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     menton_y = r.get("menton_y") or yeux + 0.09
     normale = st["centre_y"] - zs["haut"] - 150    # la hauteur d'un bloc quand il a tout l'écran
     decalage = round(r.get("decalage_y") or 0)     # l'image remontée (négatif) ou descendue, en pixels
+
+    # ----- Mise en scène « coin » : la personne détourée, réduite, posée en bas de l'écran (son buste
+    # touche le bord du bas, un peu hors de l'écran sur le côté). Les sous-titres passent au-dessus de
+    # sa tête, les animations et les cartes au-dessus des sous-titres. Pas de décalage de l'image ici :
+    # on reprend les hauteurs du visage dans l'image d'origine.
+    coin = None
+    if en_coin:
+        rc = plan.get("coin", {})
+        s_coin = float(rc.get("echelle", 0.62))
+        large_c, haut_c = fmt["largeur"] * s_coin, H * s_coin
+        hors = float(rc.get("hors_ecran", 0.12))
+        y_c = H - haut_c + float(rc.get("descente", 0))
+        tete_ecran = y_c + (tete_y - decalage / H) * haut_c
+        st["centre_y"] = round(min(st["centre_y"], tete_ecran - 115))
+        coin = {"s": s_coin, "y": round(y_c, 1), "yeux": round(yeux - decalage / H, 4),
+                "droite": round(fmt["largeur"] - large_c * (1 - hors), 1), "gauche": round(-large_c * hors, 1),
+                "place": round(st["centre_y"] - 85 - (zs["haut"] + 30)),
+                "carte": round(st["centre_y"] - 95 - (zs["haut"] + 20)), "reglages": rc}
 
     def mise_en_scene(element: dict) -> dict:
         """Quand la personne reste DEVANT un bloc ou un plan, elle rétrécit vers le bas et ce qui est
@@ -368,7 +403,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
                 d = T(b["de"])
                 scenes["bloc", k] = g = mise_en_cadre(b)
                 fenetres.append((d, min(T(b["a"], fin=True) if "a" in b else d + fiche[2], total), g, g["centre"]))
-    if gros_plan and a_roll.exists() and not detourage:
+    if gros_plan and a_roll.exists() and not detourage and not coin:
         for k, b in enumerate(plan.get("broll", []), 1):
             if b.get("mode", "plein") == "carte":
                 cartes_cadre.add(k)   # les sous-titres se posent sur le bas de la carte
@@ -455,7 +490,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         else:
             marque = f'<span class="fin__marque">{signature}</span>'
         bloc_fin = f"""
-    <div id="fin" class="fin"><div class="fin__fond">
+    <div id="fin" class="fin"{f' style="top:{zs["haut"] + 40}px;bottom:auto"' if coin else ''}><div class="fin__fond">
       <span class="fin__verbe">{e(typo(cf.get('verbe') or variante['verbe']))}</span>
       <span id="fin-mot" class="fin__mot" style="font-size:{taille}px">{e(typo(mot_fin))}</span>
       <span class="fin__suite">{e(typo(cf.get('suite') or variante['suite']))}</span>
@@ -538,14 +573,14 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         else:
             media = f'<video id="broll-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>'
         # "cadre" : la personne est déjà dans son cadre sous la carte, inutile de la rétrécir en plus
-        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre})
+        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre or bool(coin)})
         # Deux cartes bout à bout : on passe de l'une à l'autre en coupe franche, sans sortie ni entrée animées
         if mode == "carte" and len(brolls) > 1 and brolls[-2]["mode"] == "carte" and abs(brolls[-2]["f"] - d) < 0.1:
             brolls[-2]["suite"] = True
             brolls[-1]["apres"] = True
         if mode == "carte" and f - d < 1.2:
             sys.exit(f"plan.json : le plan de coupe n° {k} en carte dure {f - d:.1f} s, il lui faut au moins 1,2 s.")
-        petite = ' style="height:660px"' if k in cartes_cadre else ""
+        petite = ' style="height:660px"' if k in cartes_cadre else f' style="height:{coin["carte"]}px"' if coin and mode == "carte" else ""
         # Légende posée sur l'image (ce qu'on montre, un prix entre *astérisques* en couleur) et petite
         # mention dans l'autre coin (« Illustration 3D », « Extrait : @compte »)
         dessus = ""
@@ -613,7 +648,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         if f - d < 1.5:
             sys.exit(f"plan.json : le bloc « {genre} » n° {k} dure {f - d:.1f} s, il lui faut au moins 1,5 s.")
         contexte = {"id": f"bloc-{k}", "debut": d, "duree": round(f - d, 3), "T": T, "typo": typo,
-                    "devant": scenes.get(("bloc", k)),
+                    # en coin, l'animation tient au-dessus des sous-titres, la personne reste devant
+                    "devant": scenes.get(("bloc", k)) or ({"hauteur": coin["place"]} if coin and mode == "plein" else None),
                     "mot_cle": mot_cle, "marque": sig,
                     "media": lambda fichier, nom_media: preparer_media(fichier, dossier, nom_media, 0, 0)}
         balises, infos = fabrique(b, contexte)
@@ -667,9 +703,29 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         personne = (f'\n      <div id="personne"><div id="plan-detoure">'
                     f'<div class="decale" style="transform:translateY({decalage}px)">{videos}</div></div></div>')
 
+    if coin:
+        # La personne détourée sur toute la vidéo, le décor remplacé par le fond de l'univers. Elle
+        # change de côté quand le contenu change (4 s d'écart au moins), sauf "alterner": false.
+        fond_html = '\n      <div id="fond-univers" class="fond-univers"></div>'
+        src = personne_entiere(dossier, a_roll, total)
+        personne = (f'\n      <div id="personne" class="personne--coin" data-cote="{coin["reglages"].get("cote", "droite")}">'
+                    f'<div id="plan-detoure"><video id="detoure-1" src="{src}" data-start="0" data-duration="{total}" '
+                    f'data-track-index="0" muted playsinline></video></div></div>')
+        cote = coin["reglages"].get("cote", "droite")
+        cotes = [{"t": 0.0, "cote": cote, "x": coin[cote]}]
+        changements = sorted({round(T(b["de"]), 3) for b in plan.get("blocs", [])
+                              if bibliotheque.BLOCS.get(b.get("bloc"), (None, ""))[1] == "plein"} | {x["d"] for x in brolls})
+        if coin["reglages"].get("alterner", True):
+            for t in changements:
+                if t - cotes[-1]["t"] >= 4 and t < total - 1:
+                    cote = "gauche" if cote == "droite" else "droite"
+                    cotes.append({"t": t, "cote": cote, "x": coin[cote]})
+        coin["cotes"] = cotes
+
     bords = "".join(f'\n      <div id="{w["bord"]}" class="cadre-bord" style="left:{w["rect"][0]}px;top:{w["rect"][1]}px;'
                     f'width:{w["rect"][2]}px;height:{w["rect"][3]}px"></div>' for w in cadres)
-    principal = {"duree": total, "visageY": r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
+    principal = {"duree": total, "visageY": coin["yeux"] if coin else r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
+                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin else None,
                  "broll": brolls, "cadres": [{k: v for k, v in w.items() if k != "rect"} for w in cadres],
                  "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
@@ -694,7 +750,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="{total}"
+    <div id="root"{' class="coin"' if coin else ''} data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
       <div class="fond-scene"></div>
       <div id="prise">{prise}{fond_html}</div>{bords}{personne}{bloc_broll}{musique}{hotes_blocs}{mots_html}{hote('sous-titres', 3)}{hote('habillage', 4)}

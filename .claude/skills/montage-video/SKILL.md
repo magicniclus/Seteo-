@@ -135,7 +135,7 @@ Détail des champs : `references/plan.md`.
 - Pas de carte de chiffre ni de plan de coupe `carte` pendant un bloc plein écran.
 - Besoin d'une animation qui n'existe pas : `references/hyperframes.md` (« Ajouter un bloc »).
 
-### Pendant une animation : deux mises en scène au choix
+### Trois mises en scène au choix
 
 Le réglage par défaut est `mise_en_scene` dans `config/da.yaml` ; le plan d'une vidéo peut décider
 autrement avec `"mise_en_scene"`.
@@ -145,6 +145,27 @@ autrement avec `"mise_en_scene"`.
 - **`cadre`** : la personne reste à l'écran dans un cadre arrondi en bas, l'animation s'affiche
   au-dessus. À proposer quand les blocs sont longs ou nombreux (on ne la perd jamais de vue plus de
   la moitié de la vidéo). Rien n'est détouré : l'image est simplement recadrée dans le cadre.
+- **`coin`** : le contenu est derrière la personne **pendant toute la vidéo** (maquettes 3D, fiche
+  du projet, animations, extraits), et elle reste devant, détourée, en bas de l'écran, buste contre
+  le bord du bas, comme un présentateur. Elle change de côté à chaque nouveau contenu (4 s d'écart
+  au moins), avec les zooms sur les coupes. C'est la mise en scène demandée pour présenter un projet.
+
+Comment se règle le coin (`"coin"` dans le plan) :
+- `echelle` (0,62 par défaut : la taille de la personne), `cote` (`"droite"` ou `"gauche"` au
+  départ), `alterner` (`false` : elle reste du même côté), `hors_ecran` (la part qui sort de l'écran
+  sur le côté, 0,12), `descente` (pixels : plus bas, on voit moins de buste).
+- Les sous-titres se posent juste au-dessus de sa tête ; les animations (blocs) et les cartes
+  tiennent au-dessus des sous-titres ; le carton de fin passe en haut.
+- **Il faut du contenu derrière elle tout le temps** : enchaîne blocs, plans plein écran et cartes
+  sans trou (un trou laisse voir le fond de l'univers, uni). Pour une maquette 3D, filme-la en
+  `"format": "fond"` (skill `video-chantier`) : la pièce est dans le haut de l'image, au-dessus de la
+  personne. Le premier plan commence à 0 : c'est lui qu'on voit à la première image.
+- Le détourage se fait avec RobustVideoMatting (`machine/detourage.py`) : net, cheveux compris,
+  environ 0,3 s par image (7 minutes pour 45 s de vidéo), gardé dans `assets/personne.webm` tant que
+  la prise ne change pas. Il faut PyTorch, version processeur :
+  `pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu` ; le modèle se
+  télécharge tout seul. Sans PyTorch, le script prend l'ancien modèle de HyperFrames, nettement moins
+  bon : préviens et installe plutôt PyTorch.
 
 Comment se règle le cadre :
 - Cadrage normal (tête et épaules) : un grand cadre, la tête en haut, les sous-titres restent à
@@ -166,11 +187,10 @@ Dans les deux mises en scène :
 - Un bloc qui va jusqu'à la dernière image y reste (pas de sortie) : la vidéo se termine sur lui.
   Bien pour une liste récapitulative quand il n'y a pas d'appel à l'action.
 
-**Le détourage (découper la silhouette pour faire passer l'animation derrière elle) : on ne le
-propose pas.** Essayé en novembre 2026, le résultat a été jugé affreux : contours qui bavent,
-tête qui flotte, et 20 s de calcul par seconde de vidéo. Le code existe encore (`"detourage"` dans
-le plan : `references/plan.md`), mais ne s'utilise que si on le redemande expressément, en
-prévenant que la qualité dépend d'un outil de découpe meilleur que celui de la machine.
+**L'ancien détourage (`"detourage"` dans le plan : la personne rétrécie au milieu, l'animation
+derrière) ne se propose pas** : essayé en novembre 2026 avec le modèle de HyperFrames, jugé affreux
+(contours qui bavent, tête qui flotte). Pour une personne devant le contenu, c'est la mise en scène
+`coin`, avec RobustVideoMatting.
 
 ### Demandes de clients
 

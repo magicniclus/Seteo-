@@ -14,3 +14,4 @@ sorties/publies.txt
 # Fiches de chantier (infos de clients) : seuls les exemples sont enregistrés
 chantiers/*
 !chantiers/exemples/
+montage/modeles/

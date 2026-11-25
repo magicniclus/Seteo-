@@ -22,7 +22,6 @@ import argparse
 import base64
 import json
 import math
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -32,7 +31,11 @@ from atelier import BROLL, RACINE, da, ffmpeg
 from site_local import adresse, en_marche, reglages
 
 SORTIE = BROLL / "chantiers"
-FORMATS = {"carte": (1380, 990), "vertical": (1080, 1920), "carre": (1080, 1080)}
+FORMATS = {"carte": (1380, 990), "vertical": (1080, 1920), "carre": (1080, 1080), "fond": (1080, 2560)}
+# « fond » : plan vertical plein écran où la maquette est dans le HAUT de l'image (mise en scène « coin » :
+# la personne occupe le bas). On filme une image plus haute et on n'en garde que le bas : le sujet,
+# centré dans l'image filmée, se retrouve aux deux tiers de la hauteur gardée en partant du bas.
+RECADRAGE = {"fond": (1080, 1920, 0, 640)}
 # La vue 3D du site s'ouvre de trois quarts, au-dessus de la maison (Cadrage.tsx) :
 DIRECTION = (-0.45, 0.75, 0.85)
 CHAMP = math.radians(45)
@@ -229,11 +232,18 @@ def filmer(navigateur, scene: dict, reperes: dict, vue: dict, nom: str, apercu: 
         image = sortie.with_suffix(".jpg")
         image.write_bytes(image_3d(page))
         contexte.close()
+        if fmt in RECADRAGE:
+            from PIL import Image
+            l, h, x, y = RECADRAGE[fmt]
+            Image.open(image).crop((x, y, x + l, y + h)).save(image, quality=90)
         return image
 
     # ----- Le tournage : la caméra tourne d'un petit angle, une image, et ainsi de suite.
     ips = da()["format"]["ips"]
-    images = max(2, round(float(vue.get("duree", 4)) * ips))
+    # Une image haute coûte cher à calculer : en « fond », 15 images par seconde suffisent pour une
+    # rotation lente (chaque image est doublée à l'encodage).
+    ips_rendu = int(vue.get("ips", 15 if fmt == "fond" else ips))
+    images = max(2, round(float(vue.get("duree", 4)) * ips_rendu))
     with tempfile.TemporaryDirectory() as tmp:
         page.mouse.move(L / 2, H / 2)
         page.mouse.down(button="right")
@@ -242,10 +252,12 @@ def filmer(navigateur, scene: dict, reperes: dict, vue: dict, nom: str, apercu: 
             Path(f"{tmp}/{i:04d}.jpg").write_bytes(image_3d(page))
         page.mouse.up(button="right")
         contexte.close()
-        ffmpeg("-framerate", ips, "-i", f"{tmp}/%04d.jpg", "-c:v", "libx264", "-crf", "17", "-preset", "medium",
-               "-pix_fmt", "yuv420p", "-movflags", "+faststart", sortie)
-        shutil.copyfile(f"{tmp}/{images // 2:04d}.jpg", sortie.with_suffix(".jpg"))
-    ffmpeg("-i", sortie, "-frames:v", 1, "-vf", f"fps={6 / (images / ips):.3f},scale=320:-2,tile=6x1", "-q:v", 4,
+        recadre = "crop={}:{}:{}:{},".format(*RECADRAGE[fmt]) if fmt in RECADRAGE else ""
+        ffmpeg("-framerate", ips_rendu, "-i", f"{tmp}/%04d.jpg", "-vf", f"{recadre}fps={ips}", "-c:v", "libx264",
+               "-crf", "17", "-preset", "medium", "-pix_fmt", "yuv420p", "-movflags", "+faststart", sortie)
+    duree_film = images / ips_rendu
+    ffmpeg("-ss", f"{duree_film / 2:.2f}", "-i", sortie, "-frames:v", 1, "-q:v", 3, sortie.with_suffix(".jpg"))
+    ffmpeg("-i", sortie, "-frames:v", 1, "-vf", f"fps={6 / duree_film:.3f},scale=320:-2,tile=6x1", "-q:v", 4,
            sortie.with_name(sortie.stem + "-planche.jpg"))
     return sortie
 
@@ -259,7 +271,7 @@ def main() -> None:
     p.add_argument("--piece", help="la pièce visée (type : cuisine, salle_de_bain... ou son numéro)")
     p.add_argument("--tour", type=float, help="angle parcouru par la caméra, en degrés (défaut 40 ; négatif = autre sens)")
     p.add_argument("--duree", type=float, help="durée de la vidéo, en secondes (défaut 4)")
-    p.add_argument("--format", choices=list(FORMATS), help="carte (défaut, pour une carte dans la vidéo), vertical ou carre")
+    p.add_argument("--format", choices=list(FORMATS), help="carte (défaut, pour une carte dans la vidéo), vertical, carre, ou fond (plein écran, maquette en haut : mise en scène « coin »)")
     p.add_argument("--zoom", type=float, help="1 = cadrage normal ; 1.3 = plus près ; 0.8 = plus loin")
     a = p.parse_args()
     if a.catalogue:

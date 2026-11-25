@@ -18,6 +18,14 @@
     else va(plan, { scale: z.de }, { scale: z.a }, z.duree, z.t, "none");
   });
 
+  // Mise en scène « coin » : la personne détourée en bas, d'un côté puis de l'autre (coupe franche)
+  if (D.coin) {
+    const p = document.getElementById("personne");
+    gsap.set(p, { x: D.coin.cotes[0].x, y: D.coin.y, scale: D.coin.s, transformOrigin: "0 0" });
+    D.coin.cotes.forEach((c) =>
+      tl.set(p, { x: c.x, y: D.coin.y, scale: D.coin.s, transformOrigin: "0 0", attr: { "data-cote": c.cote } }, c.t));
+  }
+
   // Mots derrière la personne : un mot géant passe entre le décor et elle
   D.derriere.forEach((m) => {
     const mot = document.getElementById(m.id);
@@ -74,8 +82,12 @@
         va(cadres, petit, grand, 0.32, b.f - 0.32, "power3.inOut");
       }
     } else {
-      // plein écran ou derrière la personne : apparition nette (deux plans « derriere » s'enchaînent sans trou)
-      tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: b.mode === "derriere" ? 0.02 : 0.1, ease: "none" }, b.d);
+      // plein écran ou derrière la personne : apparition nette (deux plans « derriere » s'enchaînent sans trou) ;
+      // dès la première image s'il commence avec la vidéo (c'est lui qu'on voit en premier)
+      if (b.d < 0.05) {
+        gsap.set(boite, { autoAlpha: 1 });
+        tl.set(boite, { autoAlpha: 1 }, 0);
+      } else tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: b.mode === "derriere" ? 0.02 : 0.1, ease: "none" }, b.d);
     }
     tl.fromTo(cadre, { scale: 1.09 }, { scale: 1, duration: b.f - b.d, ease: "none" }, b.d);
     tl.set(boite, { autoAlpha: 0 }, b.f);
