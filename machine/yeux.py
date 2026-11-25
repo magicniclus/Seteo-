@@ -10,9 +10,13 @@ Trois contrôles :
 
 Résultat dans montage/projets/<id>/yeux/ : planche.jpg, premiere-image.jpg, son.json, critique.json
 
+Et pour juger un raccord (l'arrivée d'un extrait, d'une animation) : --autour <instants> sort, pour
+chaque instant, une bande de 12 images serrées (de 0,3 s avant à 1,2 s après). Rien d'autre n'est refait.
+
 Usage :
     python machine/yeux.py 2026-11-30-3
     python machine/yeux.py 2026-11-30-3 --sans-gemini
+    python machine/yeux.py 2026-11-30-3 --autour 9.0 11.4 34.2
 """
 
 import argparse
@@ -69,6 +73,18 @@ def planche(video: Path, sortie: Path, total: float) -> None:
            f"tile={colonnes}x{-(-n // colonnes)}:padding=10:margin=10:color=0x16181C",
            "-frames:v", "1", "-q:v", "3", sortie / "planche.jpg")
     ffmpeg("-i", video, "-frames:v", "1", "-vf", "scale=540:960", "-q:v", "3", sortie / "premiere-image.jpg")
+
+
+def bandes(video: Path, sortie: Path, instants: list[float]) -> None:
+    """Pour chaque instant, 12 images serrées (8 par seconde) autour de lui : on y voit un raccord
+    image par image, ce que la planche générale (une image toutes les 2 s) ne montre pas."""
+    sortie.mkdir(parents=True, exist_ok=True)
+    for t in instants:
+        debut = max(0.0, t - 0.3)
+        cible = sortie / f"autour-{t:.1f}.jpg"
+        ffmpeg("-ss", debut, "-t", 1.5, "-i", video, "-frames:v", 1, "-vf", "fps=8,scale=270:-2,tile=6x2:padding=4:color=0x16181C",
+               "-q:v", 3, cible)
+        print(f"  {cible}  ({debut:.1f} s → {debut + 1.5:.1f} s)")
 
 
 def mesurer_son(video: Path, total: float) -> dict:
@@ -133,6 +149,8 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("id", help="le projet (ex. 2026-11-30-3) ou un fichier .mp4")
     p.add_argument("--sans-gemini", action="store_true", help="seulement la planche et les mesures du son")
+    p.add_argument("--autour", type=float, nargs="+", metavar="SECONDES",
+                   help="seulement des bandes d'images serrées autour de ces instants (pour juger un raccord)")
     a = p.parse_args()
 
     if a.id.endswith(".mp4"):
@@ -144,6 +162,9 @@ def main() -> None:
         sys.exit(f"Vidéo introuvable : {video}\nRends-la d'abord : python machine/monter.py {ident} --rendu")
     dossier = projet(ident, creer=True)
     sortie = dossier / "yeux"
+    if a.autour:
+        bandes(video, sortie, a.autour)
+        return
     shutil.rmtree(sortie, ignore_errors=True)
     sortie.mkdir()
     charte, total = da(), duree(video)

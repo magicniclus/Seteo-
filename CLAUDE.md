@@ -25,7 +25,8 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
 ## À quoi on ressemble
 - L'univers visuel des vidéos (couleurs, police, sous-titres, cartes) est dans `config/da.yaml`
   et `config/univers/`. Toute vidéo montée le respecte : c'est ce qui fait qu'on nous reconnaît.
-- Le montage se fait avec le skill `montage-video`.
+- Le montage se fait avec le skill `montage-video`. Les extraits courts qui ponctuent une vidéo
+  (gags de vieux films, extraits qu'on fournit) : skill `ponctuations`, banque dans `montage/ponctuations/`.
 
 ## Règles
 - On peut reprendre le **concept et le hook** d'une vidéo qui marche, jamais son design, ses

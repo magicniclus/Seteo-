@@ -1,6 +1,6 @@
 ---
 name: montage-video
-description: Monter un reel / TikTok / Short vertical Portail Travaux à partir d'une vidéo filmée au téléphone (transcription, coupe des blancs et des ratés, sous-titres mot à mot, accroche, chiffres, animations plein écran, plans de coupe, carton « Commente <MOT> », relecture). Utiliser quand on envoie ou mentionne une vidéo à monter, quand on demande de monter, éditer, refaire ou corriger une vidéo, de chercher des plans de coupe, d'ajouter une animation, ou de changer l'univers visuel (la DA) des vidéos.
+description: Monter un reel / TikTok / Short vertical Portail Travaux à partir d'une vidéo filmée au téléphone (transcription, coupe des blancs et des ratés, sous-titres mot à mot, accroche, chiffres, animations plein écran, plans de coupe, carton « Commente <MOT> », relecture). Utiliser quand on envoie ou mentionne une vidéo à monter, quand on demande de monter, éditer, refaire ou corriger une vidéo, d'ajouter une animation, ou de changer l'univers visuel (la DA) des vidéos. Pour les extraits de films ou d'Instagram qui ponctuent une vidéo, voir le skill ponctuations.
 ---
 
 # Montage vidéo vertical
@@ -202,39 +202,16 @@ python machine/broll.py ecran https://france-renov.gouv.fr      # une page web f
 python machine/broll.py ecran <url de l'outil> --prive --flouter ".client"   # avec des données de clients
 ```
 
-**Les ponctuations : deux ou trois par vidéo, pas plus.** Une ponctuation est un extrait de 2 à 3 s
-(un gag de film, une image qui fait sourire) posé sur une phrase où l'on ne voit que la personne.
-Elle relance l'attention entre deux animations. Marche à suivre pour chaque vidéo :
+**Les ponctuations : deux ou trois par vidéo.** Une ponctuation est un extrait de 2 à 3 s (un gag
+de vieux film, une image qui fait sourire) posé sur une phrase où l'on ne voit que la personne. Elle
+relance l'attention entre deux animations. Toute la marche à suivre (où ponctuer, la banque
+d'extraits, chercher et couper un gag, caler la chute sur le mot, les droits) est dans le skill
+`ponctuations` : suis-le à cette étape, pour chaque vidéo.
 
-1. Repère les passages sans animation de plus de 4 s : ce sont les candidats. Jamais pendant
-   l'accroche (les 3 à 5 premières secondes), jamais pendant un bloc ni pendant l'appel à l'action.
-2. Pour chacun, cherche l'idée de la phrase (« tout le monde veut le même client », « passer pour
-   un lourd ») et regarde d'abord la banque : `python machine/broll.py banque` donne pour chaque
-   extrait l'idée qu'il illustre et les mots qui doivent y faire penser.
-3. Rien dans la banque : cherche un gag dans un vieux film (`films`), télécharge-le, fais une
-   planche large (une image toutes les 15 à 20 s) puis une planche fine (toutes les 0,5 à 1 s)
-   autour du bon moment, et coupe l'extrait (`importer`). Évite les cartons de texte des films muets.
-4. Si l'extrait peut resservir, mets-le dans la banque avec l'idée qu'il illustre :
-   `python machine/broll.py banque --ajouter broll/perso/<nom>.mp4 --idee "..." --mots ... --source "..." --droits "..."`.
-   La banque (`montage/ponctuations/`) est gardée dans le dépôt : n'y mets que des extraits libres
-   (domaine public, Pexels) ou qui appartiennent à la marque.
-5. Pose-le dans le plan (`"broll"`, mode `carte`), en calant l'instant fort du gag sur le mot qui
-   le justifie : c'est `"debut"` qui se règle, ou l'endroit où l'extrait a été coupé.
-6. Laisse respirer : au moins 2 s de visage plein écran entre une ponctuation et l'animation
-   suivante. Exception en mise en scène `cadre` : elles peuvent se toucher (moins de 0,8 s
-   d'écart), le cadre reste alors en place et l'animation prend la suite de la carte. En `plein`,
-   avec un visage en gros plan, garde 0,7 s entre la fin de la carte et le bloc (le script le vérifie).
-
-D'où viennent les extraits :
-- **Vieux films du domaine public** (`films`) : burlesques muets, Keaton, Harold Lloyd, Laurel et
-  Hardy. Un film américain y entre 95 ans après sa sortie (en 2026 : jusqu'à 1930), et le script ne
-  cherche que ceux-là. On ne reprend jamais le son. C'est la source à utiliser sans rien demander.
-- **Film ou série récents, vidéo d'un autre compte (Instagram, TikTok, YouTube)** : ne les
-  télécharge pas toi-même. Les plateformes l'interdisent, ces images appartiennent à quelqu'un, et
-  `CLAUDE.md` dit de ne pas reprendre les images des autres. Si on te fournit le fichier (un
-  enregistrement d'écran du téléphone suffit), tu peux l'insérer : dis une fois, simplement, que
-  l'extrait appartient à quelqu'un d'autre et qu'il peut entraîner un retrait, puis fais ce qui est
-  demandé. Garde-le court (2 à 4 s), laisse visible le nom du compte, et ne le mets pas dans la banque.
+Les autres sources :
+- **Extrait fourni par la personne** (enregistrement d'écran d'Instagram, d'un film récent) :
+  `broll.py importer <fichier> --debut <s> --duree <s>`. Tu ne télécharges pas toi-même ces
+  images-là (skill `ponctuations`, « Les droits »).
 - **Pexels** : cherche en anglais si le français ne donne rien.
 - **Écran web** : une source officielle, un simulateur, et le site de la marque quand il sera en
   ligne (`python machine/ecrans.py`, pages listées dans `config/marque.yaml`).
@@ -276,6 +253,7 @@ Une erreur signalée par le contrôle (ligne `✗`) doit être corrigée avant t
 ```bash
 python machine/monter.py <id> --rendu     # -> montages/<id>.mp4 (compte 5 à 6 fois la durée de la vidéo)
 python machine/yeux.py <id>
+python machine/yeux.py <id> --autour 9.0 34.2   # 12 images serrées autour d'un raccord, pour le juger
 ```
 
 `yeux.py` produit dans `montage/projets/<id>/yeux/` :

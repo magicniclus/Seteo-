@@ -185,7 +185,8 @@ python machine/yeux.py 2026-11-30-3                # relecture
 par vidéo) : `plein`, l'animation remplace l'image quelques secondes ; `cadre`, tu restes à l'écran
 dans un cadre arrondi en bas et l'animation s'affiche au-dessus. Rien n'est détouré.
 
-**Ponctuations** : deux ou trois extraits de 2 à 3 s par vidéo (un gag de vieux film posé sur une
+**Ponctuations** (skill `ponctuations` : *« anime plus cette vidéo »*, *« trouve un extrait pour
+cette phrase »*) : deux ou trois extraits de 2 à 3 s par vidéo (un gag de vieux film posé sur une
 phrase), piochés dans la banque `montage/ponctuations/` (`python machine/broll.py banque`). Claude va
 chercher lui-même les films du domaine public. Pour un extrait d'Instagram ou d'un film récent, c'est
 toi qui lui donnes le fichier : un enregistrement d'écran suffit.
