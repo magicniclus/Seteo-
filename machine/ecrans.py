@@ -1,8 +1,8 @@
-"""Filme automatiquement le site Portail Habitat, en format vertical (téléphone).
+"""Filme automatiquement ton site, en format vertical (téléphone).
 
 Chaque page listée dans `pages_ecran` (config/marque.yaml) est ouverte dans un navigateur,
 défile doucement (et clique sur les boutons demandés) pendant l'enregistrement. Les vidéos
-servent de plans de coupe dans tes reels (« regarde, sur Portail Habitat tu fais ça... »).
+servent de plans de coupe dans tes reels (« regarde, sur le site tu fais ça... »).
 
 Résultat : ecrans/<nom>.mp4 (vidéo 1080x1920) + ecrans/<nom>.png (capture pleine page)
 Nécessite ffmpeg (voir README).
@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 
 from playwright.sync_api import sync_playwright
 
@@ -35,7 +36,9 @@ def filmer(navigateur, page_cfg: dict) -> None:
         record_video_size={"width": 540, "height": 960},
     )
     page = contexte.new_page()
+    debut_film = time.monotonic()  # l'enregistrement démarre ici, page encore blanche
     page.goto(page_cfg["url"], wait_until="networkidle")
+    chargement = time.monotonic() - debut_film
     page.wait_for_timeout(1500)  # laisse 1,5 s sur le haut de page (le « hook » visuel)
 
     # Défilement doux jusqu'en bas (max ~12 s), puis petite remontée
@@ -63,13 +66,18 @@ def filmer(navigateur, page_cfg: dict) -> None:
     video.save_as(brut)
     # Agrandit en 1080x1920 (format Reels/TikTok) et convertit en MP4
     cible = DOSSIER / f"{page_cfg['nom']}.mp4"
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(brut), "-vf", "scale=1080:1920:flags=lanczos",
+    # -ss : on jette le temps de chargement (écran blanc) pour que le plan démarre sur la page
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{chargement:.2f}", "-i", str(brut),
+                    "-vf", "scale=1080:1920:flags=lanczos",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", "30", str(cible)], check=True)
     print(f"  {page_cfg['nom']} -> {cible}")
 
 
 def main() -> None:
-    pages = config().get("pages_ecran", [])
+    pages = config().get("pages_ecran") or []
+    if not pages:
+        print("Aucune page à filmer : remplis pages_ecran dans config/marque.yaml quand le site sera en ligne.")
+        return
     if len(sys.argv) > 1:
         pages = [p for p in pages if p["nom"] in sys.argv[1:]]
     DOSSIER.mkdir(exist_ok=True)

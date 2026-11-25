@@ -1,0 +1,17 @@
+# Univers « Atelier » : bleu nuit, orange vif, papier crème.
+# Sérieux et chaleureux : l'artisan de confiance qui t'explique.
+nom: "Atelier"
+couleurs:
+  nuit: "#0F1B2D"          # fonds sombres, contour des sous-titres
+  marque: "#17304F"        # couleur de marque (dégradés, fonds)
+  accent: "#FF6A2B"        # mot en cours, chiffres, bouton « Commente »
+  accent_clair: "#FFB38A"  # mots forts déjà dits, textes secondaires sur fond sombre
+  papier: "#FBF6EE"        # fond des cartes claires
+  encre: "#0F1B2D"         # texte sur papier
+  blanc: "#FFFFFF"
+police: "Bricolage Grotesque"   # fichiers dans montage/da/polices/
+graisse_titres: 800
+graisse_texte: 600
+cartes: clair              # clair = cartes papier ; sombre = cartes foncées
+motif: uni                 # uni, grille (plan d'architecte) ou rayures (ruban de chantier)
+majuscules: false          # sous-titres EN CAPITALES

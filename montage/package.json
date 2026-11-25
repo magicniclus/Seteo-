@@ -1,0 +1,11 @@
+{
+  "name": "montage-portail-travaux",
+  "private": true,
+  "description": "Atelier de montage : compositions HyperFrames (HTML -> MP4) aux couleurs de Portail Travaux",
+  "devDependencies": {
+    "hyperframes": "0.9.94"
+  },
+  "dependencies": {
+    "gsap": "3.15.0"
+  }
+}

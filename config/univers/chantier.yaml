@@ -1,0 +1,17 @@
+# Univers « Chantier » : noir, jaune signalisation, ruban rayé.
+# Direct et punchy : ça arrête le pouce, ça parle prix et arnaques.
+nom: "Chantier"
+couleurs:
+  nuit: "#111315"
+  marque: "#24282D"
+  accent: "#FFD400"
+  accent_clair: "#FFE66B"
+  papier: "#F4F1EA"
+  encre: "#111315"
+  blanc: "#FFFFFF"
+police: "Archivo"
+graisse_titres: 900
+graisse_texte: 700
+cartes: sombre
+motif: rayures
+majuscules: true

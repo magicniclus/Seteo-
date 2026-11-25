@@ -2,7 +2,7 @@
 
 - /webhook/instagram : quelqu'un commente un mot-clé -> DM automatique avec le lien
                        quelqu'un écrit en DM -> l'IA répond dans ton style
-- /ressource/<mot>   : page « prénom + email » -> inscription Portail Habitat -> ressource
+- /ressource/<mot>   : page « prénom + email » -> inscription Portail Travaux -> ressource
 - /stats             : DM envoyés, ouvertures, inscriptions, conversion par mot-clé
 - /studio            : tes scripts à tourner, les écrans du site, les hooks du moment
 - /prompteur/...     : prompteur + caméra ; chaque prise est envoyée dans rushs/
@@ -52,6 +52,14 @@ def noter(type_: str, mot: str, qui: str = "") -> None:
 def ressource(mot: str) -> dict | None:
     fichier = DOSSIER_RESSOURCES / f"{slug(mot)}.json"
     return json.loads(fichier.read_text(encoding="utf-8")) if fichier.exists() else None
+
+
+def lien_site() -> str:
+    """Lien vers le site, seulement s'il est en ligne (config/marque.yaml : site)."""
+    cfg = config()
+    if not cfg.get("site"):
+        return ""
+    return f'<p><a href="{html.escape(cfg["site"])}">Découvrir {html.escape(cfg["marque"])} →</a></p>'
 
 
 def envoyer_dm(destinataire: dict, texte: str) -> None:
@@ -118,7 +126,7 @@ def repondre_dm(qui: str, texte: str) -> None:
                                 for f in DOSSIER_RESSOURCES.glob("*.json")))
     consignes = (f"{cerveau()}\n\nTu réponds aux DM Instagram de la marque. Réponses courtes "
                  f"(1 à 3 phrases), naturelles, dans notre style. Si la personne a un projet, "
-                 f"propose la ressource adaptée ou l'inscription gratuite sur {config()['site']}. "
+                 f"propose la ressource adaptée ou l'inscription gratuite sur {config()['site'] or config()['marque']}. "
                  f"Si tu ne sais pas, dis qu'un humain revient vers elle vite.\n\n"
                  f"Ressources disponibles :\n{liste}")
     messages = []
@@ -177,8 +185,9 @@ def inscription(mot: str, prenom: str = Form(...), email: str = Form(...), src: 
         c.execute("INSERT INTO inscrits (prenom, email, mot, source) VALUES (?, ?, ?, ?)",
                   (prenom, email, r["mot"], src))
     noter("inscription", r["mot"], src)
-    # Envoie l'inscrit vers Portail Habitat (ton site, ton CRM, ou un outil d'emailing)
-    if url := os.getenv("PORTAIL_HABITAT_WEBHOOK_URL"):
+    # Envoie l'inscrit vers Portail Travaux (ton site, ton CRM, ou un outil d'emailing).
+    # L'ancien nom de la variable reste lu pour ne pas casser un serveur déjà installé.
+    if url := os.getenv("PORTAIL_TRAVAUX_WEBHOOK_URL") or os.getenv("PORTAIL_HABITAT_WEBHOOK_URL"):
         try:
             requests.post(url, json={"prenom": prenom, "email": email, "mot_cle": r["mot"],
                                      "source": src}, timeout=15)
@@ -188,7 +197,7 @@ def inscription(mot: str, prenom: str = Form(...), email: str = Form(...), src: 
 <title>{html.escape(r['titre'])}</title>{STYLE}
 <p>Bienvenue {html.escape(prenom)} 🎉 Ton compte gratuit est créé. Voici ta ressource :</p>
 {markdown.markdown(html.escape(r['contenu']), extensions=['tables'])}
-<p><a href="{html.escape(config()['site'])}">Découvrir {html.escape(config()['marque'])} →</a></p>"""
+{lien_site()}"""
 
 
 # ---------- Statistiques ----------
@@ -251,7 +260,7 @@ def studio(cle: str = ""):
         f"<figcaption>{t(f.stem)}</figcaption></figure>" for f in sorted(ECRANS.glob("*.mp4")))
     biblio = RACINE / "sorties" / "tendances" / "hooks.json"
     hooks = json.loads(biblio.read_text(encoding="utf-8"))[-10:][::-1] if biblio.exists() else []
-    liste_hooks = "".join(f"<li>{t(h['version_portail_habitat'])}</li>" for h in hooks)
+    liste_hooks = "".join(f"<li>{t(h.get('notre_version') or h.get('version_portail_habitat', ''))}</li>" for h in hooks)
     return f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Studio</title>{STYLE}
 <h1>Studio</h1><h2>Vidéos à enregistrer</h2>

@@ -1,0 +1,19 @@
+/* Sous-titres : un écran de 2 à 4 mots à la fois, centré sous le visage.
+   Chaque écran est caché ; la timeline le montre pendant qu'il est dit. */
+#root { position: absolute; inset: 0; }
+.st {
+  position: absolute; left: var(--zone-cotes); right: var(--zone-cotes);
+  top: calc(var(--st-centre) - 170px); height: 340px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-weight: var(--graisse-titres); font-size: var(--st-taille); line-height: 1.16; letter-spacing: -0.01em;
+  color: var(--blanc); opacity: 0; visibility: hidden;
+}
+.st__ligne { display: inline-block; max-width: 940px; will-change: transform; }
+.st__mot {
+  display: inline-block; padding: 2px 16px; margin: 4px -8px; border-radius: 24px;
+  background-color: transparent;
+  -webkit-text-stroke: 12px var(--nuit); paint-order: stroke fill;
+  text-shadow: 0px 6px 22px rgba(0, 0, 0, 0.45);
+  will-change: transform, opacity;
+}
+.st--majuscules { text-transform: uppercase; letter-spacing: 0; }

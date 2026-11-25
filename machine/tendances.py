@@ -5,7 +5,7 @@ Sources (APIs officielles, pas de piratage de compte) :
 - YouTube Shorts : les Shorts les plus vus des 14 derniers jours sur tes recherches
 
 L'IA en sort :
-- les tendances du moment (sujets, formats) et comment Portail Habitat peut surfer dessus,
+- les tendances du moment (sujets, formats) et comment la marque peut surfer dessus,
 - une bibliothèque de hooks réutilisables, qui grossit chaque jour :
   sorties/tendances/hooks.json (utilisée automatiquement par generer.py)
 
@@ -31,13 +31,13 @@ class Tendance(BaseModel):
     sujet: str
     pourquoi_ca_marche: str
     exemples: List[str]  # liens
-    idee_portail_habitat: str  # notre angle pour surfer dessus
+    notre_angle: str  # notre angle pour surfer dessus
 
 
 class Hook(BaseModel):
     hook_original: str
     modele: str  # le hook rendu générique, ex. « Personne ne te dit ça avant de [ACTION] »
-    version_portail_habitat: str
+    notre_version: str  # le hook réécrit pour notre marque
     source: str  # lien de la vidéo
 
 
@@ -125,9 +125,9 @@ def main() -> None:
     print(f"L'IA analyse {len(meilleurs)} contenus...")
     veille = generer_structure(
         f"""Voici les contenus qui performent le plus en ce moment dans notre niche :\n\n{liste}\n
-1. Dégage les tendances (sujets, formats, angles) et notre angle Portail Habitat pour chacune.
+1. Dégage les tendances (sujets, formats, angles) et notre angle pour chacune.
 2. Extrais les hooks (la première phrase / le titre qui accroche). Pour chacun : le hook
-   original, un modèle générique réutilisable avec des [TROUS], et notre version habitat.
+   original, un modèle générique réutilisable avec des [TROUS], et notre version.
    Garde seulement les hooks vraiment forts (15 maximum).""",
         Veille,
     )
@@ -143,10 +143,10 @@ def main() -> None:
     md = [f"# Tendances du {date.today():%d/%m/%Y}\n"]
     for t in veille.tendances:
         md.append(f"\n## {t.sujet}\n\n{t.pourquoi_ca_marche}\n\n**Notre angle :** "
-                  f"{t.idee_portail_habitat}\n\n" + "".join(f"- {e}\n" for e in t.exemples))
+                  f"{t.notre_angle}\n\n" + "".join(f"- {e}\n" for e in t.exemples))
     md.append("\n# Hooks du jour\n")
     for h in veille.hooks:
-        md.append(f"\n- **{h.version_portail_habitat}**\n  - modèle : {h.modele}\n"
+        md.append(f"\n- **{h.notre_version}**\n  - modèle : {h.modele}\n"
                   f"  - original : « {h.hook_original} » ({h.source})\n")
     fichier = DOSSIER / f"{date.today()}.md"
     fichier.write_text("".join(md), encoding="utf-8")

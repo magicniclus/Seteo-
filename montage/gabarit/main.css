@@ -1,0 +1,29 @@
+/* Composition principale : la prise (a-roll) et les plans de coupe.
+   Couleurs, police et mesures : variables --xxx écrites par monter.py depuis la DA
+   (config/da.yaml + config/univers/<nom>.yaml).
+   Empilement : prise (1) < plans de coupe (2) < sous-titres (5) < habillage (6). */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: var(--largeur); height: var(--hauteur); overflow: hidden; background: var(--nuit); }
+body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialiased; }
+#root { position: relative; width: var(--largeur); height: var(--hauteur); overflow: hidden; isolation: isolate; }
+
+/* La prise : on zoome l'enveloppe #plan, jamais la vidéo elle-même */
+#plan { position: absolute; inset: 0; z-index: 1; will-change: transform; }
+#plan video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Pas de prise (vidéo sans visage, planche de style) : le fond de l'univers */
+#plan.plan--fond { background-color: var(--nuit); background-image: var(--fond-image); background-size: var(--fond-taille); }
+
+/* Plans de coupe : l'enveloppe est cachée, la timeline la montre pendant sa fenêtre */
+.broll { position: absolute; z-index: 2; overflow: hidden; opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.broll__cadre { width: 100%; height: 100%; will-change: transform; }
+.broll__cadre video, .broll__cadre img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.broll--plein { inset: 0; }
+.broll--carte {
+  top: calc(var(--zone-haut) + 20px); left: var(--zone-cotes); right: var(--zone-cotes); height: 700px;
+  border-radius: 44px; border: 10px solid var(--papier); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+/* Les deux calques posés par-dessus (sous-compositions) */
+#sous-titres, #habillage { position: absolute; inset: 0; }
+#sous-titres { z-index: 5; }
+#habillage { z-index: 6; }

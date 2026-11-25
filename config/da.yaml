@@ -1,0 +1,64 @@
+# ============================================================
+#  LA DA (direction artistique) : l'univers visuel de tes vidéos
+#  Toutes les vidéos montées par la machine lisent ce fichier.
+#  Tu changes une valeur ici -> toutes les prochaines vidéos changent.
+#  Voir le résultat sans rien tourner : python machine/monter.py --planche
+# ============================================================
+
+# L'univers : couleurs, police, fonds. Un fichier par univers dans config/univers/.
+# Pour en changer, remplace ce mot. Pour créer le tien, copie un des fichiers et modifie-le.
+univers: atelier
+
+format:
+  largeur: 1080
+  hauteur: 1920
+  ips: 30
+
+# Le nom écrit en petit en haut de la vidéo et sur le carton de fin.
+# Le 2e mot prend la couleur d'accent. Logo : un SVG ou PNG transparent (600 px de large minimum),
+# par exemple "montage/da/logo.png" ; vide = le nom en lettres.
+signature: ["PORTAIL", "TRAVAUX"]
+logo: ""
+
+# L'interface d'Instagram / TikTok recouvre ces bandes : aucun texte important dedans.
+zones_sures:
+  haut: 230
+  bas: 430
+  cotes: 70
+
+sous_titres:
+  mots_max: 3            # mots par écran (2 à 4 : au-delà on ne lit plus)
+  caracteres_max: 18
+  taille: 88             # px
+  centre_y: 1265         # hauteur du milieu des sous-titres (sous le visage, au-dessus de l'interface)
+  apparition: mot_a_mot  # mot_a_mot = chaque mot arrive quand il est dit ; page = tout l'écran d'un coup
+  mot_en_cours: pastille # pastille = le mot dit passe sur une pastille de couleur ; couleur = il change de couleur
+
+rythme:
+  silence_max: 0.35      # un blanc plus long (en secondes) est coupé
+  marge_avant: 0.08      # air gardé avant chaque phrase
+  marge_apres: 0.14      # air gardé après
+  gel_fin: 0.8           # la dernière image reste un instant (le temps de lire le carton)
+  zoom_coupe: 1.10       # à chaque coupe on alterne plan large / plan serré (cache le raccord)
+  zoom_lent: 0.03        # léger zoom continu entre deux coupes (l'image ne reste jamais figée)
+  zoom_intervalle_min: 1.6
+  visage_y: 0.38         # hauteur du visage dans l'image (0 = haut, 1 = bas) : centre des zooms
+
+habillage:
+  barre_progression: true   # fine barre en haut : les gens restent pour voir la fin
+  signature: true
+
+son:
+  volume_cible_lufs: -14    # niveau standard des réseaux
+  musique_volume: 0.10      # musique de fond très en dessous de la voix
+
+# Textes du carton de fin selon le réseau (le mot-clé du post s'affiche entre les deux)
+carton_fin:
+  commente:                 # Instagram, Facebook : le DM automatique existe
+    reseaux: [instagram, facebook]
+    verbe: "Commente"
+    suite: "et je t'envoie ça en DM"
+  bio:                      # TikTok, Shorts, LinkedIn : pas de DM automatique
+    reseaux: [tiktok, youtube_shorts, linkedin]
+    verbe: "Lien en bio, tape"
+    suite: "pour recevoir ça gratuitement"

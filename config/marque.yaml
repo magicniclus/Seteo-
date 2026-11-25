@@ -2,10 +2,10 @@
 #  CONFIG DE TA MARQUE : le seul fichier à remplir
 # ============================================================
 
-marque: "Portail Habitat"
-site: "https://www.portail-habitat.fr"          # <-- remplace par ta vraie URL
+marque: "Portail Travaux"
+site: ""          # <-- l'adresse du site quand il sera en ligne (vide tant qu'il ne l'est pas)
 # Adresse publique de TON serveur machine (voir README, étape 5). Sert aux liens envoyés en DM.
-url_serveur: "https://machine.portail-habitat.fr"
+url_serveur: "https://machine.example.com"   # <-- remplace par l'adresse de ton serveur
 
 # Qui tu veux attirer (sois précis : l'IA écrit pour ces gens-là)
 cible: >
@@ -66,11 +66,10 @@ recherches_youtube:
 # --- Captures d'écran vidéo du site (machine/ecrans.py) ---
 # Chaque page est filmée en format vertical (téléphone) pour servir de plans dans tes vidéos.
 # `cliquer` (facultatif) : textes des boutons à cliquer pendant la vidéo, dans l'ordre.
-pages_ecran:
-  - nom: accueil
-    url: "https://www.portail-habitat.fr"
-  - nom: inscription
-    url: "https://www.portail-habitat.fr/inscription"
-  # - nom: recherche-artisan
-  #   url: "https://www.portail-habitat.fr/artisans"
-  #   cliquer: ["Trouver un artisan"]
+# Vide tant que le site n'est pas en ligne. Ensuite, par exemple :
+#   - nom: accueil
+#     url: "https://ton-site.fr"
+#   - nom: recherche-artisan
+#     url: "https://ton-site.fr/artisans"
+#     cliquer: ["Trouver un artisan"]
+pages_ecran: []

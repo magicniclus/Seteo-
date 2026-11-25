@@ -1,0 +1,17 @@
+# Univers « Plan » : bleu d'architecte, quadrillage, surligneur vert.
+# Précis et malin : le pote ingénieur qui te montre les chiffres.
+nom: "Plan"
+couleurs:
+  nuit: "#0A2540"
+  marque: "#11447A"
+  accent: "#C8FF3D"
+  accent_clair: "#E4FF9E"
+  papier: "#EEF4FA"
+  encre: "#0A2540"
+  blanc: "#FFFFFF"
+police: "Space Grotesk"
+graisse_titres: 700
+graisse_texte: 600
+cartes: sombre
+motif: grille
+majuscules: false

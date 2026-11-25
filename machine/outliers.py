@@ -70,7 +70,7 @@ def main() -> None:
         f"- {p['permalink']} (@{p['compte']}, x{p['ratio']} sa médiane)\n  Légende : {p.get('caption', '')[:600]}"
         for p in trouves[:10]
     )
-    print("L'IA adapte les meilleures à Portail Habitat...")
+    print("L'IA adapte les meilleures à notre marque...")
     res = generer_structure(
         f"""Voici des vidéos qui explosent dans notre niche :\n\n{liste}\n
 Pour chacune : explique le mécanisme du hook, puis écris NOTRE version : même structure et même

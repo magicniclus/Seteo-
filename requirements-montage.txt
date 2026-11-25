@@ -1,0 +1,4 @@
+# Pour le montage vidéo (en plus de requirements.txt)
+pillow            # planches d'images clés
+faster-whisper    # transcription locale quand il n'y a pas de clé ElevenLabs
+numpy

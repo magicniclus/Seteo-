@@ -1,0 +1,51 @@
+/* Habillage : accroche, chiffres, carton de fin, signature, barre de progression.
+   Tout tient dans les zones sûres (hors des bandes recouvertes par l'interface des réseaux). */
+#root { position: absolute; inset: 0; }
+
+/* Cartes (accroche et chiffres), en haut, au-dessus du visage. Claires ou sombres selon l'univers. */
+.carte {
+  position: absolute; left: var(--zone-cotes); right: var(--zone-cotes); top: calc(var(--zone-haut) + 20px);
+  display: flex; justify-content: center;
+}
+.carte__fond {
+  position: relative; overflow: hidden; max-width: 100%; text-align: center;
+  background-color: var(--carte-fond); background-image: var(--carte-image); background-size: var(--carte-taille);
+  border-radius: 44px; padding: 40px 52px 58px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.carte__fond::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: var(--lisere); }
+.accroche__texte { font-weight: var(--graisse-titres); line-height: 1.1; letter-spacing: -0.02em; color: var(--carte-texte); text-wrap: balance; }
+.accroche__texte em { font-style: normal; color: var(--carte-accent); }
+.chiffre__valeur { display: block; font-weight: var(--graisse-titres); line-height: 1; letter-spacing: -0.03em; color: var(--carte-accent); white-space: nowrap; }
+.chiffre__legende { display: block; margin-top: 18px; font-weight: var(--graisse-texte); font-size: 40px; line-height: 1.2; color: var(--carte-texte); text-wrap: balance; }
+
+/* Carton de fin : flotte sous le visage, au-dessus de l'interface */
+.fin { position: absolute; left: var(--zone-cotes); right: var(--zone-cotes); bottom: calc(var(--zone-bas) + 10px); }
+.fin__fond {
+  background-color: var(--nuit); background-image: var(--fond-image); background-size: var(--fond-taille);
+  border-radius: 56px; padding: 44px 40px 40px; text-align: center;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); border: 4px solid rgba(255, 255, 255, 0.14);
+  opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.fin__verbe { display: block; font-weight: var(--graisse-texte); font-size: 58px; line-height: 1.1; color: var(--blanc); }
+.fin__mot {
+  display: inline-block; margin: 22px 0 20px; padding: 14px 54px 12px; border-radius: 999px;
+  background: var(--accent); color: var(--sur-accent); font-weight: var(--graisse-titres); line-height: 1.05;
+  letter-spacing: 0.02em; will-change: transform;
+}
+.fin__suite { display: block; font-weight: var(--graisse-texte); font-size: 42px; line-height: 1.2; color: var(--accent-clair); text-wrap: balance; }
+.fin__marque { display: block; margin-top: 26px; font-weight: var(--graisse-texte); font-size: 28px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.72); }
+.fin__marque b { color: var(--accent); font-weight: inherit; }
+.fin__logo { display: block; height: 64px; margin: 26px auto 0; }
+
+/* Signature et barre de progression */
+.signature {
+  position: absolute; top: 128px; left: var(--zone-cotes);
+  padding: 12px 22px 10px; border-radius: 999px; background: var(--nuit);
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  font-weight: var(--graisse-texte); font-size: 26px; letter-spacing: 0.12em; color: var(--blanc);
+}
+.signature b { color: var(--accent); font-weight: inherit; }
+.signature img { display: block; height: 40px; }
+.barre { position: absolute; top: 0; left: 0; right: 0; height: 12px; background: rgba(255, 255, 255, 0.28); }
+.barre__plein { width: 100%; height: 100%; background: var(--accent); transform-origin: 0 50%; }
