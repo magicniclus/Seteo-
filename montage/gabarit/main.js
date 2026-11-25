@@ -87,9 +87,9 @@
       if (b.d < 0.05) {
         gsap.set(boite, { autoAlpha: 1 });
         tl.set(boite, { autoAlpha: 1 }, 0);
-      } else tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: b.mode === "derriere" ? 0.02 : 0.1, ease: "none" }, b.d);
+      } else tl.fromTo(boite, { autoAlpha: 0 }, { autoAlpha: 1, duration: b.mode === "derriere" || b.apres ? 0.02 : 0.1, ease: "none" }, b.d);
     }
-    tl.fromTo(cadre, { scale: 1.09 }, { scale: 1, duration: b.f - b.d, ease: "none" }, b.d);
+    if (b.zoom !== false) tl.fromTo(cadre, { scale: 1.09 }, { scale: 1, duration: b.f - b.d, ease: "none" }, b.d);
     tl.set(boite, { autoAlpha: 0 }, b.f);
   });
 

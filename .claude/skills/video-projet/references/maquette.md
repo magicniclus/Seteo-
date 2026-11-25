@@ -1,20 +1,9 @@
----
-name: video-chantier
-description: Monter une vidéo Portail Travaux sur un chantier précis, avec sa maquette 3D faite dans l'outil Dessin du site (maison, pièce, extérieur) et filmée selon le plan choisi (zoom sur une pièce, vue large, vue extérieure). Utiliser quand on donne les infos d'un chantier ou d'une demande de travaux (surface, pièces, type de travaux, budget) et qu'on veut une vidéo dessus, quand on demande une maquette ou un rendu 3D d'un projet, ou d'ajouter une vue 3D à une vidéo.
----
+# Maquettes 3D : la fiche, les règles d'agencement, les vues
 
-# Vidéo de chantier avec maquette 3D
+Comment construire et filmer la maquette d'un projet avec l'outil Dessin du site. Le skill
+`video-projet` dit quand et comment la poser dans la vidéo ; ici, tout ce qui concerne la maquette.
 
-On te donne les infos d'un chantier (et, le plus souvent, la vidéo où la personne en parle). Tu
-construis la maquette 3D du projet avec l'outil Dessin du site Portail Travaux, tu la filmes, et tu
-la poses dans la vidéo au moment où le chantier est décrit.
-
-Le montage lui-même (transcrire, couper, sous-titres, accroche, animations, rendu, relecture) est le
-skill `montage-video` : suis-le pour tout ce qui n'est pas dit ici. Les mêmes règles s'appliquent :
-la seule voix est celle de la vidéo, on ne fait pas dire à la personne ce qu'elle n'a pas dit, et
-**aucune donnée d'un client en clair** (nom, adresse, téléphone, e-mail, photo de façade reconnaissable).
-
-## Ce qu'il te faut
+## Avant de commencer
 
 1. **Les infos du chantier.** Type de travaux, pièces concernées, dimensions ou surface, équipements
    voulus, ce qu'il y a dehors (terrasse, piscine, clôture), budget si la personne le donne. S'il
@@ -38,7 +27,7 @@ la seule voix est celle de la vidéo, on ne fait pas dire à la personne ce qu'e
    cloud, le dépôt du site doit être accessible à la session : s'il ne l'est pas, ajoute-le
    (lecture seule suffit). On ne pousse jamais rien dans le dépôt du site depuis ici.
 
-## 1. Écrire la fiche du chantier
+## 1. Écrire la fiche de la maquette
 
 Un fichier `chantiers/<nom>.json` (le dossier n'est pas enregistré dans le dépôt, sauf
 `chantiers/exemples/` : une salle de bains, une cuisine avec îlot, un T3 avec jardin, à copier). **Jamais le nom du client ni son adresse dans la fiche ou dans son nom de
@@ -184,51 +173,6 @@ image de vue, et vérifie :
 - la maquette ressemble à ce que la personne a décrit (nombre de pièces, étage, forme du toit).
 
 Après le tournage, ouvre la planche `<nom>-<plan>-planche.jpg` (six images du mouvement).
-
-## 4. Poser la maquette dans la vidéo
-
-Dans `montage/projets/<id>/plan.json`, clé `"broll"`, au moment où le chantier est décrit :
-
-```json
-{"de": "m24", "a": "m38", "fichier": "broll/chantiers/salle-de-bain-6m2-piece-salle-de-bain.mp4", "mode": "carte"}
-```
-
-- `carte` : la maquette en haut, la personne visible dessous. C'est le mode normal. Écris sur la
-  carte ce qu'on voit et son budget (`"legende": "Cuisine · *17 000 €*"`) et signale que c'est une
-  illustration (`"mention": "Illustration 3D"`) : un artisan ne doit pas la prendre pour le vrai plan. Pour une vue
-  filmée en `"format": "vertical"`, utilise `"mode": "plein"` (la maquette prend tout l'écran).
-- Fais durer la vue autant que la phrase qui décrit le chantier (3 à 5 s) et filme-la à cette
-  durée : une vidéo plus courte que sa fenêtre se fige sur sa dernière image.
-- Enchaîne du large au serré quand il y a plusieurs vues : `exterieur`, puis `large`, puis `piece`.
-  Deux cartes bout à bout passent de l'une à l'autre en coupe franche.
-
-**Une vidéo existante + un projet à présenter** (« ajoute le projet n°2114 à ma vidéo ») : quand la
-personne ne parle pas du projet, pose-le là où son propos s'y prête (le plus souvent à la fin : « quand
-t'as un lead, tu l'appelles tout de suite » → voici un projet), dans cet ordre : bloc `demande` (numéro,
-ville, travaux, budgets donnés, client en `"flou": true`), puis une carte 3D par pièce avec son budget en
-légende, puis le carton de fin avec `"mot"` / `"verbe"` / `"suite"` pour l'appel (« Projet / N°2114 /
-Propose ton devis, c'est gratuit. Lien dans la bio »). Allonge la fin (`"reglages": {"gel_fin": 3.4}`,
-puis `couper.py`) pour qu'on ait le temps de lire le carton. Une copie du projet de montage
-(`montage/projets/<id>-projet-<n>`) garde la vidéo d'origine intacte.
-
-Ce qui va bien autour, avec les blocs de `montage-video` :
-- **la demande du client** : bloc `demande` (projet, surface, budget ; nom, téléphone, adresse en
-  `"flou": true`, jamais écrits) juste avant la maquette ;
-- **le budget** : une carte `chiffres` avec la fourchette que la personne donne. Jamais un prix
-  qu'elle ne dit pas, jamais un prix ferme (`CLAUDE.md`) ;
-- **les postes du chantier** : bloc `liste` ou `barres`, avec ses chiffres à elle.
-
-Ne mets pas la maquette pendant l'accroche ni pendant l'appel à l'action. Deux à trois vues par
-vidéo suffisent.
-
-## 5. Monter, vérifier, livrer
-
-Comme dans `montage-video` : `monter.py <id> --apercu`, puis `--rendu`, puis `yeux.py <id>` et
-`yeux.py <id> --autour <instants>` sur l'entrée et la sortie de chaque maquette.
-
-Dans le récap à la personne : quelles vues, sur quelles phrases, ce que la maquette reprend de ses
-infos et ce que tu as supposé (dimensions, équipements), et rappelle que tu ne peux pas écouter la
-vidéo. Quand tout est fini : `python machine/site_local.py arreter`.
 
 ## Si ça coince
 

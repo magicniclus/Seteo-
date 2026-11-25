@@ -195,11 +195,12 @@ phrase), piochés dans la banque `montage/ponctuations/` (`python machine/broll.
 chercher lui-même les films du domaine public. Pour un extrait d'Instagram ou d'un film récent, c'est
 toi qui lui donnes le fichier : un enregistrement d'écran suffit.
 
-**Vidéo de chantier en 3D** (skill `video-chantier` : *« voilà un chantier : salle de bains de 6 m²,
-douche à l'italienne, double vasque ; fais-moi un zoom sur la pièce »*) : Claude construit la maquette
-avec l'outil Dessin de ton site (`python machine/site_local.py demarrer` le lance sur la machine,
-avec des données fictives), l'aménage selon les règles d'usage et la filme selon le plan que tu
-choisis : zoom sur une pièce, vue large de l'intérieur, ou vue extérieure avec le toit et le jardin.
+**Vidéo de projet** (skill `video-projet`, à part : *« voilà ma vidéo, projet n°2114 à Montélimar,
+salle de bains 5 000 €, cuisine 17 000 € »*) : tu restes devant, détouré en bas de l'écran, et
+derrière toi il n'y a que le projet, du début à la fin : ses maquettes 3D, construites avec l'outil
+Dessin de ton site (`python machine/site_local.py demarrer` le lance sur la machine, avec des données
+fictives) et aménagées selon les règles d'usage, sa fiche, ses budgets, et l'appel « propose ton devis ».
+Pas d'extrait venu d'ailleurs.
 
 **Clients** : une demande de travaux se montre soit en fiche redessinée (bloc `demande`), soit en
 filmant ton outil avec `broll.py ecran --prive --flouter ...`. Dans les deux cas le nom, l'adresse,

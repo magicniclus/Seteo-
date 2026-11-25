@@ -28,9 +28,11 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
   et `config/univers/`. Toute vidéo montée le respecte : c'est ce qui fait qu'on nous reconnaît.
 - Le montage se fait avec le skill `montage-video`. Les extraits courts qui ponctuent une vidéo
   (gags de vieux films, extraits qu'on fournit) : skill `ponctuations`, banque dans `montage/ponctuations/`.
-- Une vidéo sur un chantier précis, avec sa maquette 3D faite dans l'outil Dessin du site (zoom sur
-  une pièce, vue large ou vue extérieure) : skill `video-chantier`. La maquette doit être crédible
-  (douche dans un angle, cuisine avec plan de travail continu et passages, lit tête au mur).
+- La vidéo d'un projet de travaux (numéro, ville, budgets, « propose ton devis ») : skill
+  `video-projet`, à part. Derrière la personne, rien que le projet (maquettes 3D faites dans l'outil
+  Dessin du site, fiche, budgets, appel) : pas d'extrait venu d'ailleurs, pas d'animation hors projet.
+  La maquette doit être crédible (douche dans un angle, cuisine avec plan de travail continu et
+  passages, lit tête au mur).
 
 ## Règles
 - On peut reprendre le **concept et le hook** d'une vidéo qui marche, jamais son design, ses

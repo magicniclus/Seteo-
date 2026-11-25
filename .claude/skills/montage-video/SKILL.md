@@ -1,6 +1,6 @@
 ---
 name: montage-video
-description: Monter un reel / TikTok / Short vertical Portail Travaux à partir d'une vidéo filmée au téléphone (transcription, coupe des blancs et des ratés, sous-titres mot à mot, accroche, chiffres, animations plein écran, plans de coupe, carton « Commente <MOT> », relecture). Utiliser quand on envoie ou mentionne une vidéo à monter, quand on demande de monter, éditer, refaire ou corriger une vidéo, d'ajouter une animation, ou de changer l'univers visuel (la DA) des vidéos. Pour les extraits de films ou d'Instagram qui ponctuent une vidéo, voir le skill ponctuations.
+description: Monter un reel / TikTok / Short vertical Portail Travaux à partir d'une vidéo filmée au téléphone (transcription, coupe des blancs et des ratés, sous-titres mot à mot, accroche, chiffres, animations plein écran, plans de coupe, carton « Commente <MOT> », relecture). Utiliser quand on envoie ou mentionne une vidéo à monter, quand on demande de monter, éditer, refaire ou corriger une vidéo, d'ajouter une animation, ou de changer l'univers visuel (la DA) des vidéos. Pour les extraits de films ou d'Instagram qui ponctuent une vidéo, voir le skill ponctuations. Pour la vidéo d'un projet de travaux (maquette 3D, budgets, « propose ton devis »), c'est le skill video-projet.
 ---
 
 # Montage vidéo vertical
@@ -104,8 +104,7 @@ Les décisions à prendre, dans cet ordre :
    scène », plus bas). Voir « Les blocs » ci-dessous.
 5. **Plans de coupe et ponctuations** : des images réelles sur ce qui est dit, et deux ou trois
    extraits courts pour relancer l'attention (étape 3 bis). `carte` laisse le visage
-   visible, `plein` le remplace. Quand la vidéo parle d'un chantier précis, sa maquette 3D faite
-   dans l'outil Dessin du site se prépare avec le skill `video-chantier`.
+   visible, `plein` le remplace.
 6. **Mots forts** (`emphase`) : 3 à 6 dans la vidéo, pas plus. Les chiffres et le mot-clé le sont déjà.
 7. **Carton de fin** : automatique dès que « commente » ou « tape » est dit. Adapte `suite` à la ressource
    promise (« et je t'envoie la checklist en DM »).
@@ -158,7 +157,7 @@ Comment se règle le coin (`"coin"` dans le plan) :
   tiennent au-dessus des sous-titres ; le carton de fin passe en haut.
 - **Il faut du contenu derrière elle tout le temps** : enchaîne blocs, plans plein écran et cartes
   sans trou (un trou laisse voir le fond de l'univers, uni). Pour une maquette 3D, filme-la en
-  `"format": "fond"` (skill `video-chantier`) : la pièce est dans le haut de l'image, au-dessus de la
+  `"format": "fond"` (skill `video-projet`, `references/maquette.md`) : la pièce est dans le haut de l'image, au-dessus de la
   personne. Le premier plan commence à 0 : c'est lui qu'on voit à la première image.
 - Le détourage se fait avec RobustVideoMatting (`machine/detourage.py`) : net, cheveux compris,
   environ 0,3 s par image (7 minutes pour 45 s de vidéo), gardé dans `assets/personne.webm` tant que

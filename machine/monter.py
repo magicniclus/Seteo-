@@ -573,9 +573,11 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         else:
             media = f'<video id="broll-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>'
         # "cadre" : la personne est déjà dans son cadre sous la carte, inutile de la rétrécir en plus
-        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre or bool(coin)})
-        # Deux cartes bout à bout : on passe de l'une à l'autre en coupe franche, sans sortie ni entrée animées
-        if mode == "carte" and len(brolls) > 1 and brolls[-2]["mode"] == "carte" and abs(brolls[-2]["f"] - d) < 0.1:
+        brolls.append({"id": f"broll-{k}", "d": round(d, 3), "f": round(f, 3), "mode": mode, "cadre": k in cartes_cadre or bool(coin),
+                       # "zoom": false : pas de lent zoom arrière sur l'image (une maquette 3D bouge déjà)
+                       "zoom": b.get("zoom", True)})
+        # Deux plans de même mode bout à bout : on passe de l'un à l'autre en coupe franche, sans sortie ni entrée animées
+        if mode in ("carte", "plein") and len(brolls) > 1 and brolls[-2]["mode"] == mode and abs(brolls[-2]["f"] - d) < 0.1:
             brolls[-2]["suite"] = True
             brolls[-1]["apres"] = True
         if mode == "carte" and f - d < 1.2:

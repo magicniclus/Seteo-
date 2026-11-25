@@ -15,7 +15,7 @@ Usage :
     python machine/chantier3d.py --catalogue                          # ce qu'on peut mettre dans une fiche
 
 Résultat : broll/chantiers/<nom>-<plan>.mp4 (+ .jpg et une planche), à poser dans plan.json ("broll").
-Le format de la fiche est décrit dans le skill video-chantier.
+Le format de la fiche est décrit dans le skill video-projet (references/maquette.md).
 """
 
 import argparse
@@ -245,10 +245,22 @@ def filmer(navigateur, scene: dict, reperes: dict, vue: dict, nom: str, apercu: 
     ips_rendu = int(vue.get("ips", 15 if fmt == "fond" else ips))
     images = max(2, round(float(vue.get("duree", 4)) * ips_rendu))
     with tempfile.TemporaryDirectory() as tmp:
-        page.mouse.move(L / 2, H / 2)
+        # Le clic droit glissé fait tourner la caméra. Une longue rotation ferait sortir la souris de
+        # l'image (la caméra s'arrêterait) : près du bord, on relâche et on reprend au centre.
+        x, fait, total_px = L / 2, 0.0, tour * par_degre
+        page.mouse.move(x, H / 2)
         page.mouse.down(button="right")
         for i in range(images):
-            page.mouse.move(L / 2 - tour * par_degre * i / (images - 1), H / 2)
+            voulu = total_px * i / (images - 1)
+            pas = voulu - fait
+            if not 40 <= x - pas <= L - 40:
+                page.mouse.up(button="right")
+                x = L / 2
+                page.mouse.move(x, H / 2)
+                page.mouse.down(button="right")
+            x -= pas
+            fait = voulu
+            page.mouse.move(x, H / 2)
             Path(f"{tmp}/{i:04d}.jpg").write_bytes(image_3d(page))
         page.mouse.up(button="right")
         contexte.close()
