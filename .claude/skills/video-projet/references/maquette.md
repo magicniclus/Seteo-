@@ -97,13 +97,26 @@ Deux sortes de maquettes.
 
   Une pièce se désigne par un point qui est dedans, une ouverture par un point sur son mur, un objet
   par son centre (le troisième nombre le fait tourner : 1800 = demi-tour).
+- **Un plan avec seulement `cloisons` et `pieces`** (ni `ouvertures` ni `objets`) : portes, fenêtres,
+  porte d'entrée, baie vitrée et meubles sont posés d'office, selon les règles d'agencement. C'est le
+  plus simple pour une maison sur mesure (une grande pièce de vie, des chambres sur le côté...).
+  `"ouvertures_en_plus": [[[6.25, 9.9], "baie_coulissante"]]` y ajoute des ouvertures (une deuxième
+  baie à côté de la première = une grande baie vitrée) ; une ouverture refusée est signalée.
+- `equipements` (à côté de `maison`) : l'équipement voulu par type de pièce, à la place de
+  l'équipement courant : `{"cuisine": [..., "ilot-repas"], "sejour": ["canape-angle", ...],
+  "salle_de_bain": [...]}`. Il vaut aussi pour la cuisine ouverte du séjour. Un îlot demande de la
+  place : dans une maison, mets la cuisine dans une grande pièce de vie (pas de pièce « cuisine »).
+  Les tabourets ne se placent pas autour de l'îlot (ils finissent contre un mur) : ne les demande pas.
 - `toit` : `deux_pans` (défaut), `quatre_pans`, `croupe`, `monopente`, `plate`, `mansarde`, ou `false`.
+  `false` : la maison sans toit, vue de dehors avec l'intérieur visible d'en haut (« je ne veux pas
+  voir la toiture »).
 - `exterieur` : `terrasse`, `piscine` (`true` ou une forme : `rectangle`, `ronde`, `ovale`,
   `haricot`, `L`, `couloir`, `hors_sol`), `allee`, `arbres` (un nombre, 4 au plus), `cloture`.
   `true` les place comme sur une vraie parcelle : l'allée mène à la porte d'entrée, la terrasse
   est devant la baie vitrée, la piscine au-delà de la terrasse avec 2 m de plage, les arbres
   derrière la maison (devant, ils la cacheraient à la caméra). Des points les placent où tu veux
-  (`"terrasse": [[4, 7.1], [9, 10.5]]`). `"parcelle"` : la marge de terrain autour de la maison, en
+  (`"terrasse": [[4, 7.1], [9, 10.5]]`, `"piscine": [[2.95, 17.4], "rectangle"]` : son centre et sa
+  forme). Une terrasse qui englobe la piscine donne une plage en bois tout autour. `"parcelle"` : la marge de terrain autour de la maison, en
   mètres (6 par défaut, 10,5 avec une piscine).
 
 Tout ce qu'on peut écrire (objets par catégorie, ouvertures, pièces, toits, piscines) :
@@ -151,7 +164,7 @@ Chaque entrée de `"vues"` donne une vidéo. Les réglages, tous facultatifs sau
 | `zoom` | 1.3 = plus près, 0.8 = plus loin | 1 |
 | `hauteur` | la caméra plus ou moins haut, en degrés au-dessus de l'horizon | 39 dehors, 45 en large, 52 sur une pièce |
 | `murs` | `"entiers"` : garder les murs de devant (on voit moins dedans) | abaissés |
-| `format` | `carte` (pour une carte dans la vidéo), `vertical` (plein écran), `carre`, `fond` (plein écran, la pièce dans le haut de l'image : pour la mise en scène `coin`, où la personne occupe le bas ; filmé à 15 images/s, environ 3 min pour 4 s) | `carte` |
+| `format` | `carte` (pour une carte dans la vidéo), `vertical` (plein écran), `carre`, `fond` (plein écran, la pièce dans le haut de l'image : pour la mise en scène `coin`, où la personne occupe le bas ; filmé à 15 images/s, environ 3 min pour 4 s), `partage` (la carte horizontale de l'écran partagé, 1240 × 738, 15 images/s : la maquette la remplit, rien à recadrer) | `carte` |
 | `nom` | un suffixe, pour filmer deux fois la même vue avec des réglages différents | |
 
 Une rotation lente se regarde mieux qu'un tour complet : 30 à 60° en 3 à 5 secondes.

@@ -298,8 +298,12 @@ const dire = (alertes: string[]) => alertes.forEach((a) => console.error(a));
 /**
  * Meubles de chaque pièce, posés selon les règles d'agencement (agencement.mts). Une maison sans
  * pièce « cuisine » reçoit une cuisine ouverte dans le séjour, sur le premier mur où elle tient.
+ * "equipements" dans la fiche d'une maison : l'équipement voulu par type de pièce
+ * ({"cuisine": [..., "ilot"]}), à la place de l'équipement courant ; il vaut aussi pour la cuisine
+ * ouverte du séjour.
  */
 function meublesAuto(n: Tout): Tout {
+  const voulus: Record<string, string[]> = fiche.equipements ?? {};
   const sansCuisine = !n.pieces.some((p: Tout) => p.type === 'cuisine');
   for (const piece of [...n.pieces]) {
     if (!PAR_DEFAUT[piece.type]) continue;
@@ -310,7 +314,7 @@ function meublesAuto(n: Tout): Tout {
       // Cuisine ouverte : la ligne complète si elle tient sur un mur, sinon une ligne courte.
       const courte = ['refrigerateur', 'evier-120', 'meuble-bas-60', 'plaque-60', 'hotte-60'];
       let faite = false;
-      for (const liste of [PAR_DEFAUT.cuisine!, courte]) {
+      for (const liste of [voulus.cuisine ?? PAR_DEFAUT.cuisine!, courte]) {
         const cote = (['fond', 'droite', 'gauche', 'devant'] as Cote[]).find(
           (c) => agencerCuisine(p, liste, d, { cote: c, essai: true }).evier !== null,
         );
@@ -321,7 +325,7 @@ function meublesAuto(n: Tout): Tout {
       }
       if (!faite) p.alertes.push('Aucun mur du séjour ne peut recevoir une cuisine : la maison est sans cuisine. Écris le plan à la main ("plan") ou prends un modèle avec cuisine.');
     }
-    agencer(p, piece.type, undefined, d);
+    agencer(p, piece.type, voulus[piece.type], d);
     n = p.niveau;
     dire(p.alertes);
   }
@@ -338,6 +342,18 @@ function amenager(n: Tout, plan: Tout): Tout {
     n = etape(d.typerPiece(n, piece.id, type), `pièce ${type}`);
   }
   n = revetir(n);
+  // Seulement les cloisons et les pièces : portes, fenêtres et meubles posés d'office, selon les règles.
+  // "ouvertures_en_plus" : des ouvertures ajoutées à celles d'office (une deuxième baie...), avant les
+  // meubles, qui en tiennent compte.
+  if (!plan.ouvertures && !plan.objets) {
+    n = ouverturesAuto(n);
+    for (const [point, type] of plan.ouvertures_en_plus ?? []) {
+      const avant = n;
+      n = ouvrir(n, P(point), type);
+      if (n === avant) console.error(`  ⚠ « ${type} » refusée en ${point} : pas de mur là, ou la place est prise (porte, fenêtre, angle).`);
+    }
+    return meublesAuto(n);
+  }
   for (const [point, type] of plan.ouvertures ?? []) n = ouvrir(n, P(point), type);
   for (const [id, point, tour] of plan.objets ?? []) n = meubler(n, id, P(point), tour);
   return n;

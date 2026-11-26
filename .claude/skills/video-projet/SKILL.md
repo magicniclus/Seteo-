@@ -254,7 +254,10 @@ design ni les textes.
   du haut.
 - **Par plan** : `titre` (la barre du haut, 4 à 6 mots, *astérisques* en couleur ; s'il ne change
   pas, la barre ne bouge pas), `badge` (le montant de ce qu'on voit), `legende` (la pièce).
-- **Le cadrage de la 3D** : la carte est horizontale, un rendu `fond` est vertical. `"entier": true`
+- **La 3D faite pour la carte** : filme les vues en `"format": "partage"` (horizontal, à la taille de
+  la carte) : elles la remplissent sans réglage. Une maison : vue `exterieur` (sans toit si on ne veut
+  pas la toiture : `"toit": false`) avec `"zoom": 1.5`, plus les pièces du projet en vue `piece`.
+- **Le cadrage d'une 3D déjà filmée en `fond`** : la carte est horizontale, un rendu `fond` est vertical. `"entier": true`
   prend un carré de l'image (la pièce, choisie par `"ancre_y": 0.15`) et le pose entier au milieu
   de la carte, les côtés remplis de la couleur du fond de la maquette ; `"recul": -0.04` resserre un
   peu. Rien n'est coupé, même quand la pièce tourne.

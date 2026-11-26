@@ -31,7 +31,9 @@ from atelier import BROLL, RACINE, da, ffmpeg
 from site_local import adresse, en_marche, reglages
 
 SORTIE = BROLL / "chantiers"
-FORMATS = {"carte": (1380, 990), "vertical": (1080, 1920), "carre": (1080, 1080), "fond": (1080, 2560)}
+FORMATS = {"carte": (1380, 990), "vertical": (1080, 1920), "carre": (1080, 1080), "fond": (1080, 2560),
+           # « partage » : la carte horizontale de l'écran partagé (820 x 488 à l'écran, filmée une fois et demie plus grande)
+           "partage": (1240, 738)}
 # « fond » : plan vertical plein écran où la maquette est dans le HAUT de l'image (mise en scène « coin » :
 # la personne occupe le bas). On filme une image plus haute et on n'en garde que le bas : le sujet,
 # centré dans l'image filmée, se retrouve aux deux tiers de la hauteur gardée en partant du bas.
@@ -242,7 +244,7 @@ def filmer(navigateur, scene: dict, reperes: dict, vue: dict, nom: str, apercu: 
     ips = da()["format"]["ips"]
     # Une image haute coûte cher à calculer : en « fond », 15 images par seconde suffisent pour une
     # rotation lente (chaque image est doublée à l'encodage).
-    ips_rendu = int(vue.get("ips", 15 if fmt == "fond" else ips))
+    ips_rendu = int(vue.get("ips", 15 if fmt in ("fond", "partage") else ips))
     images = max(2, round(float(vue.get("duree", 4)) * ips_rendu))
     with tempfile.TemporaryDirectory() as tmp:
         # Le clic droit glissé fait tourner la caméra. Une longue rotation ferait sortir la souris de
