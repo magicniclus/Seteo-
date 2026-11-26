@@ -153,7 +153,8 @@ autrement avec `"mise_en_scene"`.
   avec leur légende. Pas de bloc plein écran ni de carte de chiffre. Détail : skill `video-projet`, 3 bis.
 - **`partage`** : l'écran coupé en deux pendant toute la vidéo. En haut, sur fond papier, une barre
   de titre, une carte où passent les plans (pastille de montant, étiquette) et des encarts chiffrés ;
-  en bas, la personne détourée ; les sous-titres en bandeau sur la couture. C'est la mise en page
+  en bas, la vraie vidéo de la personne avec son décor (pas de détourage) ; les sous-titres en
+  bandeau sur la couture. C'est la mise en page
   préférée (26/11/2026). Détail : skill `video-projet`, 3 ter.
 
 Comment se règle le coin (`"coin"` dans le plan) :

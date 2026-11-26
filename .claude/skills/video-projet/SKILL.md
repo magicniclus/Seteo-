@@ -1,6 +1,6 @@
 ---
 name: video-projet
-description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : l'écran coupé en deux (en haut le projet sur fond papier, en bas la personne, les sous-titres sur la couture), ou la personne détourée devant le projet, et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
+description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : l'écran coupé en deux (en haut le projet sur fond papier, en bas la vraie vidéo de la personne, les sous-titres sur la couture), ou la personne détourée devant le projet, et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
 ---
 
 # Vidéo de projet
@@ -21,14 +21,15 @@ l'écran comme un présentateur (`coin`), ou au centre sous un carré animé (`v
    Jamais d'extrait de film, d'Instagram, de YouTube, de Pexels, d'écran d'un autre site, jamais de
    « ponctuation », jamais d'animation qui ne parle pas du projet (pas de liste de conseils, pas de
    barres de statistiques), même si la vidéo de départ en avait. On repart de zéro sur le contenu.
-2. **La personne à l'écran, tout le temps**, détourée sur le fond de la marque, avec des zooms sur
-   les coupes. Ses sous-titres restent : ce sont ses mots. Trois mises en scène au choix :
+2. **La personne à l'écran, tout le temps**, avec des zooms sur les coupes. Ses sous-titres
+   restent : ce sont ses mots. Trois mises en scène au choix :
    - **`partage`** (celle qu'on préfère, à faire par défaut) : l'écran coupé en deux. En haut, sur
      un fond papier, une barre de titre, la carte du projet (la 3D, la pastille du budget,
-     l'étiquette de la pièce) et un encart pour le chiffre clé ; en bas, elle ; les sous-titres en
-     bandeau sur la ligne qui sépare les deux. Voir 3 ter.
-   - **`coin`** : elle en bas, le buste contre le bord de l'écran, le projet en plein écran derrière
-     elle ; elle change de côté quand le contenu change.
+     l'étiquette de la pièce) et un encart pour le chiffre clé ; en bas, **sa vraie vidéo, avec son
+     décor, sans détourage** ; les sous-titres en bandeau sur la ligne qui sépare les deux. Voir 3 ter.
+     (Le détourage sur fond transparent a été jugé moche dans cette mise en page : ne le propose pas.)
+   - **`coin`** : elle détourée en bas, le buste contre le bord de l'écran, le projet en plein écran
+     derrière elle ; elle change de côté quand le contenu change.
    - **`vitrine`** : elle au centre, plus haut et plus présente ; au-dessus d'elle, le projet dans un
      carré encadré et légèrement animé (plaques décalées, coins de viseur, onglet du projet). À
      proposer quand on la trouve « trop en bas » ou quand on veut un rendu plus posé. Voir 3 bis.
@@ -226,7 +227,7 @@ pas sur son menton pendant les zooms (sinon `"zoom_coupe": 1.05`).
  │ │ [Cuisine]       ┌───────┐│ │  étiquette de la pièce ("legende")
  │ └─────────────────│ encart│┘ │  encart qui déborde ("encarts") : le nombre monte
  ══════ BANDEAU DES SOUS-TITRES ══  la couture
- │            (elle)            │  détourée, sur le fond de l'univers
+ │            (elle)            │  sa vraie vidéo, sur toute la largeur, avec son décor
  └──────────────────────────────┘
 ```
 
@@ -247,16 +248,18 @@ design ni les textes.
 - **Les encarts** : `{"de": 31.6, "titre": "Budget total", "valeur": "22 000 €", "detail": "Salle de bains + cuisine"}`
   (sans `"a"`, il reste jusqu'à la fin de la carte). Un chiffre seulement s'il est donné ou s'il est
   la somme de ceux qu'on t'a donnés.
-- **La personne** : elle ne dépasse jamais au-dessus de la couture. Sa vidéo de téléphone est souvent
-  un gros plan : on la détoure et on la pose, un peu réduite, sur le fond de l'univers. Filmée de
-  plus loin (le buste dans l'image, comme sur la référence), elle remplirait mieux le bas : dis-le
-  si le gros plan fait trop « tête posée ».
+- **La personne** : sa vraie vidéo remplit tout le bas, sur toute la largeur, avec son décor (pas de
+  détourage). Ses yeux se posent à `yeux_ecran` (1 370 px par défaut avec la couture à 1 040) ; ce
+  qui dépasse au-dessus de la couture passe sous le fond papier. Un selfie très serré ne tient pas en
+  entier : le haut du front passe sous la couture, et `"zoom_coupe": 1.05` dans `reglages` évite que
+  les zooms ne la collent à l'écran. Filmée d'un peu plus loin (le buste dans l'image), elle tiendrait
+  entière : dis-le. (`"detoure": true` existe encore, mais n'est plus voulu.)
 
 ```json
 {
   "mise_en_scene": "partage",
   "partage": {"entete": "Projet n°2114 · Montélimar", "mention": "Illustration 3D",
-              "couture": 1120, "echelle": 0.52, "sous_couture": 50},
+              "couture": 1040, "yeux_ecran": 1370},
   "broll": [
     {"de": 0, "a": 11.6, "fichier": "broll/chantiers/projet-2114-cuisine-piece-cuisine.mp4", "debut": 0,
      "ancre_y": 0.15, "entier": true, "recul": -0.04,
@@ -280,9 +283,9 @@ design ni les textes.
 ```
 
 Réglages : `couture` (hauteur de la ligne de séparation, en pixels : plus haut, plus de place pour
-elle), `echelle` (sa taille), `sous_couture` (l'écart entre la couture et le haut de sa tête),
-`taille_sous_titres` (60 par défaut). Sa bouche doit rester au-dessus de ~1 650 px (le nom du compte
-et la légende de la publication passent dessous) : regarde la planche.
+elle, moins pour la carte), `yeux_ecran` (où tombent ses yeux), `taille_sous_titres` (60 par
+défaut). Sa bouche doit rester au-dessus de ~1 650 px (le nom du compte et la légende de la
+publication passent dessous) : regarde la planche.
 
 ## 4. Monter, vérifier, livrer
 

@@ -343,17 +343,22 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # on reprend les hauteurs du visage dans l'image d'origine.
     coin = None
     if en_partage:
-        # Écran partagé : la couture (la ligne qui sépare le haut du bas) porte les sous-titres. La
-        # personne détourée est posée dans le bas, le haut de la tête juste sous la couture, sur le fond
-        # de l'univers ; elle ne dépasse jamais au-dessus de la couture.
+        # Écran partagé : la couture (la ligne qui sépare le haut du bas) porte les sous-titres. Dans le
+        # bas, la vraie vidéo de la personne, sur toute la largeur, avec son décor (par défaut : on ne la
+        # détoure pas). Ses yeux se posent à "yeux_ecran" ; ce qui dépasse au-dessus de la couture passe
+        # sous le fond papier du haut. "detoure": true : l'ancienne façon (détourée, réduite, sur le fond
+        # de l'univers, le haut de la tête "sous_couture" pixels sous la couture).
         rp = plan.get("partage", {})
         L = fmt["largeur"]
-        couture = int(rp.get("couture", 1120))
+        en_video = not rp.get("detoure", False)
+        couture = int(rp.get("couture", 1040 if en_video else 1120))
         s_coin = float(rp.get("echelle", 0.52))
         y_c = couture + float(rp.get("sous_couture", 50)) - (tete_y - decalage / H) * H * s_coin
         st.update(centre_y=couture, taille=int(rp.get("taille_sous_titres", 60)), mot_en_cours="couleur",
                   apparition="page", bandeau=True)
-        coin = {"s": s_coin, "y": round(y_c, 1), "yeux": round(yeux - decalage / H, 4),
+        yeux_bruts = (yeux - decalage / H) * H     # les yeux dans l'image d'origine, en pixels
+        coin = {"s": s_coin, "y": round(y_c, 1), "yeux": round(yeux - decalage / H, 4), "video": en_video,
+                "pousse": round(float(rp.get("yeux_ecran", couture + 330)) - yeux_bruts),
                 "panneau": round(L * (1 - s_coin) / 2, 1), "place": 0, "carte": 0,
                 "reglages": {**rp, "cote": "panneau", "alterner": False},
                 "coupe": round((couture - y_c) / s_coin, 1),   # le haut caché de la personne (pixels de l'image)
@@ -801,7 +806,9 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
     # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.
-    decale = f'<div class="decale{" decale--fondu" if decalage else ""}" style="transform:translateY({decalage}px)">'
+    # (écran partagé, vraie vidéo : l'image descend pour poser les yeux dans le bas de l'écran)
+    dy = coin["pousse"] if coin and coin.get("video") else decalage
+    decale = f'<div class="decale{" decale--fondu" if dy < 0 else ""}" style="transform:translateY({dy}px)">'
     if a_roll.exists():
         flou = ' class="plan--flou"' if detourage and fond == "flou" else ""
         prise = (f'<div id="plan"{flou}>{decale}<video id="a-roll" src="assets/a-roll.mp4" data-start="0" '
@@ -912,7 +919,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         personne = (f'\n      <div id="personne"><div id="plan-detoure">'
                     f'<div class="decale" style="transform:translateY({decalage}px)">{videos}</div></div></div>')
 
-    if coin:
+    if coin and not coin.get("video"):
         # La personne détourée sur toute la vidéo, le décor remplacé par le fond de l'univers. Elle
         # change de côté quand le contenu change (4 s d'écart au moins), sauf "alterner": false.
         fond_html = '\n      <div id="fond-univers" class="fond-univers"></div>'
@@ -935,8 +942,9 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     bords = "".join(f'\n      <div id="{w["bord"]}" class="cadre-bord" style="left:{w["rect"][0]}px;top:{w["rect"][1]}px;'
                     f'width:{w["rect"][2]}px;height:{w["rect"][3]}px"></div>' for w in cadres)
-    principal = {"duree": total, "visageY": coin["yeux"] if coin else r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
-                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin else None, "vitrine": vitrine, "partage": partage,
+    visage_zoom = ((coin["yeux"] * H + coin["pousse"]) / H if coin.get("video") else coin["yeux"]) if coin else r["visage_y"]
+    principal = {"duree": total, "visageY": round(visage_zoom, 4), "derriere": mots_derriere, "reduit": reduit,
+                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin and not coin.get("video") else None, "vitrine": vitrine, "partage": partage,
                  "broll": brolls, "cadres": [{k: v for k, v in w.items() if k != "rect"} for w in cadres],
                  "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
