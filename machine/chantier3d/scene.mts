@@ -189,13 +189,35 @@ function ouverturesAuto(n: Tout, rdc = true): Tout {
     const l = largeur(type);
     poser(choix.mur, type, choix.u1 - choix.u0 >= l + 300 ? choix.u0 + 150 + l / 2 : (choix.u0 + choix.u1) / 2);
   }
-  // Fenêtres, porte d'entrée, baie vitrée
+  // Fenêtres, porte d'entrée, baie vitrée. Avec une piscine (ou "entree": "arriere"), la porte d'entrée
+  // passe sur la façade de derrière, côté rue : la façade de devant, côté jardin, garde la baie, la
+  // terrasse et la piscine, et l'allée ne longe jamais la piscine.
   let entree = !rdc;
+  const entreeArriere = (fiche.entree ?? (fiche.exterieur?.piscine ? 'arriere' : 'devant')) === 'arriere';
+  const xDe = (a: Tout, t: number) => {
+    const m = a.mur, l = Math.hypot(m.b.x - m.a.x, m.b.y - m.a.y);
+    return m.a.x + ((m.b.x - m.a.x) / l) * t;
+  };
   const ordre = [...n.pieces].sort((a: Tout, b: Tout) => VIE.indexOf(b.type) - VIE.indexOf(a.type));
   for (const piece of ordre) {
     const dehors = aretes.filter((x) => x.piece === piece && x.mur.type === 'mur').sort((a, b) => b.t1 - b.t0 - (a.t1 - a.t0));
     const devant = dehors.find((x) => Math.abs(x.mur.a.y - x.mur.b.y) < 5 && Math.abs(x.mur.a.y - exterieur.y1) < 150);
     let fenetres = 0;
+    const derriere = dehors.find((x) => Math.abs(x.mur.a.y - x.mur.b.y) < 5 && Math.abs(x.mur.a.y - exterieur.y0) < 150);
+    if (devant && derriere && entreeArriere && VIE.includes(piece.type) && !entree) {
+      // Porte d'entrée derrière, au bout du mur le plus proche du centre de la maison (l'autre bout
+      // reste libre pour la cuisine) ; la baie vitrée centrée sur toute la façade de devant.
+      const lp = largeur('porte_entree');
+      const milieu = (exterieur.x0 + exterieur.x1) / 2;
+      const bout = Math.abs(xDe(derriere, derriere.t1) - milieu) < Math.abs(xDe(derriere, derriere.t0) - milieu);
+      // à 1,50 m de l'angle : la porte de la pièce voisine, souvent dans cet angle, garde sa place
+      poser(derriere.mur, 'porte_entree', bout ? derriere.t1 - 1500 - lp / 2 : derriere.t0 + 1500 + lp / 2);
+      entree = true;
+      if (piece.type === 'sejour' && devant.t1 - devant.t0 - 800 >= largeur('baie_coulissante')) {
+        poser(devant.mur, 'baie_coulissante', (devant.t0 + devant.t1) / 2);
+        fenetres++;
+      }
+    }
     if (devant && VIE.includes(piece.type) && !entree) {
       // La porte d'entrée dans l'angle, la baie vitrée centrée sur ce qui reste de façade.
       const lp = largeur('porte_entree');
@@ -302,8 +324,13 @@ const dire = (alertes: string[]) => alertes.forEach((a) => console.error(a));
  * ({"cuisine": [..., "ilot"]}), à la place de l'équipement courant ; il vaut aussi pour la cuisine
  * ouverte du séjour.
  */
+// Une maison est meublée SOBREMENT par défaut : la cuisine, les lits, les équipements de la salle de
+// bains, rien d'autre (un séjour meublé au hasard bouche les passages et fait faux). "meubles":
+// "complet" dans la fiche : l'équipement courant de chaque pièce.
+const SOBRE: Record<string, string[]> = { sejour: [], chambre: ['lit-160'], bureau: [], entree: [], couloir: [] };
+
 function meublesAuto(n: Tout): Tout {
-  const voulus: Record<string, string[]> = fiche.equipements ?? {};
+  const voulus: Record<string, string[]> = { ...(fiche.meubles === 'complet' ? {} : SOBRE), ...(fiche.equipements ?? {}) };
   const sansCuisine = !n.pieces.some((p: Tout) => p.type === 'cuisine');
   for (const piece of [...n.pieces]) {
     if (!PAR_DEFAUT[piece.type]) continue;
@@ -392,10 +419,16 @@ function exterieur(n: Tout, e: Tout, marge: number): Tout {
   const l = b.x1 - b.x0;
   const facade = b.y1 + 100;                       // nu extérieur de la façade de devant
   const porte = surFacade(n, ['porte_entree'], b.y1)[0];
+  const porteDerriere = porte ? undefined : surFacade(n, ['porte_entree'], b.y0)[0];
   const baie = surFacade(n, ['baie_coulissante', 'porte_fenetre'], b.y1)[0];
-  // Allée : 1,20 m de large, de la porte d'entrée jusqu'au bord de la parcelle.
-  const xp = porte?.x ?? b.x0 + l * 0.2;
-  const allee = e.allee === true ? [{ x: xp - 600, y: facade }, { x: xp + 600, y: b.y1 + marge }] : e.allee ? [P(e.allee[0]), P(e.allee[1])] : null;
+  // Allée : 1,20 m de large, de la porte d'entrée jusqu'au bord de la parcelle (derrière la maison
+  // quand l'entrée y est : côté rue, loin de la terrasse et de la piscine).
+  const xp = porte?.x ?? porteDerriere?.x ?? b.x0 + l * 0.2;
+  const allee = e.allee === true
+    ? porteDerriere
+      ? [{ x: xp - 600, y: b.y0 - marge }, { x: xp + 600, y: b.y0 - 100 }]
+      : [{ x: xp - 600, y: facade }, { x: xp + 600, y: b.y1 + marge }]
+    : e.allee ? [P(e.allee[0]), P(e.allee[1])] : null;
   if (allee) n = tenter(n, () => d.ajouterAllee(n, allee[0], allee[1]));
   // Terrasse : devant la baie, 1 m de plus de chaque côté, 3,50 m de profondeur ; jamais sur l'allée.
   let terrasse: { x0: number; x1: number; y1: number } | null = null;
@@ -404,7 +437,7 @@ function exterieur(n: Tout, e: Tout, marge: number): Tout {
       e.terrasse === true
         ? [{ x: (baie?.x ?? b.x0 + l * 0.65) - (baie?.l ?? 2400) / 2 - 1000, y: facade }, { x: (baie?.x ?? b.x0 + l * 0.65) + (baie?.l ?? 2400) / 2 + 1000, y: facade + 3500 }]
         : [P(e.terrasse[0]), P(e.terrasse[1])];
-    if (allee && e.terrasse === true) {
+    if (allee && !porteDerriere && e.terrasse === true) {
       const [g, dr] = [Math.min(allee[0].x, allee[1].x), Math.max(allee[0].x, allee[1].x)];
       if (a.x < dr + 300 && c.x > g - 300) {
         if ((baie?.x ?? 0) > xp) a = { ...a, x: Math.max(a.x, dr + 300) };
@@ -429,14 +462,16 @@ function exterieur(n: Tout, e: Tout, marge: number): Tout {
       point = devant + taille[1]! / 2 <= b.y1 + marge - 800
         ? { x: Math.min(Math.max(cx, b.x0 - marge + taille[0]! / 2 + 800), b.x1 + marge - taille[0]! / 2 - 800), y: devant }
         : { x: xp < b.x0 + l / 2 ? b.x1 + 2000 + taille[0]! / 2 : b.x0 - 2000 - taille[0]! / 2, y: b.y1 - taille[1]! / 2 };
-      if (!Array.isArray(e.piscine) && point.y === devant && allee) {
+      if (!Array.isArray(e.piscine) && point.y === devant && allee && !porteDerriere) {
         const [g, dr] = [Math.min(allee[0].x, allee[1].x), Math.max(allee[0].x, allee[1].x)];
         if (point.x - taille[0]! / 2 < dr + 800 && point.x + taille[0]! / 2 > g - 800)
           point = { ...point, x: xp < (b.x0 + b.x1) / 2 ? dr + 800 + taille[0]! / 2 : g - 800 - taille[0]! / 2 };
       }
     }
+    // "piscine": [[x, y], "rectangle", [longueur, largeur]] : sa taille sur mesure, en mètres
+    const cadre = Array.isArray(e.piscine) && Array.isArray(e.piscine[2]) ? { longueur: mm(e.piscine[2][0]), largeur: mm(e.piscine[2][1]) } : {};
     const avant = n.exterieur.piscines.length;
-    n = tenter(n, () => d.ajouterPiscine(n, point, forme, ctx));
+    n = tenter(n, () => d.ajouterPiscine(n, point, forme, ctx, cadre));
     if (n.exterieur.piscines.length === avant) console.error('La piscine ne tient pas sur la parcelle à cet endroit : agrandis "parcelle" ou donne sa place.');
   }
   // Les arbres restent derrière et à droite : devant à gauche, ils cacheraient la maison à la caméra.
@@ -446,7 +481,10 @@ function exterieur(n: Tout, e: Tout, marge: number): Tout {
     { x: b.x0 + l * 0.5, y: b.y0 - marge * 0.6 },
     { x: b.x1 + marge * 0.7, y: b.y0 + (b.y1 - b.y0) * 0.35 },
   ];
-  const arbres: Pt[] = Array.isArray(e.arbres) ? e.arbres.map(P) : coins.slice(0, Number(e.arbres ?? 0));
+  // jamais d'arbre sur l'allée : un coin trop près d'elle (rayon d'un arbre + 1 m) est sauté
+  const libre = (c: Pt) => !allee || Math.abs(c.x - (allee[0].x + allee[1].x) / 2) > Math.abs(allee[1].x - allee[0].x) / 2 + 3000
+    || c.y < Math.min(allee[0].y, allee[1].y) - 3000 || c.y > Math.max(allee[0].y, allee[1].y) + 3000;
+  const arbres: Pt[] = Array.isArray(e.arbres) ? e.arbres.map(P) : coins.filter(libre).slice(0, Number(e.arbres ?? 0));
   for (const a of arbres) n = tenter(n, () => d.ajouterVegetal(n, a, 'arbre', ctx, { aimant: false }));
   if (e.cloture) {
     const type = e.cloture === true ? 'grillage' : e.cloture;
@@ -554,6 +592,24 @@ if (fiche.piece) {
     if (fiche.toit !== false) scene = etape(d.toitureAutomatique(scene, fiche.toit ?? 'deux_pans'), 'toit');
   }
 }
+
+// ----- Menuiseries visibles : des portes blanches sur des murs blancs ne se voient pas (la maquette
+// fait « pas finie »). Portes intérieures en bois, porte d'entrée, baies et fenêtres en alu anthracite.
+// "menuiseries" dans la fiche pour d'autres teintes : {"portes": "#a0714a", "exterieur": "#2f3437"}.
+const TEINTES = { portes: '#9a6a43', exterieur: '#30353a', ...(fiche.menuiseries ?? {}) };
+const INTERIEURES = ['porte', 'porte_double', 'porte_coulissante', 'porte_galandage', 'porte_galandage_double', 'porte_pivot'];
+scene = {
+  ...scene,
+  niveaux: scene.niveaux.map((n: Tout) => ({
+    ...n,
+    ouvertures: n.ouvertures.map((o: Tout) =>
+      INTERIEURES.includes(o.type)
+        ? { ...o, materiau: 'bois', couleur: TEINTES.portes, remplissage: o.remplissage ?? 'cassettes' }
+        : o.type === 'ouverture_libre' || o.type === 'arche'
+          ? o
+          : { ...o, materiau: 'alu', couleur: TEINTES.exterieur }),
+  })),
+};
 
 // ----- Les repères pour la caméra (mêmes calculs que la vue 3D du site : cadre du niveau, marge de 3 m)
 const rdc = scene.niveaux[0];

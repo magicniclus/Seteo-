@@ -108,6 +108,11 @@ plusieurs passages dedans, chacun montre un autre angle.
 - Le format `fond` coûte cher : environ 1,5 s de calcul par image, à 15 images par seconde, soit
   5 à 6 minutes pour 22 s. Lance les tournages en tâche de fond pendant que tu écris le plan.
 - Pour une maison (extension, toiture, façade) : vue `exterieur` ou `large`, même format.
+- **Règles imposées à chaque maquette** (détail : `references/maquette.md`, « Règles imposées ») :
+  une porte pour chaque pièce et une porte d'entrée, bien visibles ; jamais d'allée à côté de la
+  piscine (avec une piscine, l'entrée et l'allée sont derrière, côté rue) ; une maison n'est pas
+  meublée (la cuisine, les lits, la salle de bains, c'est tout) ; si on demande des meubles, des
+  zones bien séparées (cuisine, salle à manger, salon) sans rien dans les passages.
 
 ```bash
 python machine/chantier3d.py chantiers/projet-2114-cuisine.json --apercu   # vue de dessus + une image, à vérifier

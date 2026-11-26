@@ -128,6 +128,31 @@ python machine/chantier3d.py --catalogue
 **Fidélité** : la maquette illustre le chantier, ce n'est pas le plan de la vraie maison. Dans le
 récap, dis ce qui vient des infos données et ce que tu as supposé.
 
+### Règles imposées (toujours, sans qu'on les redemande)
+
+Ce que la personne a demandé une fois pour toutes. Le script les applique d'office ; ne les défais
+pas dans une fiche.
+
+1. **Une porte pour chaque pièce, et une porte d'entrée pour la maison.** Les portes se voient :
+   portes intérieures en bois, porte d'entrée, baies et fenêtres en alu anthracite (des portes
+   blanches sur des murs blancs font « pas fini »). Autre teinte : `"menuiseries": {"portes":
+   "#a0714a", "exterieur": "#2f3437"}`.
+2. **Jamais d'allée à côté de la piscine.** Dès qu'il y a une piscine, la porte d'entrée et l'allée
+   passent derrière la maison, côté rue ; la façade de devant, côté jardin, garde la baie vitrée,
+   la terrasse et la piscine. Aucun arbre sur l'allée. (`"entree": "devant"` force l'ancienne place.)
+3. **Une maison n'est pas meublée** : la cuisine (avec son îlot si demandé), les lits, les
+   équipements de la salle de bains, et c'est tout. Pas de canapé, de table, d'armoire posés au
+   hasard. (`"meubles": "complet"` seulement si on le demande.)
+4. **Si on demande des meubles** (maison ou appartement) : des zones bien séparées dans la pièce de
+   vie ouverte, dans cet ordre logique : la cuisine contre un mur avec son îlot, la salle à manger
+   (une grande table) entre la cuisine et le salon, le salon (canapé, table basse) côté baie. Rien
+   devant une porte ni dans le passage vers une chambre : on doit pouvoir traverser la pièce. Si le
+   script ne sait pas le faire proprement, ne meuble pas et dis-le.
+5. **Une piscine qui fait toute la longueur** se demande avec sa taille :
+   `"piscine": [[8, 16.3], "rectangle", [15, 4]]` (centre, forme, longueur × largeur en mètres),
+   posée dans une terrasse qui la borde de tous les côtés.
+6. **« Je ne veux pas voir la toiture »** : `"toit": false`.
+
 ### Une maquette crédible
 
 Une maquette fausse se voit tout de suite (une douche au milieu de la pièce, un évier collé au
@@ -144,6 +169,9 @@ les objets à la main sans les respecter.
 | Maison | Une porte par pièce, vers la pièce de vie, dans un angle ; une fenêtre par pièce sur son mur extérieur ; pas de fenêtre dans un WC ; porte d'entrée dans l'angle de la façade de devant, baie vitrée sur le séjour. |
 
 Ce que tu vérifies toi-même, sur la vue de dessus (`<nom>-plan.jpg`) avant tout tournage :
+- chaque pièce a sa porte, la maison a sa porte d'entrée, et deux portes ne se gênent pas dans un
+  même angle ;
+- l'allée va de la porte d'entrée à la rue sans longer la piscine, et rien n'est posé dessus ;
 - les dimensions annoncées sont réalistes (une douche à l'italienne fait 1,20 × 0,90 m au moins, un
   îlot demande une cuisine de 4,5 × 4 m environ, une salle de bains avec baignoire 2,2 × 1,9 m) ;
 - chaque pièce a sa porte et on peut y entrer sans traverser une chambre ;
