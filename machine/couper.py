@@ -17,8 +17,28 @@ Usage :
 import argparse
 import sys
 
-from atelier import (PAS, REC709, RACINE, a_du_son, afficher_phrases, cadrage, da, duree, ecouter, ecrire, est_hdr,
-                     ffmpeg, lire, projet, silences_du_son)
+from atelier import (MONTAGE, PAS, REC709, RACINE, a_du_son, afficher_phrases, cadrage, da, duree, ecouter, ecrire,
+                     est_hdr, ffmpeg, lancer, lire, projet, silences_du_son)
+
+# Débruitage de la voix : RNNoise (filtre arnndn de ffmpeg), un réseau entraîné à garder la parole et à
+# retirer le reste (ventilation, clim, rue, ronflement). Le modèle (300 Ko) est téléchargé au premier
+# usage dans montage/modeles/ (pas enregistré dans le dépôt).
+MODELE_VOIX = MONTAGE / "modeles" / "rnnoise-std.rnnn"
+URL_VOIX = "https://raw.githubusercontent.com/richardpl/arnndn-models/master/std.rnnn"
+
+
+def filtre_debruitage(reglage) -> str:
+    """"voix" : RNNoise (le bruit de fond baisse d'une dizaine de dB, la voix bouge de moins de 1 dB) ;
+    un nombre : réduction douce d'un souffle régulier (afftdn, en dB) ; 0 : rien."""
+    if reglage == "voix":
+        if not MODELE_VOIX.exists():
+            MODELE_VOIX.parent.mkdir(parents=True, exist_ok=True)
+            print("Téléchargement du modèle de débruitage de la voix (300 Ko, une seule fois)...")
+            lancer(["curl", "-sSL", "-o", MODELE_VOIX, URL_VOIX])
+        return f"aresample=48000,arnndn=m='{MODELE_VOIX}',"
+    if reglage:
+        return f"afftdn=nr={float(reglage)}:nf=-45,"
+    return ""
 
 
 def plages_a_garder(mots: list[dict], retirer: list[tuple], r: dict, duree_rush: float) -> list[dict]:
@@ -105,6 +125,8 @@ def main() -> None:
     if (dossier / "plan.json").exists():
         propres = lire(dossier / "plan.json").get("reglages", {})
         rythme.update({k: v for k, v in propres.items() if k in rythme})
+        if "debruitage" in propres:   # le débruitage, vidéo par vidéo
+            charte["son"]["debruitage"] = propres["debruitage"]
         if a.silence is not None:
             rythme["silence_max"] = a.silence
     trans = lire(dossier / "transcription.json")
@@ -147,8 +169,7 @@ def main() -> None:
                    f"tpad=stop_mode=clone:stop_duration={gel}[v]")
     sorties = ["-map", "[v]"]
     if son:
-        bruit = charte["son"].get("debruitage", 0)  # souffle, ventilation : réduction douce, en dB
-        nettoyage = f"afftdn=nr={bruit}:nf=-45," if bruit else ""
+        nettoyage = filtre_debruitage(charte["son"].get("debruitage", 0))   # bruit de fond derrière la voix
         filtres.append(f"[ac]highpass=f=80,{nettoyage}loudnorm=I={charte['son']['volume_cible_lufs']}:TP=-1.5:LRA=11,"
                        f"apad=pad_dur={gel},aresample=48000[a]")
         sorties += ["-map", "[a]", "-c:a", "aac", "-b:a", "192k"]

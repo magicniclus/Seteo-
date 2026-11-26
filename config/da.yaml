@@ -67,7 +67,9 @@ habillage:
 son:
   volume_cible_lufs: -14    # niveau standard des réseaux
   musique_volume: 0.10      # musique de fond très en dessous de la voix
-  debruitage: 0             # 0 = rien ; 8 à 12 si on entend un souffle ou une ventilation derrière la voix
+  debruitage: voix          # voix = RNNoise : retire le bruit de fond (clim, ventilation, rue) sans toucher
+                            # la voix ; un nombre (8 à 12) = réduction douce d'un souffle ; 0 = rien.
+                            # Se règle aussi vidéo par vidéo ("debruitage" dans les "reglages" du plan).
 
 # Textes du carton de fin selon le réseau (le mot-clé du post s'affiche entre les deux)
 carton_fin:

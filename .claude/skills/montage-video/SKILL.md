@@ -68,6 +68,11 @@ python machine/couper.py <id> --retirer 5.4-10.9 31.2-33
   chaque coupe se pose à l'instant le plus calme près du mot (pas au milieu d'une syllabe qui traîne).
 - Whisper n'écrit pas les « euh ». Une plage `--retirer` qui ne contient aucun mot est coupée telle
   quelle : c'est comme ça qu'on enlève une hésitation restée entre deux mots.
+- **Bruit de fond** (clim, ventilation, rue) : il est retiré à la coupe, par défaut, par un débruiteur
+  fait pour la voix (RNNoise, `son.debruitage: voix` dans `config/da.yaml`) : une dizaine de dB de
+  bruit en moins, la voix presque intacte. Vidéo par vidéo : `"debruitage"` dans les `reglages` du
+  plan (`"voix"`, un nombre de 8 à 12 pour un simple souffle, ou `0`), puis recoupe. Si on entend
+  encore du bruit, ou si la voix sonne « sous l'eau », dis-le : ça se règle.
 - Tu ne peux pas écouter la vidéo : dis-le, et demande à la personne de vérifier les raccords à
   l'oreille. Si un mot est mangé ou s'il reste un « euh », elle te donne l'endroit et tu recoupes.
 - Le script affiche le texte final avec le numéro de chaque mot (`12:devis`). Ces numéros servent de

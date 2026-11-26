@@ -270,10 +270,10 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     fmt, c = charte["format"], charte["couleurs"]
     # "reglages" du plan : mêmes noms que dans config/da.yaml, pour CETTE vidéo seulement
     regl = plan.get("reglages", {})
-    inconnus = [k for k in regl if k not in charte["rythme"] and k not in charte["sous_titres"]]
+    inconnus = [k for k in regl if k not in charte["rythme"] and k not in charte["sous_titres"] and k not in charte["son"]]
     if inconnus:
         sys.exit(f"plan.json : réglage(s) inconnu(s) {inconnus}. Possibles : "
-                 f"{sorted({**charte['rythme'], **charte['sous_titres']})}")
+                 f"{sorted({**charte['rythme'], **charte['sous_titres'], **charte['son']})}")
     r = {**charte["rythme"], **{k: v for k, v in regl.items() if k in charte["rythme"]}}
     st = {**charte["sous_titres"], **{k: v for k, v in regl.items() if k in charte["sous_titres"]}}
     zs, hab, dv = charte["zones_sures"], charte["habillage"], derives(charte)
