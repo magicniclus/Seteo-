@@ -34,6 +34,8 @@
   letter-spacing: 0.02em; will-change: transform;
 }
 .fin__suite { display: block; font-weight: var(--graisse-texte); font-size: 42px; line-height: 1.2; color: var(--accent-clair); text-wrap: balance; }
+/* la partie entre *astérisques* de la phrase du carton (« *Lien dans la bio* ») : en blanc, en gras, soulignée de la couleur */
+.fin__suite em { font-style: normal; font-weight: var(--graisse-titres); color: var(--blanc); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 5px; text-underline-offset: 8px; }
 .fin__marque { display: block; margin-top: 26px; font-weight: var(--graisse-texte); font-size: 28px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.72); }
 .fin__marque b { color: var(--accent); font-weight: inherit; }
 .fin__logo { display: block; height: 64px; margin: 26px auto 0; }

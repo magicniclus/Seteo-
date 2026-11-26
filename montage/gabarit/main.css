@@ -145,7 +145,8 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 .vitrine__coin--bd { right: 0; bottom: 0; border-right-width: 8px; border-bottom-width: 8px; border-bottom-right-radius: 22px; }
 /* l'onglet, à cheval sur le bord du haut */
 .vitrine__onglet {
-  position: absolute; left: 50%; top: 0; translate: -50% -50%; display: flex;   /* translate : main.js anime transform */ align-items: center; gap: 12px;
+  position: absolute; left: 0; right: 0; margin-inline: auto; width: max-content; top: -30px;   /* pas de translate : GSAP anime y */
+  display: flex; align-items: center; gap: 12px;
   padding: 11px 26px 13px 20px; border-radius: 999px; background: var(--accent); color: var(--sur-accent); white-space: nowrap;
   font-weight: var(--graisse-titres); font-size: 32px; line-height: 1.1; letter-spacing: -0.01em; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
@@ -198,8 +199,10 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 }
 .partage-titre__icone svg { width: 40px; height: 40px; display: block; }
 .partage-titre__textes { position: relative; flex: 1; height: 100%; }
+/* centré par flex, pas par translate : GSAP reprend le translate CSS dans son « y » et l'écrase
+   quand il anime le titre (le texte retombait alors sous le milieu de la barre) */
 .partage-titre__texte {
-  position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%;   /* translate : main.js anime transform */
+  position: absolute; inset: 0; display: flex; align-items: center;
   color: var(--encre); font-weight: var(--graisse-titres); line-height: 1.1; letter-spacing: -0.02em; white-space: nowrap;
   opacity: 0; visibility: hidden; will-change: transform, opacity;
 }

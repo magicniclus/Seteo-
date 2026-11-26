@@ -144,6 +144,9 @@ Le contenu doit couvrir **toute** la durée, sans trou (un trou laisse voir le f
   passages d'une même pièce se suivent dans le film (0 → 5,15, puis 5,15 → 15,65...), pour ne jamais
   montrer deux fois le même angle.
 - Pas de légende pendant l'accroche ni pendant le carton de fin, qui occupent le haut de l'écran.
+- Dans la phrase du carton de fin, « Lien dans la bio » ressort d'office (en blanc, gras, souligné
+  de la couleur) : c'est l'action à faire. Une autre partie à faire ressortir : entre *astérisques*
+  dans `suite`.
 - Les enchaînements se règlent seuls : un plan 3D reste 0,3 s sous le suivant (jamais d'image vide),
   une fiche monte par-dessus la 3D et repart en la découvrant. Écris des fenêtres bout à bout, sans
   chevauchement, et ajoute `"zoom": false` sur les plans 3D (la caméra bouge déjà).

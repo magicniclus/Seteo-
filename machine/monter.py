@@ -550,11 +550,17 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             marque = f'<img class="fin__logo" src="assets/{e(Path(logo).name)}" alt="">'
         else:
             marque = f'<span class="fin__marque">{signature}</span>'
+        # « *Lien dans la bio* » : la partie entre astérisques ressort (habillage.css, .fin__suite em)
+        # (sans astérisques, « lien dans la bio » / « dans ma bio » ressort d'office : c'est l'action à faire)
+        suite_brute = cf.get('suite') or variante['suite']
+        if "*" not in suite_brute:
+            suite_brute = re.sub(r"((?:le )?lien (?:est )?dans (?:la|ma) bio)", r"*\1*", suite_brute, flags=re.I)
+        suite_fin = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(suite_brute)))
         bloc_fin = f"""
     <div id="fin" class="fin"{f' style="top:{(zs["haut"] + coin["partage"]["couture"]) // 2 - 190 if en_partage else zs["haut"] + 40}px;bottom:auto"' if coin else ''}><div class="fin__fond">
       <span class="fin__verbe">{e(typo(cf.get('verbe') or variante['verbe']))}</span>
       <span id="fin-mot" class="fin__mot" style="font-size:{taille}px">{e(typo(mot_fin))}</span>
-      <span class="fin__suite">{e(typo(cf.get('suite') or variante['suite']))}</span>
+      <span class="fin__suite">{suite_fin}</span>
       {marque}
     </div></div>"""
 
@@ -765,7 +771,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
                 taille = min(46, int((g["largeur"] - 150) / (0.56 * max(n, 1))))
                 texte = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(titre)))
                 en_titre += (f'<span id="partage-titre-{len(titres) + 1}" class="partage-titre__texte" '
-                             f'style="font-size:{taille}px">{texte}</span>')
+                             f'style="font-size:{taille}px"><span>{texte}</span></span>')   # (span : garde les espaces en flex)
                 titres.append({"id": f"partage-titre-{len(titres) + 1}", "d": round(d, 3), "texte": titre})
             items.append(item)
         fin_p = items[-1]["f"]
