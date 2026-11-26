@@ -332,8 +332,42 @@ export function agencerCuisine(
     if (ou === 'bout') ligne.push(`meuble-bas-${taille / 10}`);
     else ligne.splice(ligne.indexOf(evier), 0, `meuble-bas-${taille / 10}`);
   }
+  // Évier sous la fenêtre. Dans une maison, la fenêtre est percée avant la cuisine : si l'évier ne
+  // tombe pas sous une vitre de ce mur, on essaie la ligne dans l'autre sens, puis glissée, pour qu'il
+  // y tombe ; jamais la plaque (et sa hotte) devant une fenêtre.
+  const tient = (l: string[], s0: number) => {
+    let x = s0;
+    for (const id of l) {
+      const cat = dims(id);
+      if (!piece.possible(c, x, cat.l, cat.p, { libre: 900, h: cat.h, sur: l })) return false;
+      x += cat.l;
+    }
+    return true;
+  };
+  const centreDe = (l: string[], s0: number, id: string) =>
+    s0 + l.slice(0, l.indexOf(id)).reduce((t, x) => t + dims(x).l, 0) + dims(id).l / 2;
+  const vitres = piece.baies.filter((b) => b.cote === c && !b.porte);
+  const sousVitre = (x: number) => vitres.some((v) => x > v.de && x < v.a);
+  const plaqueDevantVitre = (l: string[], s0: number) => {
+    const x = centreDe(l, s0, plaque), lp = dims(plaque).l;
+    return vitres.some((v) => x + lp / 2 > v.de && x - lp / 2 < v.a);
+  };
+  let depart = 0;
+  if (vitres.length && (!sousVitre(centreDe(ligne, 0, evier)) || plaqueDevantVitre(ligne, 0))) {
+    const inverse = [...ligne].reverse();
+    const reste = longueurMur - total();
+    const essais: [string[], number][] = [[inverse, 0], [ligne, reste], [inverse, reste]];
+    for (const v of vitres)
+      for (const l of [ligne, inverse])
+        essais.push([l, Math.min(Math.max((v.de + v.a) / 2 - centreDe(l, 0, evier), 0), reste)]);
+    const bon = essais.find(([l, s0]) => sousVitre(centreDe(l, s0, evier)) && !plaqueDevantVitre(l, s0) && tient(l, s0));
+    if (bon) {
+      ligne.splice(0, ligne.length, ...bon[0]);
+      depart = bon[1];
+    } else if (plaqueDevantVitre(ligne, 0)) dire('Cuisine : la plaque tombe devant une fenêtre et aucune autre place ne convient : déplace la fenêtre ou la cuisine.');
+  }
   // Essai à blanc : chaque élément tient-il (porte, débattement, fenêtre devant un meuble trop haut) ?
-  let s = 0;
+  let s = depart;
   for (const id of ligne) {
     const cat = dims(id);
     if (!piece.possible(c, s, cat.l, cat.p, { libre: 900, h: cat.h, sur: ligne })) {
@@ -343,7 +377,7 @@ export function agencerCuisine(
     s += cat.l;
   }
   if (o.essai) return { evier: 1 };
-  s = 0;
+  s = depart;
   let centreEvier: number | null = null;
   let posePlaque: Pose | null = null;
   const posesBas: Pose[] = [];

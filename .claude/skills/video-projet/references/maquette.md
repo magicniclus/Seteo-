@@ -152,6 +152,9 @@ pas dans une fiche.
    `"piscine": [[8, 16.3], "rectangle", [15, 4]]` (centre, forme, longueur × largeur en mètres),
    posée dans une terrasse qui la borde de tous les côtés.
 6. **« Je ne veux pas voir la toiture »** : `"toit": false`.
+7. **L'évier sous la fenêtre, jamais la plaque.** Dans une maison, la fenêtre est percée avant la
+   cuisine : le script retourne ou glisse la ligne pour que l'évier tombe sous la vitre (la plaque
+   et sa hotte restent sur un plein de mur). Vérifie-le sur la vue de la pièce.
 
 ### Une maquette crédible
 
