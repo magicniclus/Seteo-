@@ -795,13 +795,18 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         maison = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2V20a1 1 0 0 1-1 1h-5v-6h-5v6'
                   'h-5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>')
         mention = f'<span class="partage-carte__mention">{e(typo(rp["mention"]))}</span>' if rp.get("mention") else ""
+        # Le numéro du projet, en permanence en tête de la carte : on sait toujours sur quel dossier
+        # proposer son devis (le carton de fin le reprend en grand)
+        numero = (f'<span id="partage-numero" class="partage-carte__numero">Projet n°{e(str(rp["numero"]))}</span>'
+                  if rp.get("numero") else "")
+        point = '<span id="partage-point" class="partage-carte__point"></span>'   # sans numéro : un point qui clignote
         bloc_broll = (f'\n      <div id="partage-haut" class="partage-haut" style="height:{g["couture"]}px"></div>'
                       f'\n      <div id="partage-titre" class="partage-titre" style="left:{g["x"]}px;top:{g["titre_y"]}px;'
                       f'width:{g["largeur"]}px;height:{g["titre_h"]}px"><span id="partage-icone" class="partage-titre__icone">'
                       f'{maison}</span><span class="partage-titre__textes">{en_titre}</span></div>'
                       f'\n      <div id="partage-carte" class="partage-carte" style="left:{g["x"]}px;top:{g["carte_y"]}px;'
                       f'width:{g["largeur"]}px;height:{g["carte_h"]}px"><div class="partage-carte__entete">'
-                      f'<span id="partage-point" class="partage-carte__point"></span>'
+                      f'{numero or point}'
                       f'<span class="partage-carte__nom">{e(typo(rp.get("entete", "")))}</span>{mention}</div>'
                       f'<div id="partage-ecran" class="partage-carte__ecran">{dedans}{dessus}</div></div>'
                       f'{html_encarts}'

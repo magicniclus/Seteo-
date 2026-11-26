@@ -260,8 +260,13 @@ design ni les textes.
   d'`accroche` (le titre du premier plan en tient lieu). Les plans se suivent bout à bout jusqu'au
   carton de fin ; le titre, la carte et les encarts s'en vont juste avant lui, qui se pose au milieu
   du haut.
+- **Le numéro du projet, tout le temps à l'écran** : `"numero": "842"` dans `partage` le pose en
+  pastille de la couleur en tête de la carte (« Projet n°842 »), du début jusqu'au carton de fin qui
+  le reprend en grand. Les gens doivent toujours savoir sur quel dossier proposer leur devis :
+  ne l'oublie jamais. `entete` dit alors le reste (« Secteur Montélimar »).
 - **Par plan** : `titre` (la barre du haut, 4 à 6 mots, *astérisques* en couleur ; s'il ne change
-  pas, la barre ne bouge pas), `badge` (le montant de ce qu'on voit), `legende` (la pièce).
+  pas, la barre ne bouge pas), `badge` (le montant de ce qu'on voit, pas le numéro : il est déjà en
+  tête), `legende` (la pièce).
 - **La 3D faite pour la carte** : filme les vues en `"format": "partage"` (horizontal, à la taille de
   la carte) : elles la remplissent sans réglage. Une maison : vue `exterieur` (sans toit si on ne veut
   pas la toiture : `"toit": false`) avec `"zoom": 1.5`, plus les pièces du projet en vue `piece`.
@@ -282,7 +287,7 @@ design ni les textes.
 ```json
 {
   "mise_en_scene": "partage",
-  "partage": {"entete": "Projet n°2114 · Montélimar", "mention": "Illustration 3D",
+  "partage": {"numero": "2114", "entete": "Montélimar", "mention": "Illustration 3D",
               "couture": 1040, "yeux_ecran": 1370},
   "broll": [
     {"de": 0, "a": 11.6, "fichier": "broll/chantiers/projet-2114-cuisine-piece-cuisine.mp4", "debut": 0,

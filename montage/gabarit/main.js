@@ -101,6 +101,9 @@
     entre(titre, { y: -26, scale: 0.97 }, { y: 0, scale: 1 }, 0.55, t0, "back.out(1.8)");
     entre(carte, { y: 46, scale: 0.95 }, { y: 0, scale: 1 }, 0.65, t0 + 0.05, "back.out(1.5)");
     entre(icone, { rotate: -14, scale: 0.8 }, { rotate: 0, scale: 1 }, 0.6, t0 + 0.15, "back.out(2.6)");
+    // le numéro du projet saute à l'arrivée, puis à chaque nouveau titre (on le voit, on le retient)
+    const numero = $("partage-numero");
+    if (numero) entre(numero, { scale: 0.6 }, { scale: 1 }, 0.5, t0 + 0.3, "back.out(2.6)");
     // le point de l'en-tête clignote doucement (allers-retours entiers)
     let fois = Math.floor((sortie - t0 - 0.8) / 0.7);
     fois -= fois % 2;
@@ -115,6 +118,7 @@
       } else {
         va(el, { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0 }, 0.38, x.d + 0.08, "back.out(1.7)");
         va(icone, { rotate: -12, scale: 1.18 }, { rotate: 0, scale: 1 }, 0.45, x.d + 0.05, "back.out(2.4)");
+        if (numero) va(numero, { scale: 1.12 }, { scale: 1 }, 0.4, x.d + 0.1, "back.out(2.4)");
       }
       if (k + 1 < P.titres.length) va(el, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -30 }, 0.22, x.f - 0.06, "power2.in");
     });

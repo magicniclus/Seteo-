@@ -53,6 +53,8 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
   en bas, les sous-titres en bandeau sur la couture (`mise_en_scene: partage`). À faire par défaut.
   En bas, sa VRAIE vidéo avec son décor, sur toute la largeur : le détourage sur fond transparent y
   a été jugé moche (« je veux plus le background transparent »).
+- Vidéo de projet (26/11/2026) : le numéro du projet est écrit en permanence (pastille en tête de
+  la carte, `partage.numero`) : on doit toujours savoir sur quel dossier proposer son devis.
 - Maquettes 3D (26/11/2026) : une porte pour chaque pièce et une porte d'entrée, visibles ; jamais
   d'allée à côté de la piscine (entrée et allée côté rue) ; une maison n'est pas meublée (cuisine,
   lits, salle de bains, c'est tout) ; des meubles seulement en zones bien séparées, sans gêner les

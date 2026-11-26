@@ -216,6 +216,12 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
   color: var(--encre); font-weight: var(--graisse-titres); font-size: 30px; letter-spacing: -0.01em;
 }
 .partage-carte__point { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); }
+/* le numéro du projet, en permanence : une pastille de la couleur, bien lisible */
+.partage-carte__numero {
+  flex: none; padding: 6px 18px 8px; border-radius: 999px; background: var(--accent); color: var(--sur-accent);
+  font-weight: var(--graisse-titres); font-size: 37px; line-height: 1.1; letter-spacing: -0.01em; white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(15, 27, 45, 0.18); will-change: transform;
+}
 .partage-carte__nom { flex: 1; white-space: nowrap; overflow: hidden; }
 .partage-carte__mention {
   flex: none; font-weight: var(--graisse-texte); font-size: 20px; letter-spacing: 0.14em; text-transform: uppercase;
