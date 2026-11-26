@@ -26,8 +26,10 @@
         // une fois dit, le mot quitte la pastille ; un mot fort (chiffre, mot-clé) reste coloré
         if (suivant) va(mot, enCours, dit(m.fort), 0.09, suivant.d);
       } else {
-        va(mot, { color: D.blanc }, { color: D.accent }, 0.07, m.d);
-        if (suivant && !m.fort) va(mot, { color: D.accent }, { color: D.blanc }, 0.09, suivant.d);
+        // (en bandeau, les mots au repos sont gris clair : seul le mot dit ressort)
+        const calme = D.repos || D.blanc;
+        va(mot, { color: calme }, { color: D.accent }, 0.07, m.d);
+        if (suivant && !m.fort) va(mot, { color: D.accent }, { color: calme }, 0.09, suivant.d);
       }
       if (m.fort) va(mot, { scale: 1.22 }, { scale: 1 }, 0.3, m.d, "back.out(2.5)");
     });

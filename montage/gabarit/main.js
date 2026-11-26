@@ -85,6 +85,90 @@
     }
   }
 
+  // Mise en scène « partage » : le haut de l'écran. À l'arrivée, la barre de titre descend et la carte
+  // monte (déjà là à la première image). Un nouveau titre chasse l'ancien vers le haut ; un nouveau plan
+  // arrive en fondu avec un petit « tap » de l'écran ; pastille et étiquette changent s'il le faut.
+  // Les encarts sautent par-dessus le coin de la carte et leur nombre monte jusqu'à sa valeur.
+  // Tout repart juste avant le carton de fin (sauf si ça va jusqu'au bout).
+  if (D.partage) {
+    const P = D.partage, $ = (id) => document.getElementById(id);
+    const titre = $("partage-titre"), carte = $("partage-carte"), ecran = $("partage-ecran");
+    const icone = $("partage-icone"), point = $("partage-point");
+    const t0 = P.d, debut = t0 < 0.05;
+    const sortie = P.reste ? D.duree : P.f - 0.35;
+    const entre = (cible, de, a, duree, t, ease) =>
+      tl.fromTo(cible, de, Object.assign({ duration: duree, ease: ease, immediateRender: debut }, a), t);
+    entre(titre, { y: -26, scale: 0.97 }, { y: 0, scale: 1 }, 0.55, t0, "back.out(1.8)");
+    entre(carte, { y: 46, scale: 0.95 }, { y: 0, scale: 1 }, 0.65, t0 + 0.05, "back.out(1.5)");
+    entre(icone, { rotate: -14, scale: 0.8 }, { rotate: 0, scale: 1 }, 0.6, t0 + 0.15, "back.out(2.6)");
+    // le point de l'en-tête clignote doucement (allers-retours entiers)
+    let fois = Math.floor((sortie - t0 - 0.8) / 0.7);
+    fois -= fois % 2;
+    if (point && fois >= 2)
+      tl.fromTo(point, { autoAlpha: 1 }, { autoAlpha: 0.25, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: fois - 1, immediateRender: false }, t0 + 0.8);
+
+    P.titres.forEach((x, k) => {
+      const el = $(x.id);
+      if (k === 0) {
+        gsap.set(el, { autoAlpha: debut ? 1 : 0 });
+        tl.set(el, { autoAlpha: 1 }, x.d);
+      } else {
+        va(el, { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0 }, 0.38, x.d + 0.08, "back.out(1.7)");
+        va(icone, { rotate: -12, scale: 1.18 }, { rotate: 0, scale: 1 }, 0.45, x.d + 0.05, "back.out(2.4)");
+      }
+      if (k + 1 < P.titres.length) va(el, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -30 }, 0.22, x.f - 0.06, "power2.in");
+    });
+
+    P.plans.forEach((p, k) => {
+      const plan = $(p.id), avant = P.plans[k - 1], apres = P.plans[k + 1];
+      if (k === 0) {
+        gsap.set(plan, { autoAlpha: debut ? 1 : 0 });
+        tl.set(plan, { autoAlpha: 1 }, p.d);
+      } else {
+        va(plan, { autoAlpha: 0, scale: 1.06 }, { autoAlpha: 1, scale: 1 }, 0.32, p.d, "power2.out");
+        va(ecran, { scale: 1 }, { scale: 0.975 }, 0.1, p.d, "power2.out");
+        va(ecran, { scale: 0.975 }, { scale: 1 }, 0.4, p.d + 0.1, "back.out(2.2)");
+      }
+      if (apres || !P.reste) tl.set(plan, { autoAlpha: 0 }, p.cache);
+      // pastille (en haut à droite) : elle saute ; étiquette (en bas à gauche) : elle glisse
+      [["badge", { scale: 0.4 }, { scale: 1 }, "back.out(2.6)", 0.45], ["legende", { x: -30 }, { x: 0 }, "back.out(1.8)", 0.55]]
+        .forEach(([cle, de, a, ease, retard]) => {
+          if (!p[cle]) return;
+          const el = $(p[cle]);
+          if (!avant || avant[cle] !== p[cle])
+            va(el, Object.assign({ autoAlpha: 0 }, de), Object.assign({ autoAlpha: 1 }, a), 0.42, p.d + (k === 0 ? retard : 0.12), ease);
+          if (apres && apres[cle] !== p[cle])
+            va(el, Object.assign({ autoAlpha: 1 }, a), Object.assign({ autoAlpha: 0 }, de), 0.18, p.f - 0.16, "power2.in");
+        });
+    });
+
+    P.encarts.forEach((x) => {
+      const el = $(x.id);
+      va(el, { autoAlpha: 0, scale: 0.7, rotate: -6, y: 30 }, { autoAlpha: 1, scale: 1, rotate: 0, y: 0 }, 0.5, x.d, "back.out(1.7)");
+      if (x.compteur) {
+        const valeur = $(x.id + "-valeur"), etat = { v: 0 };
+        const ecrire = () => {
+          const n = String(Math.round(etat.v)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+          valeur.textContent = x.compteur.avant + n + x.compteur.apres;
+        };
+        tl.fromTo(etat, { v: 0 }, { v: x.compteur.valeur, duration: 0.8, ease: "power2.out", onUpdate: ecrire, immediateRender: false }, x.d + 0.12);
+      }
+      if (!x.avec_carte) {
+        va(el, { autoAlpha: 1, scale: 1 }, { autoAlpha: 0, scale: 0.85 }, 0.22, x.f - 0.22, "power2.in");
+        tl.set(el, { autoAlpha: 0 }, x.f);
+      } else if (!P.reste) {
+        va(el, { autoAlpha: 1, scale: 1 }, { autoAlpha: 0, scale: 0.85 }, 0.3, P.f - 0.35, "power2.in");
+        tl.set(el, { autoAlpha: 0 }, P.f);
+      }
+    });
+
+    if (!P.reste) {
+      va(titre, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -24 }, 0.3, P.f - 0.35, "power2.in");
+      va(carte, { autoAlpha: 1, scale: 1 }, { autoAlpha: 0, scale: 0.94 }, 0.35, P.f - 0.35, "power2.in");
+      tl.set([titre, carte], { autoAlpha: 0 }, P.f);
+    }
+  }
+
   // Mots derrière la personne : un mot géant passe entre le décor et elle
   D.derriere.forEach((m) => {
     const mot = document.getElementById(m.id);

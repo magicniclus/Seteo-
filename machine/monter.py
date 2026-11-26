@@ -134,7 +134,7 @@ def calculer_zooms(mots: list[dict], coupes: list[float], total: float, r: dict)
 
 def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_utile: float,
                    cadre: tuple[int, int] = (1080, 1920), ancre_x: float = 0.5, ancre_y: float = 0.5,
-                   recul: float = 0) -> str:
+                   recul: float = 0, entier: bool = False) -> str:
     """Copie un plan de coupe dans le projet, à la bonne longueur et à la forme du cadre qui le montre
     (tout l'écran, la carte, le carré de la vitrine : on garde la partie de l'image donnée par les ancres)."""
     chemin = (RACINE / source) if not Path(source).is_absolute() else Path(source)
@@ -144,11 +144,12 @@ def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_uti
         cible = dossier / "assets" / f"{nom}{chemin.suffix.lower()}"
         shutil.copyfile(chemin, cible)
         return f"assets/{cible.name}"
-    ancres = f"{ancre_x}" if (ancre_y, recul) == (0.5, 0) else f"{ancre_x}/{ancre_y}/{recul}"   # (empreintes d'avant inchangées)
+    ancres = (f"{ancre_x}" if (ancre_y, recul, entier) == (0.5, 0, False)    # (empreintes d'avant inchangées)
+              else f"{ancre_x}/{ancre_y}/{recul}" + ("/entier" if entier else ""))
     empreinte = hashlib.md5(f"{chemin}{chemin.stat().st_mtime}{debut}{duree_utile:.2f}{cadre}{ancres}".encode()).hexdigest()[:8]
     cible = dossier / "assets" / f"{nom}-{empreinte}.mp4"
     if not cible.exists():
-        normaliser_clip(chemin, cible, debut, duree_utile + 0.2, cadre, ancre_x, ancre_y, recul)
+        normaliser_clip(chemin, cible, debut, duree_utile + 0.2, cadre, ancre_x, ancre_y, recul, entier)
     return f"assets/{cible.name}"
 
 
@@ -305,21 +306,27 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # "coin" : la personne détourée en bas, d'un côté puis de l'autre, le contenu toujours derrière elle.
     # "vitrine" : la personne détourée au centre, plus haut ; au-dessus d'elle, un carré encadré et
     # légèrement animé où passent les plans de coupe (la maquette 3D d'un projet).
+    # "partage" : l'écran coupé en deux. En haut, sur fond papier, une barre de titre et la carte où
+    # passent les plans (avec pastilles et encarts) ; en bas, la personne ; les sous-titres sur la couture.
     style = plan.get("mise_en_scene", charte.get("mise_en_scene", "plein"))
-    if style not in ("plein", "cadre", "coin", "vitrine"):
-        sys.exit(f"mise_en_scene inconnue « {style} » (plein, cadre, coin ou vitrine).")
+    if style not in ("plein", "cadre", "coin", "vitrine", "partage"):
+        sys.exit(f"mise_en_scene inconnue « {style} » (plein, cadre, coin, vitrine ou partage).")
     blocs_cadre = style == "cadre" and a_roll.exists() and not blocs_derriere
     en_vitrine = style == "vitrine" and a_roll.exists()
-    en_coin = style in ("coin", "vitrine") and a_roll.exists()   # la vitrine reprend la personne du coin
-    if en_vitrine:
+    en_partage = style == "partage" and a_roll.exists()
+    en_coin = style in ("coin", "vitrine", "partage") and a_roll.exists()   # la personne détourée du coin
+    if en_vitrine or en_partage:
+        ou = "dans le carré" if en_vitrine else "dans la carte du haut"
         for b in plan.get("blocs", []):
             if bibliotheque.BLOCS.get(b.get("bloc"), (None, ""))[1] == "plein":
-                sys.exit(f"plan.json : en vitrine, tout passe dans le carré : pas de bloc plein écran "
+                sys.exit(f"plan.json : en {style}, tout passe {ou} : pas de bloc plein écran "
                          f"(« {b.get('bloc')} »). Les blocs par-dessus (commentaire, nom) restent possibles.")
         if plan.get("chiffres"):
-            sys.exit("plan.json : en vitrine, les montants vont dans la légende des plans (\"legende\"), pas en cartes de chiffres.")
+            sys.exit(f"plan.json : en {style}, les montants vont sur les plans (\"legende\", \"badge\") "
+                     "ou dans un encart (\"encarts\"), pas en cartes de chiffres.")
         if plan.get("accroche"):
-            sys.exit("plan.json : en vitrine, l'accroche est le titre posé sur le carré (\"vitrine\": {\"titre\": ...}).")
+            sys.exit(f"plan.json : en {style}, l'accroche est le titre du haut (\"vitrine\": {{\"titre\": ...}} "
+                     "ou \"titre\" sur le premier plan en partage).")
 
     # ----- Où est le visage dans l'image (une fois l'image décalée, si elle l'est) : les yeux, le haut
     # de la tête, le menton, en fraction de la hauteur. Tout le reste de la mise en scène en découle.
@@ -335,7 +342,25 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # sa tête, les animations et les cartes au-dessus des sous-titres. Pas de décalage de l'image ici :
     # on reprend les hauteurs du visage dans l'image d'origine.
     coin = None
-    if en_vitrine:
+    if en_partage:
+        # Écran partagé : la couture (la ligne qui sépare le haut du bas) porte les sous-titres. La
+        # personne détourée est posée dans le bas, le haut de la tête juste sous la couture, sur le fond
+        # de l'univers ; elle ne dépasse jamais au-dessus de la couture.
+        rp = plan.get("partage", {})
+        L = fmt["largeur"]
+        couture = int(rp.get("couture", 1120))
+        s_coin = float(rp.get("echelle", 0.52))
+        y_c = couture + float(rp.get("sous_couture", 50)) - (tete_y - decalage / H) * H * s_coin
+        st.update(centre_y=couture, taille=int(rp.get("taille_sous_titres", 60)), mot_en_cours="couleur",
+                  apparition="page", bandeau=True)
+        coin = {"s": s_coin, "y": round(y_c, 1), "yeux": round(yeux - decalage / H, 4),
+                "panneau": round(L * (1 - s_coin) / 2, 1), "place": 0, "carte": 0,
+                "reglages": {**rp, "cote": "panneau", "alterner": False},
+                "coupe": round((couture - y_c) / s_coin, 1),   # le haut caché de la personne (pixels de l'image)
+                "partage": {"couture": couture, "x": (L - 840) // 2, "largeur": 840,
+                            "titre_y": zs["haut"] + 20, "titre_h": 112, "carte_y": zs["haut"] + 162,
+                            "carte_h": couture - 80 - (zs["haut"] + 162)}}
+    elif en_vitrine:
         # Mise en scène « vitrine » : le carré en haut (sous l'interface), la personne centrée dessous,
         # le haut de ses cheveux passe devant le bas du carré (de la profondeur, et elle monte d'autant).
         # Les sous-titres se posent sous son menton, au-dessus de l'interface du bas.
@@ -521,7 +546,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         else:
             marque = f'<span class="fin__marque">{signature}</span>'
         bloc_fin = f"""
-    <div id="fin" class="fin"{f' style="top:{zs["haut"] + 40}px;bottom:auto"' if coin else ''}><div class="fin__fond">
+    <div id="fin" class="fin"{f' style="top:{(zs["haut"] + coin["partage"]["couture"]) // 2 - 190 if en_partage else zs["haut"] + 40}px;bottom:auto"' if coin else ''}><div class="fin__fond">
       <span class="fin__verbe">{e(typo(cf.get('verbe') or variante['verbe']))}</span>
       <span id="fin-mot" class="fin__mot" style="font-size:{taille}px">{e(typo(mot_fin))}</span>
       <span class="fin__suite">{e(typo(cf.get('suite') or variante['suite']))}</span>
@@ -544,12 +569,14 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         if centre_sous_titres(milieu):
             regles.append(f'top:{centre_sous_titres(milieu) - 170}px')
         style = f' style="{";".join(regles)}"' if regles else ""
-        bloc_st += (f'\n    <div id="{p["id"]}" class="st{" st--majuscules" if charte.get("majuscules") else ""}"{style}>'
+        bloc_st += (f'\n    <div id="{p["id"]}" class="st{" st--majuscules" if charte.get("majuscules") or st.get("bandeau") else ""}'
+                    f'{" st--bandeau" if st.get("bandeau") else ""}"{style}>'
                     f'<span class="st__ligne">{spans}</span></div>')
     calque(dossier, "sous-titres", fmt, bloc_st, gabarit("sous-titres.css"), gabarit("sous-titres.js", {
         "duree": total, "apparition": st["apparition"], "motEnCours": st["mot_en_cours"],
         "accent": c["accent"], "accentVide": dv["accent_vide"], "accentClair": c["accent_clair"], "blanc": c["blanc"],
         "surAccent": dv["sur_accent"], "contour": c["nuit"], "contourActif": dv["contour_actif"],
+        "repos": "rgba(255, 255, 255, 0.62)" if st.get("bandeau") else c["blanc"],
         "ombreActive": not claire(c["accent"]),
         "pages": [{"id": p["id"], "d": p["d"], "f": p["f"],
                    "mots": [{"d": m["d"], "fort": m["fort"]} for m in p["mots"]]} for p in pages]}),
@@ -597,7 +624,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         if fiche and fiche[1] == "plein":
             dx = T(x["de"])
             fen_blocs.append((dx, min(T(x["a"], fin=True) if "a" in x else dx + fiche[2], total)))
-    for k, b in enumerate([] if en_vitrine else plan.get("broll", []), 1):
+    for k, b in enumerate([] if en_vitrine or en_partage else plan.get("broll", []), 1):
         d, f = T(b["de"]), T(b["a"], fin=True)
         # Un plan plein écran suivi bout à bout d'un autre (ou, en coin, d'un bloc qui monte par-dessus)
         # reste un peu plus longtemps dessous : la première image du suivant n'est jamais un trou.
@@ -690,6 +717,87 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
                       f'<div id="vitrine-coins" class="vitrine__coins">{coins_v}</div>{mention}{titre}</div>')
         vitrine = {"plans": [{k: x[k] for k in x if k != "texte"} for x in items],
                    "d": items[0]["d"], "f": items[-1]["f"], "reste": items[-1]["f"] >= total - 0.05}
+
+    # ----- L'écran partagé : en haut, la barre de titre (elle change quand le "titre" d'un plan change)
+    # et la carte où passent les plans bout à bout, avec la pastille du montant ("badge", en haut à
+    # droite) et l'étiquette de ce qu'on voit ("legende", en bas à gauche). Les encarts ("encarts" du
+    # plan : un chiffre clé) débordent du coin bas droit de la carte, et leur nombre monte jusqu'à sa valeur.
+    partage = None
+    if en_partage:
+        g, rp = coin["partage"], coin["reglages"]
+        plans_p = plan.get("broll", [])
+        if not plans_p:
+            sys.exit("plan.json : l'écran partagé montre les plans de coupe (\"broll\") : il en faut au moins un.")
+        ecran = (g["largeur"] - 20, g["carte_h"] - 80)      # la vidéo dans la carte (sous son en-tête)
+        bornes = [(T(b["de"]), T(b["a"], fin=True)) for b in plans_p]
+        items, titres, dedans, dessus, en_titre = [], [], "", "", ""
+        for k, (b, (d, f)) in enumerate(zip(plans_p, bornes), 1):
+            if k > 1 and abs(d - bornes[k - 2][1]) > 0.1:
+                sys.exit(f"plan.json : en partage, les plans se suivent bout à bout (le n° {k} commence à {d:.2f} s, "
+                         f"le précédent finit à {bornes[k - 2][1]:.2f} s) : la carte n'est jamais vide.")
+            reste = min(0.35 if k < len(plans_p) else 0.0, max(0.0, total - f))
+            src = preparer_media(b["fichier"], dossier, f"partage-{k}", float(b.get("debut", 0)), f - d + reste, ecran,
+                                 float(b.get("ancre_x", 0.5)), float(b.get("ancre_y", 0.5)), float(b.get("recul", 0)),
+                                 bool(b.get("entier", False)))
+            minutage = f'data-start="{round(d, 3)}" data-duration="{round(f - d + reste, 3)}" data-track-index="1"'
+            media = (f'<img id="partage-{k}-image" class="clip" src="{e(src)}" alt="" {minutage}>' if Path(src).suffix in IMAGES
+                     else f'<video id="partage-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>')
+            dedans += f'<div id="partage-{k}" class="partage__plan">{media}</div>'
+            item = {"id": f"partage-{k}", "d": round(d, 3), "f": round(f, 3), "cache": round(f + reste, 3)}
+            for cle, classe in (("badge", "partage__badge"), ("legende", "partage__legende")):
+                if not b.get(cle):
+                    continue
+                if items and items[-1].get(cle + "_texte") == b[cle]:
+                    item[cle] = items[-1][cle]      # le même que sur le plan d'avant : il reste en place
+                else:
+                    texte = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(b[cle])))
+                    dessus += f'<span id="partage-{k}-{cle}" class="{classe}">{texte}</span>'
+                    item[cle] = f"partage-{k}-{cle}"
+                item[cle + "_texte"] = b[cle]
+            titre = b.get("titre") or (titres[-1]["texte"] if titres else "")
+            if titre and (not titres or titres[-1]["texte"] != titre):
+                n = len(titre.replace("*", ""))
+                taille = min(46, int((g["largeur"] - 150) / (0.56 * max(n, 1))))
+                texte = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(titre)))
+                en_titre += (f'<span id="partage-titre-{len(titres) + 1}" class="partage-titre__texte" '
+                             f'style="font-size:{taille}px">{texte}</span>')
+                titres.append({"id": f"partage-titre-{len(titres) + 1}", "d": round(d, 3), "texte": titre})
+            items.append(item)
+        fin_p = items[-1]["f"]
+        for k, x in enumerate(titres):
+            x["f"] = titres[k + 1]["d"] if k + 1 < len(titres) else fin_p
+        encarts, html_encarts = [], ""
+        for k, x in enumerate(plan.get("encarts", []), 1):
+            d, f = T(x["de"]), min(T(x["a"], fin=True) if "a" in x else fin_p, fin_p)
+            valeur = typo(x["valeur"])
+            seul = re.fullmatch(r"(\D*?)(\d[\d\s]*\d|\d)(\D*)", valeur)
+            encart = {"id": f"encart-{k}", "d": round(d, 3), "f": round(f, 3), "avec_carte": f >= fin_p - 0.05}
+            if seul and int(re.sub(r"\D", "", seul.group(2))) >= 10:
+                encart["compteur"] = {"avant": seul.group(1), "valeur": int(re.sub(r"\D", "", seul.group(2))),
+                                      "apres": seul.group(3)}
+            encarts.append(encart)
+            detail = f'<span class="encart__detail">{e(typo(x["detail"]))}</span>' if x.get("detail") else ""
+            html_encarts += (f'\n      <div id="encart-{k}" class="encart" style="right:{g["x"] - 34}px;'
+                             f'bottom:{fmt["hauteur"] - g["carte_y"] - g["carte_h"] - 10}px">'
+                             f'<span class="encart__titre">{e(typo(x.get("titre", "")))}</span>'
+                             f'<span id="encart-{k}-valeur" class="encart__valeur">{e(valeur)}</span>{detail}</div>')
+        maison = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2V20a1 1 0 0 1-1 1h-5v-6h-5v6'
+                  'h-5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>')
+        mention = f'<span class="partage-carte__mention">{e(typo(rp["mention"]))}</span>' if rp.get("mention") else ""
+        bloc_broll = (f'\n      <div id="partage-haut" class="partage-haut" style="height:{g["couture"]}px"></div>'
+                      f'\n      <div id="partage-titre" class="partage-titre" style="left:{g["x"]}px;top:{g["titre_y"]}px;'
+                      f'width:{g["largeur"]}px;height:{g["titre_h"]}px"><span id="partage-icone" class="partage-titre__icone">'
+                      f'{maison}</span><span class="partage-titre__textes">{en_titre}</span></div>'
+                      f'\n      <div id="partage-carte" class="partage-carte" style="left:{g["x"]}px;top:{g["carte_y"]}px;'
+                      f'width:{g["largeur"]}px;height:{g["carte_h"]}px"><div class="partage-carte__entete">'
+                      f'<span id="partage-point" class="partage-carte__point"></span>'
+                      f'<span class="partage-carte__nom">{e(typo(rp.get("entete", "")))}</span>{mention}</div>'
+                      f'<div id="partage-ecran" class="partage-carte__ecran">{dedans}{dessus}</div></div>'
+                      f'{html_encarts}'
+                      f'\n      <div class="partage-couture" style="top:{g["couture"] - 2}px"></div>')
+        partage = {"plans": [{k: x[k] for k in x if not k.endswith("_texte")} for x in items],
+                   "titres": [{k: x[k] for k in x if k != "texte"} for x in titres], "encarts": encarts,
+                   "d": items[0]["d"], "f": fin_p, "reste": fin_p >= total - 0.05}
 
     # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
     # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.
@@ -809,7 +917,9 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         # change de côté quand le contenu change (4 s d'écart au moins), sauf "alterner": false.
         fond_html = '\n      <div id="fond-univers" class="fond-univers"></div>'
         src = personne_entiere(dossier, a_roll, total)
-        personne = (f'\n      <div id="personne" class="personne--coin" data-cote="{coin["reglages"].get("cote", "droite")}">'
+        # (écran partagé : rien de la personne au-dessus de la couture ; la découpe suit ses zooms)
+        coupe = f' style="clip-path:inset({coin["coupe"]}px 0 0 0)"' if partage else ""
+        personne = (f'\n      <div id="personne" class="personne--coin" data-cote="{coin["reglages"].get("cote", "droite")}"{coupe}>'
                     f'<div id="plan-detoure"><video id="detoure-1" src="{src}" data-start="0" data-duration="{total}" '
                     f'data-track-index="0" muted playsinline></video></div></div>')
         cote = coin["reglages"].get("cote", "droite")
@@ -826,7 +936,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     bords = "".join(f'\n      <div id="{w["bord"]}" class="cadre-bord" style="left:{w["rect"][0]}px;top:{w["rect"][1]}px;'
                     f'width:{w["rect"][2]}px;height:{w["rect"][3]}px"></div>' for w in cadres)
     principal = {"duree": total, "visageY": coin["yeux"] if coin else r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
-                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin else None, "vitrine": vitrine,
+                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin else None, "vitrine": vitrine, "partage": partage,
                  "broll": brolls, "cadres": [{k: v for k, v in w.items() if k != "rect"} for w in cadres],
                  "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
@@ -851,7 +961,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     </style>
   </head>
   <body>
-    <div id="root"{' class="coin vitrine-scene"' if vitrine else ' class="coin"' if coin else ''} data-composition-id="main" data-start="0" data-duration="{total}"
+    <div id="root"{' class="coin partage-scene"' if partage else ' class="coin vitrine-scene"' if vitrine else ' class="coin"' if coin else ''} data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
       <div class="fond-scene"></div>
       <div id="prise">{prise}{fond_html}</div>{bords}{personne}{bloc_broll}{musique}{hotes_blocs}{mots_html}{hote('sous-titres', 3)}{hote('habillage', 4)}
@@ -868,8 +978,11 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     # Les instants à regarder : première image, chaque carte, chaque plan de coupe, trois sous-titres, la fin
     reperes = [0.0] + [round((x["d"] + x["f"]) / 2, 2) for x in cartes + brolls + mots_derriere]
-    if vitrine:  # chaque plan du carré au milieu, et juste après chaque changement de plan
-        reperes += [round((x["d"] + x["f"]) / 2, 2) for x in vitrine["plans"]] + [round(x["d"] + 0.25, 2) for x in vitrine["plans"][1:]]
+    for v_ in (vitrine, partage):  # chaque plan au milieu, et juste après chaque changement de plan
+        if v_:
+            reperes += [round((x["d"] + x["f"]) / 2, 2) for x in v_["plans"]] + [round(x["d"] + 0.25, 2) for x in v_["plans"][1:]]
+    if partage:
+        reperes += [round(x["d"] + 1.2, 2) for x in partage["encarts"]]
     reperes += [round(p["mots"][-1]["d"] + 0.1, 2) for p in pages[1::max(len(pages) // 3, 1)]][:3]
     for d, f in fenetres_blocs:  # un bloc se juge au milieu de sa construction et une fois complet
         reperes += [round(d + (f - d) * 0.45, 2), round(f - 0.6, 2)]

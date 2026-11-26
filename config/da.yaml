@@ -54,6 +54,8 @@ rythme:
 #   coin  = toute la vidéo : tu es détouré en bas, d'un côté puis de l'autre, le contenu derrière toi
 #   vitrine = toute la vidéo : tu es détouré au centre, plus haut ; au-dessus, un carré animé où passent
 #             les plans (la 3D d'un projet). Voir le skill video-projet.
+#   partage = toute la vidéo : l'écran coupé en deux, le contenu en haut sur fond papier, toi en bas,
+#             les sous-titres en bandeau sur la couture. La mise en page préférée pour un projet.
 # Le plan d'une vidéo peut décider autrement avec "mise_en_scene".
 mise_en_scene: plein
 

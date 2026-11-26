@@ -104,14 +104,24 @@ HDR_VERS_SDR = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap
 # ancre_x : quelle partie garder quand l'image est trop large (0 = la gauche, 0.5 = le centre, 1 = la droite)
 # ancre_y : pareil en hauteur, quand l'image est trop haute (0 = le haut, 0.5 = le milieu, 1 = le bas)
 # recul : une marge ajoutée autour de l'image cadrée (0.1 = 10 % de chaque côté), de la couleur `fond` :
-# pour une maquette 3D sur fond uni qui touche les bords du cadre.
+# pour une maquette 3D sur fond uni qui touche les bords du cadre. Négatif : on resserre (-0.05 = 5 %
+# rogné de chaque côté).
+# entier : on garde un carré de l'image (choisi par les ancres) et on le pose ENTIER dans le cadre, le
+# reste rempli de la couleur `fond` : une maquette 3D verticale dans une carte horizontale.
 def cadrage(largeur: int, hauteur: int, ips: int, hdr: bool = False, ancre_x: float = 0.5, ancre_y: float = 0.5,
-            recul: float = 0, fond: str = "black") -> str:
-    marge = (f"pad=iw*{1 + 2 * recul:.4f}:ih*{1 + 2 * recul:.4f}:(ow-iw)/2:(oh-ih)/2:color={fond},"
-             f"scale={largeur}:{hauteur}:flags=lanczos," if recul > 0 else "")
+            recul: float = 0, fond: str = "black", entier: bool = False) -> str:
+    k = 1 + 2 * recul
+    marge = (f"pad=iw*{k:.4f}:ih*{k:.4f}:(ow-iw)/2:(oh-ih)/2:color={fond}," if recul > 0
+             else f"crop=iw*{k:.4f}:ih*{k:.4f}," if recul < 0 else "")
+    fin = f"fps={ips},{HDR_VERS_SDR if hdr else ''}setsar=1,format=yuv420p"
+    if entier:
+        c = "min(iw\\,ih)"
+        return (f"crop={c}:{c}:(iw-{c})*{ancre_x}:(ih-{c})*{ancre_y},{marge}"
+                f"scale={largeur}:{hauteur}:force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos,"
+                f"pad={largeur}:{hauteur}:(ow-iw)/2:(oh-ih)/2:color={fond},{fin}")
+    retour = f"scale={largeur}:{hauteur}:flags=lanczos," if marge else ""
     return (f"scale={largeur}:{hauteur}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={largeur}:{hauteur}:(iw-{largeur})*{ancre_x}:(ih-{hauteur})*{ancre_y},{marge}fps={ips},"
-            f"{HDR_VERS_SDR if hdr else ''}setsar=1,format=yuv420p")
+            f"crop={largeur}:{hauteur}:(iw-{largeur})*{ancre_x}:(ih-{hauteur})*{ancre_y},{marge}{retour}{fin}")
 
 
 def couleur_coin(source: Path, t: float = 0) -> str:
@@ -126,7 +136,7 @@ REC709 = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt
 
 def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: float = 8,
                      cadre: tuple[int, int] | None = None, ancre_x: float = 0.5, ancre_y: float = 0.5,
-                     recul: float = 0) -> None:
+                     recul: float = 0, entier: bool = False) -> None:
     """Prépare un plan de coupe : 30 i/s, sans son, court, couleurs normales.
     cadre=(largeur, hauteur) : l'image remplit ce cadre (ce qui dépasse est rogné).
     cadre=None : on garde la forme d'origine (un extrait horizontal reste horizontal), c'est au
@@ -135,7 +145,7 @@ def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: floa
     cible.parent.mkdir(parents=True, exist_ok=True)
     if cadre:
         filtre = cadrage(cadre[0], cadre[1], ips, est_hdr(source), ancre_x, ancre_y, recul,
-                         couleur_coin(source, debut) if recul > 0 else "black")
+                         couleur_coin(source, debut) if recul > 0 or entier else "black", entier)
     else:
         filtre = (f"scale='min(1920,iw)':'min(1920,ih)':force_original_aspect_ratio=decrease:flags=lanczos,"
                   f"scale=trunc(iw/2)*2:trunc(ih/2)*2,fps={ips},{HDR_VERS_SDR if est_hdr(source) else ''}setsar=1,format=yuv420p")

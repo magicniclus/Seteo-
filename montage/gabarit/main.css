@@ -166,3 +166,73 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 #sous-titres, #habillage { position: absolute; inset: 0; }
 #sous-titres { z-index: 6; }
 #habillage { z-index: 7; }
+
+/* Mise en scène « partage » : l'écran coupé en deux. En haut, un fond papier (léger grain) avec la barre
+   de titre, la carte du projet et ses encarts ; en bas, la personne détourée sur le fond de l'univers
+   (un halo derrière elle) ; sur la couture, un filet clair et les sous-titres en bandeau. */
+#root.coin #personne[data-cote="panneau"] {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%), linear-gradient(180deg, #000 0, #000 90%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%), linear-gradient(180deg, #000 0, #000 90%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
+#root.partage-scene .fond-univers::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(58% 26% at 50% 80%, color-mix(in srgb, var(--marque) 90%, transparent) 0%, transparent 100%);
+}
+.partage-haut {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 2;
+  background-color: color-mix(in srgb, var(--papier) 90%, var(--encre));
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2  0 0 0 0 0.16  0 0 0 0 0.1  0 0 0 0.12 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+}
+.partage-couture { position: absolute; left: 0; right: 0; height: 4px; z-index: 5; background: var(--papier); }
+.partage-titre {
+  position: absolute; z-index: 4; display: flex; align-items: center; gap: 22px; padding: 0 30px 0 24px;
+  background: var(--blanc); border-radius: 30px; box-shadow: 0 14px 34px rgba(15, 27, 45, 0.16); will-change: transform;
+}
+.partage-titre__icone {
+  flex: none; width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
+  background: var(--accent); color: var(--sur-accent); will-change: transform;
+}
+.partage-titre__icone svg { width: 40px; height: 40px; display: block; }
+.partage-titre__textes { position: relative; flex: 1; height: 100%; }
+.partage-titre__texte {
+  position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%;   /* translate : main.js anime transform */
+  color: var(--encre); font-weight: var(--graisse-titres); line-height: 1.1; letter-spacing: -0.02em; white-space: nowrap;
+  opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.partage-titre__texte em { font-style: normal; color: var(--accent); }
+.partage-carte {
+  position: absolute; z-index: 3; display: flex; flex-direction: column; padding: 0 10px 10px;
+  background: var(--blanc); border-radius: 34px; box-shadow: 0 24px 60px rgba(15, 27, 45, 0.2); will-change: transform;
+}
+.partage-carte__entete {
+  flex: none; height: 70px; display: flex; align-items: center; gap: 14px; padding: 0 16px;
+  color: var(--encre); font-weight: var(--graisse-titres); font-size: 30px; letter-spacing: -0.01em;
+}
+.partage-carte__point { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); }
+.partage-carte__nom { flex: 1; white-space: nowrap; overflow: hidden; }
+.partage-carte__mention {
+  flex: none; font-weight: var(--graisse-texte); font-size: 20px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--encre) 50%, transparent);
+}
+.partage-carte__ecran { position: relative; flex: 1; overflow: hidden; border-radius: 24px; background: var(--papier); will-change: transform; }
+.partage__plan { position: absolute; inset: 0; opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.partage__plan video, .partage__plan img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.partage__badge, .partage__legende {
+  position: absolute; padding: 10px 24px 12px; border-radius: 999px; white-space: nowrap;
+  font-weight: var(--graisse-titres); line-height: 1.1; letter-spacing: -0.01em;
+  box-shadow: 0 8px 22px rgba(15, 27, 45, 0.25); opacity: 0; visibility: hidden; will-change: transform, opacity;
+}
+.partage__badge { right: 20px; top: 20px; background: var(--accent); color: var(--sur-accent); font-size: 40px; }
+.partage__legende { left: 20px; bottom: 20px; background: var(--nuit); color: var(--blanc); font-size: 36px; }
+.partage__badge em, .partage__legende em { font-style: normal; }
+.partage__legende em { color: var(--accent); }
+/* l'encart : un chiffre clé qui déborde du coin bas droit de la carte */
+.encart {
+  position: absolute; z-index: 4; min-width: 330px; display: flex; flex-direction: column; gap: 4px; padding: 22px 30px 24px;
+  border-radius: 28px; background: var(--blanc); box-shadow: 0 20px 50px rgba(15, 27, 45, 0.3);
+  opacity: 0; visibility: hidden; transform-origin: 70% 80%; will-change: transform, opacity;
+}
+.encart__titre { font-weight: var(--graisse-texte); font-size: 28px; color: color-mix(in srgb, var(--encre) 60%, transparent); }
+.encart__valeur { font-weight: var(--graisse-titres); font-size: 72px; line-height: 1; letter-spacing: -0.03em; color: var(--encre); white-space: nowrap; }
+.encart__detail { margin-top: 6px; font-weight: var(--graisse-titres); font-size: 26px; color: var(--accent); }

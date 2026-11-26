@@ -17,3 +17,14 @@
   will-change: transform, opacity;
 }
 .st--majuscules { text-transform: uppercase; letter-spacing: 0; }
+/* Bandeau (mise en scène « partage ») : une seule barre foncée sous toute la ligne, posée sur la
+   couture de l'écran ; mots en capitales, gris clair au repos, le mot dit en couleur. */
+.st--bandeau .st__ligne {
+  padding: 6px 26px 10px; border-radius: 14px; background: var(--nuit);
+  border: 3px solid color-mix(in srgb, var(--papier) 80%, transparent);   /* se détache aussi du bas foncé */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); line-height: 1.12;
+}
+.st--bandeau .st__mot {
+  padding: 0 7px; margin: 0; border-radius: 0; color: rgba(255, 255, 255, 0.62);
+  -webkit-text-stroke: 0; text-shadow: none;
+}

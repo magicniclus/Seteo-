@@ -151,6 +151,10 @@ autrement avec `"mise_en_scene"`.
 - **`vitrine`** : la personne détourée au centre, plus haut, pendant toute la vidéo ; au-dessus
   d'elle, un carré encadré et légèrement animé où passent les plans de coupe (la 3D d'un projet),
   avec leur légende. Pas de bloc plein écran ni de carte de chiffre. Détail : skill `video-projet`, 3 bis.
+- **`partage`** : l'écran coupé en deux pendant toute la vidéo. En haut, sur fond papier, une barre
+  de titre, une carte où passent les plans (pastille de montant, étiquette) et des encarts chiffrés ;
+  en bas, la personne détourée ; les sous-titres en bandeau sur la couture. C'est la mise en page
+  préférée (26/11/2026). Détail : skill `video-projet`, 3 ter.
 
 Comment se règle le coin (`"coin"` dans le plan) :
 - `echelle` (0,62 par défaut : la taille de la personne), `cote` (`"droite"` ou `"gauche"` au

@@ -1,14 +1,14 @@
 ---
 name: video-projet
-description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : la personne détourée pendant toute la vidéo (en bas comme un présentateur, ou au centre sous un carré animé qui montre le projet), et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
+description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : l'écran coupé en deux (en haut le projet sur fond papier, en bas la personne, les sous-titres sur la couture), ou la personne détourée devant le projet, et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
 ---
 
 # Vidéo de projet
 
 On te donne une vidéo où la personne parle face caméra et un projet de travaux (numéro, ville,
 travaux, budgets). Tu sors une vidéo verticale où **le projet est derrière elle du début à la fin**,
-et elle devant, détourée : en bas de l'écran comme un présentateur (`coin`), ou au centre sous un
-carré animé qui montre le projet (`vitrine`).
+avec elle à l'écran tout du long : écran partagé (`partage`, la mise en page préférée), en bas de
+l'écran comme un présentateur (`coin`), ou au centre sous un carré animé (`vitrine`).
 
 ## Les règles de ce skill
 
@@ -21,10 +21,14 @@ carré animé qui montre le projet (`vitrine`).
    Jamais d'extrait de film, d'Instagram, de YouTube, de Pexels, d'écran d'un autre site, jamais de
    « ponctuation », jamais d'animation qui ne parle pas du projet (pas de liste de conseils, pas de
    barres de statistiques), même si la vidéo de départ en avait. On repart de zéro sur le contenu.
-2. **La personne devant, tout le temps**, détourée sur le fond de la marque, avec des zooms sur les
-   coupes. Ses sous-titres restent : ce sont ses mots. Deux mises en scène au choix :
-   - **`coin`** (par défaut) : elle en bas, le buste contre le bord de l'écran, le projet en plein
-     écran derrière elle ; elle change de côté quand le contenu change.
+2. **La personne à l'écran, tout le temps**, détourée sur le fond de la marque, avec des zooms sur
+   les coupes. Ses sous-titres restent : ce sont ses mots. Trois mises en scène au choix :
+   - **`partage`** (celle qu'on préfère, à faire par défaut) : l'écran coupé en deux. En haut, sur
+     un fond papier, une barre de titre, la carte du projet (la 3D, la pastille du budget,
+     l'étiquette de la pièce) et un encart pour le chiffre clé ; en bas, elle ; les sous-titres en
+     bandeau sur la ligne qui sépare les deux. Voir 3 ter.
+   - **`coin`** : elle en bas, le buste contre le bord de l'écran, le projet en plein écran derrière
+     elle ; elle change de côté quand le contenu change.
    - **`vitrine`** : elle au centre, plus haut et plus présente ; au-dessus d'elle, le projet dans un
      carré encadré et légèrement animé (plaques décalées, coins de viseur, onglet du projet). À
      proposer quand on la trouve « trop en bas » ou quand on veut un rendu plus posé. Voir 3 bis.
@@ -210,6 +214,75 @@ Réglages de la vitrine : `taille` (côté du carré, en pixels), `marge` (sous 
 `echelle` (taille de la personne) et `chevauche` (de combien ses cheveux passent devant le carré).
 Plus grand le carré, plus bas et plus petite la personne : vérifie que les sous-titres ne mordent
 pas sur son menton pendant les zooms (sinon `"zoom_coupe": 1.05`).
+
+## 3 ter. Écran partagé (`partage`) : la mise en page préférée
+
+```
+ ┌──────────────────────────────┐  fond papier (léger grain)
+ │ [⌂ Rénovation à Montélimar ] │  barre de titre : change avec le "titre" des plans
+ │ ┌──────────────────────────┐ │
+ │ │● Projet n°2114 · …  3D   │ │  en-tête de la carte ("entete", "mention")
+ │ │        maquette 3D [17k€]│ │  pastille du budget ("badge")
+ │ │ [Cuisine]       ┌───────┐│ │  étiquette de la pièce ("legende")
+ │ └─────────────────│ encart│┘ │  encart qui déborde ("encarts") : le nombre monte
+ ══════ BANDEAU DES SOUS-TITRES ══  la couture
+ │            (elle)            │  détourée, sur le fond de l'univers
+ └──────────────────────────────┘
+```
+
+C'est la mise en page d'une vidéo de référence qu'on a aimée (organisation de l'écran, place des
+sous-titres, animations), refaite à nos couleurs et avec nos contenus : on n'en reprend ni le
+design ni les textes.
+
+- **Mêmes refus qu'en vitrine** : pas de bloc plein écran, pas de carte `chiffres`, pas
+  d'`accroche` (le titre du premier plan en tient lieu). Les plans se suivent bout à bout jusqu'au
+  carton de fin ; le titre, la carte et les encarts s'en vont juste avant lui, qui se pose au milieu
+  du haut.
+- **Par plan** : `titre` (la barre du haut, 4 à 6 mots, *astérisques* en couleur ; s'il ne change
+  pas, la barre ne bouge pas), `badge` (le montant de ce qu'on voit), `legende` (la pièce).
+- **Le cadrage de la 3D** : la carte est horizontale, un rendu `fond` est vertical. `"entier": true`
+  prend un carré de l'image (la pièce, choisie par `"ancre_y": 0.15`) et le pose entier au milieu
+  de la carte, les côtés remplis de la couleur du fond de la maquette ; `"recul": -0.04` resserre un
+  peu. Rien n'est coupé, même quand la pièce tourne.
+- **Les encarts** : `{"de": 31.6, "titre": "Budget total", "valeur": "22 000 €", "detail": "Salle de bains + cuisine"}`
+  (sans `"a"`, il reste jusqu'à la fin de la carte). Un chiffre seulement s'il est donné ou s'il est
+  la somme de ceux qu'on t'a donnés.
+- **La personne** : elle ne dépasse jamais au-dessus de la couture. Sa vidéo de téléphone est souvent
+  un gros plan : on la détoure et on la pose, un peu réduite, sur le fond de l'univers. Filmée de
+  plus loin (le buste dans l'image, comme sur la référence), elle remplirait mieux le bas : dis-le
+  si le gros plan fait trop « tête posée ».
+
+```json
+{
+  "mise_en_scene": "partage",
+  "partage": {"entete": "Projet n°2114 · Montélimar", "mention": "Illustration 3D",
+              "couture": 1120, "echelle": 0.52, "sous_couture": 50},
+  "broll": [
+    {"de": 0, "a": 11.6, "fichier": "broll/chantiers/projet-2114-cuisine-piece-cuisine.mp4", "debut": 0,
+     "ancre_y": 0.15, "entier": true, "recul": -0.04,
+     "titre": "Rénovation à *Montélimar*", "legende": "Cuisine", "badge": "17 000 €"},
+    {"de": 11.6, "a": 22.1, "fichier": "broll/chantiers/projet-2114-sdb-piece-salle-de-bain.mp4", "debut": 0,
+     "ancre_y": 0.15, "entier": true, "recul": -0.04,
+     "titre": "*Salle de bains* à rénover", "legende": "Salle de bains", "badge": "5 000 €"},
+    {"de": 22.1, "a": 31.4, "fichier": "broll/chantiers/projet-2114-cuisine-piece-cuisine.mp4", "debut": 11.6,
+     "ancre_y": 0.15, "entier": true, "recul": -0.04,
+     "titre": "*Cuisine* à rénover", "legende": "Cuisine", "badge": "17 000 €"},
+    {"de": 31.4, "a": 36.5, "fichier": "broll/chantiers/projet-2114-sdb-piece-salle-de-bain.mp4", "debut": 8.8,
+     "ancre_y": 0.15, "entier": true, "recul": -0.04,
+     "titre": "*22 000 €* de travaux", "legende": "Salle de bains", "badge": "5 000 €"},
+    {"de": 36.5, "a": 44.35, "fichier": "broll/chantiers/projet-2114-cuisine-court-piece-cuisine.mp4", "debut": 0,
+     "ancre_y": 0.15, "entier": true, "recul": -0.04,
+     "titre": "Propose *ton devis*, c'est gratuit", "legende": "Cuisine", "badge": "17 000 €"}
+  ],
+  "encarts": [{"de": 31.6, "titre": "Budget total", "valeur": "22 000 €", "detail": "Salle de bains + cuisine"}],
+  "carton_fin": {"de": 44.35, "verbe": "Projet", "mot": "N°2114", "suite": "Propose ton devis, c'est gratuit. Lien dans la bio"}
+}
+```
+
+Réglages : `couture` (hauteur de la ligne de séparation, en pixels : plus haut, plus de place pour
+elle), `echelle` (sa taille), `sous_couture` (l'écart entre la couture et le haut de sa tête),
+`taille_sous_titres` (60 par défaut). Sa bouche doit rester au-dessus de ~1 650 px (le nom du compte
+et la légende de la publication passent dessous) : regarde la planche.
 
 ## 4. Monter, vérifier, livrer
 
