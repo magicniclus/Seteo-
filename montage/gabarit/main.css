@@ -83,8 +83,19 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
    toujours derrière elle. main.js la pose d'un côté ou de l'autre ; son bord côté écran s'efface. */
 #root.coin #personne { z-index: 5; transform-origin: 0 0; }
 #root.coin #plan-detoure { -webkit-mask-image: none; mask-image: none; }
-#root.coin #personne[data-cote="droite"] { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18%); mask-image: linear-gradient(90deg, transparent 0, #000 18%); }
-#root.coin #personne[data-cote="gauche"] { -webkit-mask-image: linear-gradient(270deg, transparent 0, #000 18%); mask-image: linear-gradient(270deg, transparent 0, #000 18%); }
+/* Le bord intérieur de l'image du téléphone coupe l'épaule et le bras en ligne droite : on l'adoucit
+   sur une bande étroite (7 %) en bas du corps, et à peine (3 %) en haut, quand la tête penche jusqu'au
+   bord. Masque = 7 % ∪ (haut du corps ∩ 3 %). Un fondu large rendait bras et visage flous. */
+#root.coin #personne[data-cote="droite"] {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%), linear-gradient(180deg, #000 0, #000 55%, transparent 63%), linear-gradient(90deg, transparent 0, #000 3%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%), linear-gradient(180deg, #000 0, #000 55%, transparent 63%), linear-gradient(90deg, transparent 0, #000 3%);
+  -webkit-mask-composite: source-over, source-in; mask-composite: add, intersect;
+}
+#root.coin #personne[data-cote="gauche"] {
+  -webkit-mask-image: linear-gradient(270deg, transparent 0, #000 7%), linear-gradient(180deg, #000 0, #000 55%, transparent 63%), linear-gradient(270deg, transparent 0, #000 3%);
+  mask-image: linear-gradient(270deg, transparent 0, #000 7%), linear-gradient(180deg, #000 0, #000 55%, transparent 63%), linear-gradient(270deg, transparent 0, #000 3%);
+  -webkit-mask-composite: source-over, source-in; mask-composite: add, intersect;
+}
 #root.coin .broll--plein { z-index: 3; }
 
 /* Blocs (montage/blocs/) : « plein » couvre la prise, « calque » se pose au-dessus de tout */
