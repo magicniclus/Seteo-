@@ -40,12 +40,21 @@ l'écran comme un présentateur (`coin`), ou au centre sous un carré animé (`v
 4. **Une maquette est une illustration** : tant qu'on n'a pas les vraies dimensions et les vrais
    équipements, chaque plan 3D porte la mention « Illustration 3D ». Elle doit rester crédible
    (règles d'agencement : `references/maquette.md`).
+5. **Le numéro du projet est écrit en permanence**, de la première image au carton de fin (qui le
+   reprend en grand). Les gens doivent toujours savoir sur quel dossier proposer leur devis : une
+   vidéo de projet sans son numéro visible à chaque instant n'est pas finie.
+   - `partage` : `"numero": "842"` dans `partage`, une pastille « Projet n°842 » en tête de la carte.
+   - `vitrine` : le numéro dans le titre de l'onglet (`vitrine.titre`), toujours visible.
+   - `coin` : rien ne reste à l'écran tout du long : préfère `partage`, ou mets le numéro dans la
+     légende de chaque plan.
+   Pas de numéro dans les infos reçues : cherche-le dans ce que dit la personne ; s'il est incertain
+   (« je crois »), affiche-le et demande confirmation à la livraison ; s'il n'y en a aucun, demande-le.
 
 ## Ce qu'il te faut
 
 - **La vidéo** : un fichier envoyé (le skill `montage-video`, étapes 0 à 2, dit comment la récupérer,
   la transcrire et la couper), ou un projet de montage déjà fait (`montage/projets/<id>/`).
-- **Le projet** : numéro, ville, travaux (pièces), budget par pièce ou total. Si tu les as : surfaces,
+- **Le projet** : numéro (obligatoire : il reste à l'écran tout du long), ville, travaux (pièces), budget par pièce ou total. Si tu les as : surfaces,
   équipements voulus (douche à l'italienne, îlot...). Sans surface, prends une taille courante et dis-le.
 - **L'appel** : par défaut « Propose ton devis, c'est gratuit. Lien dans la bio ».
 - **Le site lancé sur la machine** et **le détourage installé** (voir « Si ça coince ») :
@@ -330,6 +339,7 @@ Vérifie sur les images :
 - rien d'autre que le projet n'apparaît ;
 - la personne n'est jamais coupée en pleine phrase par un changement de côté ;
 - les budgets et le numéro affichés sont exactement ceux qu'on t'a donnés ;
+- le numéro du projet se lit sur CHAQUE image, de la première au carton de fin ;
 - aucun nom, adresse, téléphone ou e-mail de client, même flou mais lisible ;
 - le texte de chaque légende et du carton se lit en petit (taille d'un téléphone).
 
