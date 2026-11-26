@@ -183,10 +183,11 @@ python machine/monter.py 2026-11-30-3 --rendu      # -> montages/2026-11-30-3.mp
 python machine/yeux.py 2026-11-30-3                # relecture
 ```
 
-**Trois mises en scène**, au choix (`mise_en_scene` dans `config/da.yaml`, ou vidéo par vidéo) :
+**Quatre mises en scène**, au choix (`mise_en_scene` dans `config/da.yaml`, ou vidéo par vidéo) :
 `plein`, l'animation remplace l'image quelques secondes ; `cadre`, tu restes à l'écran dans un cadre
 arrondi en bas et l'animation s'affiche au-dessus ; `coin`, le contenu est derrière toi toute la vidéo
-et tu restes devant, détouré, en bas de l'écran, d'un côté puis de l'autre. Le détourage se fait avec
+et tu restes devant, détouré, en bas de l'écran, d'un côté puis de l'autre ; `vitrine`, tu es détouré
+au centre et le projet passe dans un carré animé au-dessus de toi. Le détourage se fait avec
 RobustVideoMatting (`machine/detourage.py`, il faut PyTorch version processeur).
 
 **Ponctuations** (skill `ponctuations` : *« anime plus cette vidéo »*, *« trouve un extrait pour

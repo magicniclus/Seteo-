@@ -102,17 +102,31 @@ HDR_VERS_SDR = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap
 
 # Filtre ffmpeg : remplit un cadre vertical 1080x1920 sans déformer (rogne ce qui dépasse)
 # ancre_x : quelle partie garder quand l'image est trop large (0 = la gauche, 0.5 = le centre, 1 = la droite)
-def cadrage(largeur: int, hauteur: int, ips: int, hdr: bool = False, ancre_x: float = 0.5) -> str:
+# ancre_y : pareil en hauteur, quand l'image est trop haute (0 = le haut, 0.5 = le milieu, 1 = le bas)
+# recul : une marge ajoutée autour de l'image cadrée (0.1 = 10 % de chaque côté), de la couleur `fond` :
+# pour une maquette 3D sur fond uni qui touche les bords du cadre.
+def cadrage(largeur: int, hauteur: int, ips: int, hdr: bool = False, ancre_x: float = 0.5, ancre_y: float = 0.5,
+            recul: float = 0, fond: str = "black") -> str:
+    marge = (f"pad=iw*{1 + 2 * recul:.4f}:ih*{1 + 2 * recul:.4f}:(ow-iw)/2:(oh-ih)/2:color={fond},"
+             f"scale={largeur}:{hauteur}:flags=lanczos," if recul > 0 else "")
     return (f"scale={largeur}:{hauteur}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={largeur}:{hauteur}:(iw-{largeur})*{ancre_x}:(ih-{hauteur})/2,fps={ips},"
+            f"crop={largeur}:{hauteur}:(iw-{largeur})*{ancre_x}:(ih-{hauteur})*{ancre_y},{marge}fps={ips},"
             f"{HDR_VERS_SDR if hdr else ''}setsar=1,format=yuv420p")
+
+
+def couleur_coin(source: Path, t: float = 0) -> str:
+    """La couleur du coin haut gauche d'une image de la vidéo (le fond uni d'une maquette 3D), en 0xRRGGBB."""
+    r = subprocess.run(["ffmpeg", "-v", "error", "-ss", str(t), "-i", str(source), "-frames:v", "1",
+                        "-vf", "crop=4:4:2:2,scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True)
+    return "0x" + r.stdout[:3].hex() if len(r.stdout) >= 3 else "black"
 
 
 REC709 = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709"]
 
 
 def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: float = 8,
-                     cadre: tuple[int, int] | None = None, ancre_x: float = 0.5) -> None:
+                     cadre: tuple[int, int] | None = None, ancre_x: float = 0.5, ancre_y: float = 0.5,
+                     recul: float = 0) -> None:
     """Prépare un plan de coupe : 30 i/s, sans son, court, couleurs normales.
     cadre=(largeur, hauteur) : l'image remplit ce cadre (ce qui dépasse est rogné).
     cadre=None : on garde la forme d'origine (un extrait horizontal reste horizontal), c'est au
@@ -120,7 +134,8 @@ def normaliser_clip(source: Path, cible: Path, debut: float = 0, duree_max: floa
     ips = da()["format"]["ips"]
     cible.parent.mkdir(parents=True, exist_ok=True)
     if cadre:
-        filtre = cadrage(cadre[0], cadre[1], ips, est_hdr(source), ancre_x)
+        filtre = cadrage(cadre[0], cadre[1], ips, est_hdr(source), ancre_x, ancre_y, recul,
+                         couleur_coin(source, debut) if recul > 0 else "black")
     else:
         filtre = (f"scale='min(1920,iw)':'min(1920,ih)':force_original_aspect_ratio=decrease:flags=lanczos,"
                   f"scale=trunc(iw/2)*2:trunc(ih/2)*2,fps={ips},{HDR_VERS_SDR if est_hdr(source) else ''}setsar=1,format=yuv420p")

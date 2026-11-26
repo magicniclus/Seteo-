@@ -148,6 +148,9 @@ autrement avec `"mise_en_scene"`.
   du projet, animations, extraits), et elle reste devant, détourée, en bas de l'écran, buste contre
   le bord du bas, comme un présentateur. Elle change de côté à chaque nouveau contenu (4 s d'écart
   au moins), avec les zooms sur les coupes. C'est la mise en scène demandée pour présenter un projet.
+- **`vitrine`** : la personne détourée au centre, plus haut, pendant toute la vidéo ; au-dessus
+  d'elle, un carré encadré et légèrement animé où passent les plans de coupe (la 3D d'un projet),
+  avec leur légende. Pas de bloc plein écran ni de carte de chiffre. Détail : skill `video-projet`, 3 bis.
 
 Comment se règle le coin (`"coin"` dans le plan) :
 - `echelle` (0,62 par défaut : la taille de la personne), `cote` (`"droite"` ou `"gauche"` au

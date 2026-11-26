@@ -26,6 +26,65 @@
       tl.set(p, { x: c.x, y: D.coin.y, scale: D.coin.s, transformOrigin: "0 0", attr: { "data-cote": c.cote } }, c.t));
   }
 
+  // Mise en scène « vitrine » : le carré du haut. À son arrivée, il grandit, ses deux plaques se
+  // déplient derrière lui et les coins de viseur se posent. Ensuite il respire à peine (il flotte, les
+  // plaques tournent d'un rien, le point de l'onglet clignote). À chaque nouveau plan : fondu court,
+  // petit éclair et battement du cadre. Il s'efface avant le carton de fin (sauf s'il va jusqu'au bout).
+  if (D.vitrine) {
+    const V = D.vitrine, $ = (id) => document.getElementById(id);
+    const boite = $("vitrine"), cadre = $("vitrine-cadre"), coins = $("vitrine-coins"), eclair = $("vitrine-eclair");
+    const p1 = $("vitrine-plaque-1"), p2 = $("vitrine-plaque-2"), onglet = $("vitrine-onglet"), point = $("vitrine-point");
+    const t0 = V.d, debut = t0 < 0.05;   // présent dès la première image : il s'y met en place
+    const sortie = V.reste ? D.duree : V.f - 0.35;
+    const entre = (cible, de, a, duree, t, ease) =>
+      tl.fromTo(cible, de, Object.assign({ duration: duree, ease: ease, immediateRender: debut }, a), t);
+    gsap.set(boite, { autoAlpha: debut ? 1 : 0 });
+    tl.set(boite, { autoAlpha: 1 }, t0);
+    entre(boite, { scale: 0.9, rotate: -3 }, { scale: 1, rotate: 0 }, 0.7, t0, "back.out(1.6)");
+    entre(p1, { x: 0, y: 0, rotate: 0 }, { x: -24, y: 22, rotate: -3 }, 0.6, t0 + 0.12, "power3.out");
+    entre(p2, { x: 0, y: 0, rotate: 0 }, { x: 24, y: -18, rotate: 2.5 }, 0.6, t0 + 0.2, "power3.out");
+    entre(coins, { scale: 1.14, autoAlpha: 0 }, { scale: 1, autoAlpha: 1 }, 0.5, t0 + 0.25, "power2.out");
+    if (onglet) entre(onglet, { y: -16 }, { y: 0 }, 0.5, t0 + 0.05, "back.out(2)");
+    // la respiration : des allers-retours entiers (il revient au repos avant de partir)
+    const calme = t0 + 0.9;
+    const respire = (cible, de, a, periode) => {
+      let fois = Math.floor((sortie - calme) / periode);
+      fois -= fois % 2;
+      if (cible && fois >= 2)
+        tl.fromTo(cible, de, Object.assign({ duration: periode, ease: "sine.inOut", yoyo: true, repeat: fois - 1, immediateRender: false }, a), calme);
+    };
+    respire(boite, { y: 0 }, { y: -10 }, 1.8);
+    respire(p1, { rotate: -3 }, { rotate: -1.6 }, 2.6);
+    respire(p2, { rotate: 2.5 }, { rotate: 3.7 }, 3.1);
+    respire(point, { autoAlpha: 1 }, { autoAlpha: 0.25 }, 0.6);
+    V.plans.forEach((p, k) => {
+      const plan = $(p.id), avant = V.plans[k - 1], apres = V.plans[k + 1];
+      if (k === 0) {
+        gsap.set(plan, { autoAlpha: debut ? 1 : 0 });
+        tl.set(plan, { autoAlpha: 1 }, p.d);
+      } else {
+        va(plan, { autoAlpha: 0, scale: 1.08 }, { autoAlpha: 1, scale: 1 }, 0.35, p.d, "power2.out");
+        va(eclair, { autoAlpha: 0 }, { autoAlpha: 0.3 }, 0.08, p.d, "none");
+        va(eclair, { autoAlpha: 0.3 }, { autoAlpha: 0 }, 0.3, p.d + 0.08, "power1.out");
+        va(cadre, { scale: 1 }, { scale: 1.025 }, 0.14, p.d, "power2.out");
+        va(cadre, { scale: 1.025 }, { scale: 1 }, 0.4, p.d + 0.14, "back.out(2)");
+        va(coins, { scale: 1.08 }, { scale: 1 }, 0.45, p.d, "power3.out");
+      }
+      if (apres || !V.reste) tl.set(plan, { autoAlpha: 0 }, p.cache);
+      if (p.legende) {
+        const legende = $(p.legende);
+        if (!avant || avant.legende !== p.legende)
+          va(legende, { autoAlpha: 0, x: -24 }, { autoAlpha: 1, x: 0 }, 0.45, p.d + (k === 0 ? 0.35 : 0.2), "back.out(1.8)");
+        if (apres && apres.legende !== p.legende)
+          va(legende, { autoAlpha: 1, x: 0 }, { autoAlpha: 0, x: -16 }, 0.2, p.f - 0.2, "power2.in");
+      }
+    });
+    if (!V.reste) {
+      va(boite, { scale: 1, rotate: 0, autoAlpha: 1 }, { scale: 0.88, rotate: 2, autoAlpha: 0 }, 0.35, V.f - 0.35, "power2.in");
+      tl.set(boite, { autoAlpha: 0 }, V.f);
+    }
+  }
+
   // Mots derrière la personne : un mot géant passe entre le décor et elle
   D.derriere.forEach((m) => {
     const mot = document.getElementById(m.id);

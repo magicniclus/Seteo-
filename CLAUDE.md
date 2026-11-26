@@ -45,4 +45,7 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
   la personne pendant toute la vidéo, elle détourée en bas de l'écran comme un présentateur, qui
   change de côté, avec des zooms (`mise_en_scene: coin`, détourage RobustVideoMatting). Autres
   versions acceptées : animations plein écran (`plein`) ou personne dans un cadre en bas (`cadre`).
+- Montage (26/11/2026) : en `coin`, on le trouvait trop en bas. Variante demandée : lui détouré au
+  centre, plus haut, et la 3D du projet dans un carré travaillé et légèrement animé au-dessus de lui
+  (`mise_en_scene: vitrine`, skill `video-projet`).
 - (colle ici les hooks et formats qui ont le mieux marché)

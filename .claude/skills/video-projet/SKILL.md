@@ -1,13 +1,14 @@
 ---
 name: video-projet
-description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : la personne détourée en bas de l'écran pendant toute la vidéo, et derrière elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
+description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : la personne détourée pendant toute la vidéo (en bas comme un présentateur, ou au centre sous un carré animé qui montre le projet), et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
 ---
 
 # Vidéo de projet
 
 On te donne une vidéo où la personne parle face caméra et un projet de travaux (numéro, ville,
 travaux, budgets). Tu sors une vidéo verticale où **le projet est derrière elle du début à la fin**,
-et elle devant, détourée, en bas de l'écran, comme un présentateur.
+et elle devant, détourée : en bas de l'écran comme un présentateur (`coin`), ou au centre sous un
+carré animé qui montre le projet (`vitrine`).
 
 ## Les règles de ce skill
 
@@ -20,9 +21,13 @@ et elle devant, détourée, en bas de l'écran, comme un présentateur.
    Jamais d'extrait de film, d'Instagram, de YouTube, de Pexels, d'écran d'un autre site, jamais de
    « ponctuation », jamais d'animation qui ne parle pas du projet (pas de liste de conseils, pas de
    barres de statistiques), même si la vidéo de départ en avait. On repart de zéro sur le contenu.
-2. **La personne devant, tout le temps** : mise en scène `coin` (elle détourée en bas, le buste
-   contre le bord de l'écran), elle change de côté quand le contenu change, avec des zooms sur les
-   coupes. Ses sous-titres restent : ce sont ses mots.
+2. **La personne devant, tout le temps**, détourée sur le fond de la marque, avec des zooms sur les
+   coupes. Ses sous-titres restent : ce sont ses mots. Deux mises en scène au choix :
+   - **`coin`** (par défaut) : elle en bas, le buste contre le bord de l'écran, le projet en plein
+     écran derrière elle ; elle change de côté quand le contenu change.
+   - **`vitrine`** : elle au centre, plus haut et plus présente ; au-dessus d'elle, le projet dans un
+     carré encadré et légèrement animé (plaques décalées, coins de viseur, onglet du projet). À
+     proposer quand on la trouve « trop en bas » ou quand on veut un rendu plus posé. Voir 3 bis.
 3. **Les règles de la marque tiennent toujours** : la seule voix est la sienne ; on ne lui fait
    rien dire qu'elle n'a pas dit ; les budgets affichés sont ceux qu'on te donne (le total peut être
    leur somme, rien d'autre) ; **le client n'est jamais reconnaissable** (ni nom, ni adresse, ni
@@ -155,6 +160,56 @@ Réglages du coin, si besoin : `echelle` (taille de la personne : 0,55 laisse pl
 projet, 0,7 la rend plus présente), `cote` de départ, `alterner: false` pour la garder d'un seul
 côté, `descente` (pixels) pour moins de buste. Les zooms sur les coupes : `"zoom_coupe": 1.1` dans
 `reglages`.
+
+## 3 bis. Variante « vitrine » : le projet dans un carré au-dessus d'elle
+
+Tout le projet passe dans le carré : les plans 3D l'un après l'autre (fondu court, petit éclair et
+battement du cadre à chaque changement), la pièce et son budget en étiquette dans le carré, le
+numéro et la ville sur l'onglet, « Illustration 3D » à la verticale le long du bord. Le carré
+arrive dès la première image, flotte à peine, et s'efface juste avant le carton de fin (qui prend sa
+place en haut). Les sous-titres passent sous son menton.
+
+Ce qui change par rapport à `coin` :
+- **Pas de bloc plein écran, pas de carte `chiffres`, pas d'`accroche`** (le montage refuse) : le
+  titre du projet va sur l'onglet (`vitrine.titre`), les budgets dans les légendes des plans, le
+  total dans la légende d'un plan (« SdB + cuisine · *22 000 €* »).
+- **Les plans se suivent bout à bout du début jusqu'au carton de fin** (le carré n'est jamais
+  vide) ; le dernier finit à l'instant du carton (`carton_fin.de`). Pas de `mode` à donner.
+- **Une légende par plan** : la pièce montrée et son budget ; à la fin, l'appel (« Propose *ton
+  devis* »). Deux plans de suite avec la même légende : elle reste en place.
+- **Le cadrage de la 3D dans le carré** : un rendu `fond` a la pièce vers le tiers haut de l'image.
+  `"ancre_y": 0.15` (quelle hauteur de l'image on garde) et `"recul": 0.08` (une marge de la couleur
+  du fond autour, pour que la pièce ne touche pas les bords) la posent entière, un peu au-dessus du
+  milieu du carré : le haut des cheveux passe devant le bas du carré.
+- Regarde chaque passage en entier dans la rotation filmée : une rotation finit parfois sur un mur
+  qui cache la pièce. Choisis les `debut` pour l'éviter (le court film `fond` de la même pièce peut
+  servir pour le dernier passage).
+
+```json
+{
+  "mise_en_scene": "vitrine",
+  "vitrine": {"titre": "Projet n°2114 · *Montélimar*", "mention": "Illustration 3D",
+              "taille": 540, "marge": 30, "chevauche": 24, "echelle": 0.58},
+  "broll": [
+    {"de": 0, "a": 11.6, "fichier": "broll/chantiers/projet-2114-cuisine-piece-cuisine.mp4", "debut": 0,
+     "ancre_y": 0.15, "recul": 0.08, "legende": "Cuisine · *17 000 €*"},
+    {"de": 11.6, "a": 22.1, "fichier": "broll/chantiers/projet-2114-sdb-piece-salle-de-bain.mp4", "debut": 0,
+     "ancre_y": 0.15, "recul": 0.08, "legende": "Salle de bains · *5 000 €*"},
+    {"de": 22.1, "a": 31.4, "fichier": "broll/chantiers/projet-2114-cuisine-piece-cuisine.mp4", "debut": 11.6,
+     "ancre_y": 0.15, "recul": 0.08, "legende": "Cuisine · *17 000 €*"},
+    {"de": 31.4, "a": 36.5, "fichier": "broll/chantiers/projet-2114-sdb-piece-salle-de-bain.mp4", "debut": 8.8,
+     "ancre_y": 0.15, "recul": 0.08, "legende": "SdB + cuisine · *22 000 €*"},
+    {"de": 36.5, "a": 44.35, "fichier": "broll/chantiers/projet-2114-cuisine-court-piece-cuisine.mp4", "debut": 0,
+     "ancre_y": 0.15, "recul": 0.08, "legende": "Propose *ton devis*"}
+  ],
+  "carton_fin": {"de": 44.35, "verbe": "Projet", "mot": "N°2114", "suite": "Propose ton devis, c'est gratuit. Lien dans la bio"}
+}
+```
+
+Réglages de la vitrine : `taille` (côté du carré, en pixels), `marge` (sous l'interface du haut),
+`echelle` (taille de la personne) et `chevauche` (de combien ses cheveux passent devant le carré).
+Plus grand le carré, plus bas et plus petite la personne : vérifie que les sous-titres ne mordent
+pas sur son menton pendant les zooms (sinon `"zoom_coupe": 1.05`).
 
 ## 4. Monter, vérifier, livrer
 

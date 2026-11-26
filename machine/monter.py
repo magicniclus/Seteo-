@@ -133,9 +133,10 @@ def calculer_zooms(mots: list[dict], coupes: list[float], total: float, r: dict)
 
 
 def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_utile: float,
-                   cadre: tuple[int, int] = (1080, 1920), ancre_x: float = 0.5) -> str:
+                   cadre: tuple[int, int] = (1080, 1920), ancre_x: float = 0.5, ancre_y: float = 0.5,
+                   recul: float = 0) -> str:
     """Copie un plan de coupe dans le projet, à la bonne longueur et à la forme du cadre qui le montre
-    (tout l'écran, ou la carte : un extrait horizontal y garde presque toute son image)."""
+    (tout l'écran, la carte, le carré de la vitrine : on garde la partie de l'image donnée par les ancres)."""
     chemin = (RACINE / source) if not Path(source).is_absolute() else Path(source)
     if not chemin.exists():
         sys.exit(f"plan.json : fichier introuvable : {source}")
@@ -143,10 +144,11 @@ def preparer_media(source: str, dossier: Path, nom: str, debut: float, duree_uti
         cible = dossier / "assets" / f"{nom}{chemin.suffix.lower()}"
         shutil.copyfile(chemin, cible)
         return f"assets/{cible.name}"
-    empreinte = hashlib.md5(f"{chemin}{chemin.stat().st_mtime}{debut}{duree_utile:.2f}{cadre}{ancre_x}".encode()).hexdigest()[:8]
+    ancres = f"{ancre_x}" if (ancre_y, recul) == (0.5, 0) else f"{ancre_x}/{ancre_y}/{recul}"   # (empreintes d'avant inchangées)
+    empreinte = hashlib.md5(f"{chemin}{chemin.stat().st_mtime}{debut}{duree_utile:.2f}{cadre}{ancres}".encode()).hexdigest()[:8]
     cible = dossier / "assets" / f"{nom}-{empreinte}.mp4"
     if not cible.exists():
-        normaliser_clip(chemin, cible, debut, duree_utile + 0.2, cadre, ancre_x)
+        normaliser_clip(chemin, cible, debut, duree_utile + 0.2, cadre, ancre_x, ancre_y, recul)
     return f"assets/{cible.name}"
 
 
@@ -301,11 +303,23 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # ----- Mise en scène des animations plein écran : "plein" (elles remplacent l'image) ou "cadre"
     # (la personne passe dans un cadre arrondi en bas, l'animation au-dessus ; aucun détourage)
     # "coin" : la personne détourée en bas, d'un côté puis de l'autre, le contenu toujours derrière elle.
+    # "vitrine" : la personne détourée au centre, plus haut ; au-dessus d'elle, un carré encadré et
+    # légèrement animé où passent les plans de coupe (la maquette 3D d'un projet).
     style = plan.get("mise_en_scene", charte.get("mise_en_scene", "plein"))
-    if style not in ("plein", "cadre", "coin"):
-        sys.exit(f"mise_en_scene inconnue « {style} » (plein, cadre ou coin).")
+    if style not in ("plein", "cadre", "coin", "vitrine"):
+        sys.exit(f"mise_en_scene inconnue « {style} » (plein, cadre, coin ou vitrine).")
     blocs_cadre = style == "cadre" and a_roll.exists() and not blocs_derriere
-    en_coin = style == "coin" and a_roll.exists()
+    en_vitrine = style == "vitrine" and a_roll.exists()
+    en_coin = style in ("coin", "vitrine") and a_roll.exists()   # la vitrine reprend la personne du coin
+    if en_vitrine:
+        for b in plan.get("blocs", []):
+            if bibliotheque.BLOCS.get(b.get("bloc"), (None, ""))[1] == "plein":
+                sys.exit(f"plan.json : en vitrine, tout passe dans le carré : pas de bloc plein écran "
+                         f"(« {b.get('bloc')} »). Les blocs par-dessus (commentaire, nom) restent possibles.")
+        if plan.get("chiffres"):
+            sys.exit("plan.json : en vitrine, les montants vont dans la légende des plans (\"legende\"), pas en cartes de chiffres.")
+        if plan.get("accroche"):
+            sys.exit("plan.json : en vitrine, l'accroche est le titre posé sur le carré (\"vitrine\": {\"titre\": ...}).")
 
     # ----- Où est le visage dans l'image (une fois l'image décalée, si elle l'est) : les yeux, le haut
     # de la tête, le menton, en fraction de la hauteur. Tout le reste de la mise en scène en découle.
@@ -321,7 +335,24 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # sa tête, les animations et les cartes au-dessus des sous-titres. Pas de décalage de l'image ici :
     # on reprend les hauteurs du visage dans l'image d'origine.
     coin = None
-    if en_coin:
+    if en_vitrine:
+        # Mise en scène « vitrine » : le carré en haut (sous l'interface), la personne centrée dessous,
+        # le haut de ses cheveux passe devant le bas du carré (de la profondeur, et elle monte d'autant).
+        # Les sous-titres se posent sous son menton, au-dessus de l'interface du bas.
+        rc = plan.get("vitrine", {})
+        L = fmt["largeur"]
+        cote_v = int(rc.get("taille", 560))
+        haut_v = zs["haut"] + int(rc.get("marge", 20))
+        s_coin = float(rc.get("echelle", 0.58))
+        tete_ecran = haut_v + cote_v - float(rc.get("chevauche", 20))
+        y_c = tete_ecran - (tete_y - decalage / H) * H * s_coin
+        menton_ecran = y_c + (menton_y - decalage / H) * H * s_coin
+        st["centre_y"] = round(min(H - zs["bas"] - 55, menton_ecran + 85))
+        coin = {"s": s_coin, "y": round(y_c, 1), "yeux": round(yeux - decalage / H, 4),
+                "centre": round(L * (1 - s_coin) / 2, 1), "place": 0, "carte": 0,
+                "reglages": {**rc, "cote": "centre", "alterner": False},
+                "vitrine": {"x": round((L - cote_v) / 2), "y": haut_v, "cote": cote_v}}
+    elif en_coin:
         rc = plan.get("coin", {})
         s_coin = float(rc.get("echelle", 0.62))
         large_c, haut_c = fmt["largeur"] * s_coin, H * s_coin
@@ -566,7 +597,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         if fiche and fiche[1] == "plein":
             dx = T(x["de"])
             fen_blocs.append((dx, min(T(x["a"], fin=True) if "a" in x else dx + fiche[2], total)))
-    for k, b in enumerate(plan.get("broll", []), 1):
+    for k, b in enumerate([] if en_vitrine else plan.get("broll", []), 1):
         d, f = T(b["de"]), T(b["a"], fin=True)
         # Un plan plein écran suivi bout à bout d'un autre (ou, en coin, d'un bloc qui monte par-dessus)
         # reste un peu plus longtemps dessous : la première image du suivant n'est jamais un trou.
@@ -610,6 +641,55 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
             dessus += f'<span class="broll__mention">{e(typo(b["mention"]))}</span>'
         bloc_broll += (f'\n      <div id="broll-{k}" class="broll broll--{mode}"{petite}>'
                        f'<div class="broll__cadre">{media}</div>{dessus}</div>')
+
+    # ----- La vitrine : les plans de coupe passent l'un après l'autre dans le carré du haut, bout à bout
+    # (le carré n'est jamais vide). Chaque plan reste un instant sous le suivant, le temps du fondu.
+    # Sur le bord du haut, l'onglet ("titre") ; dedans, en haut à gauche, la légende du plan (la pièce
+    # et son budget) ; le long du bord gauche, la mention (« Illustration 3D »).
+    vitrine = None
+    if en_vitrine:
+        v, rv = coin["vitrine"], coin["reglages"]
+        plans_v = plan.get("broll", [])
+        if not plans_v:
+            sys.exit("plan.json : la vitrine montre les plans de coupe (\"broll\") : il en faut au moins un.")
+        bornes = [(T(b["de"]), T(b["a"], fin=True)) for b in plans_v]
+        items, dedans, legendes = [], "", ""
+        for k, (b, (d, f)) in enumerate(zip(plans_v, bornes), 1):
+            if k > 1 and abs(d - bornes[k - 2][1]) > 0.1:
+                sys.exit(f"plan.json : en vitrine, les plans se suivent bout à bout (le n° {k} commence à {d:.2f} s, "
+                         f"le précédent finit à {bornes[k - 2][1]:.2f} s) : le carré n'est jamais vide.")
+            reste = min(0.35 if k < len(plans_v) else 0.0, max(0.0, total - f))
+            src = preparer_media(b["fichier"], dossier, f"vitrine-{k}", float(b.get("debut", 0)), f - d + reste,
+                                 (v["cote"], v["cote"]), float(b.get("ancre_x", 0.5)), float(b.get("ancre_y", 0.5)),
+                                 float(b.get("recul", 0)))
+            minutage = f'data-start="{round(d, 3)}" data-duration="{round(f - d + reste, 3)}" data-track-index="1"'
+            media = (f'<img id="vitrine-{k}-image" class="clip" src="{e(src)}" alt="" {minutage}>' if Path(src).suffix in IMAGES
+                     else f'<video id="vitrine-{k}-video" src="{e(src)}" {minutage} muted playsinline></video>')
+            dedans += f'<div id="vitrine-{k}" class="vitrine__plan">{media}</div>'
+            item = {"id": f"vitrine-{k}", "d": round(d, 3), "f": round(f, 3), "cache": round(f + reste, 3)}
+            if b.get("legende"):
+                if items and items[-1].get("texte") == b["legende"]:
+                    item["legende"] = items[-1]["legende"]   # même légende que le plan d'avant : elle reste
+                else:
+                    texte = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(b["legende"])))
+                    legendes += f'<span id="vitrine-{k}-legende" class="vitrine__legende">{texte}</span>'
+                    item["legende"] = f"vitrine-{k}-legende"
+                item["texte"] = b["legende"]
+            items.append(item)
+        titre = re.sub(r"\*(.+?)\*", r"<em>\1</em>", e(typo(rv.get("titre", ""))))
+        titre = (f'<div id="vitrine-onglet" class="vitrine__onglet"><span id="vitrine-point" class="vitrine__point"></span>'
+                 f'<span>{titre}</span></div>') if titre else ""
+        mention = f'<span class="vitrine__mention">{e(typo(rv["mention"]))}</span>' if rv.get("mention") else ""
+        coins_v = "".join(f'<span class="vitrine__coin vitrine__coin--{c}"></span>' for c in ("hg", "hd", "bg", "bd"))
+        bloc_broll = (f'\n      <div id="vitrine" class="vitrine" style="left:{v["x"]}px;top:{v["y"]}px;'
+                      f'width:{v["cote"]}px;height:{v["cote"]}px">'
+                      f'<div id="vitrine-plaque-2" class="vitrine__plaque vitrine__plaque--2"></div>'
+                      f'<div id="vitrine-plaque-1" class="vitrine__plaque vitrine__plaque--1"></div>'
+                      f'<div id="vitrine-cadre" class="vitrine__cadre">{dedans}<div class="vitrine__reflet"></div>'
+                      f'<div id="vitrine-eclair" class="vitrine__eclair"></div>{legendes}</div>'
+                      f'<div id="vitrine-coins" class="vitrine__coins">{coins_v}</div>{mention}{titre}</div>')
+        vitrine = {"plans": [{k: x[k] for k in x if k != "texte"} for x in items],
+                   "d": items[0]["d"], "f": items[-1]["f"], "reste": items[-1]["f"] >= total - 0.05}
 
     # ----- La prise. Si le visage est trop bas dans l'image, on remonte l'image (rythme.decalage_y) :
     # la bande vide du bas tombe sous l'interface des réseaux et se fond dans le fond de l'univers.
@@ -746,7 +826,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     bords = "".join(f'\n      <div id="{w["bord"]}" class="cadre-bord" style="left:{w["rect"][0]}px;top:{w["rect"][1]}px;'
                     f'width:{w["rect"][2]}px;height:{w["rect"][3]}px"></div>' for w in cadres)
     principal = {"duree": total, "visageY": coin["yeux"] if coin else r["visage_y"], "derriere": mots_derriere, "reduit": reduit,
-                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin else None,
+                 "coin": {k: coin[k] for k in ("s", "y", "cotes")} if coin else None, "vitrine": vitrine,
                  "broll": brolls, "cadres": [{k: v for k, v in w.items() if k != "rect"} for w in cadres],
                  "devant": [{k: v for k, v in p.items() if k not in ("tete", "centre")} for p in passages],
                  "zooms": calculer_zooms(mots, donnees.get("coupes", []), total, r)}
@@ -771,7 +851,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     </style>
   </head>
   <body>
-    <div id="root"{' class="coin"' if coin else ''} data-composition-id="main" data-start="0" data-duration="{total}"
+    <div id="root"{' class="coin vitrine-scene"' if vitrine else ' class="coin"' if coin else ''} data-composition-id="main" data-start="0" data-duration="{total}"
          data-width="{fmt['largeur']}" data-height="{fmt['hauteur']}" data-fps="{fmt['ips']}">
       <div class="fond-scene"></div>
       <div id="prise">{prise}{fond_html}</div>{bords}{personne}{bloc_broll}{musique}{hotes_blocs}{mots_html}{hote('sous-titres', 3)}{hote('habillage', 4)}
@@ -788,6 +868,8 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
 
     # Les instants à regarder : première image, chaque carte, chaque plan de coupe, trois sous-titres, la fin
     reperes = [0.0] + [round((x["d"] + x["f"]) / 2, 2) for x in cartes + brolls + mots_derriere]
+    if vitrine:  # chaque plan du carré au milieu, et juste après chaque changement de plan
+        reperes += [round((x["d"] + x["f"]) / 2, 2) for x in vitrine["plans"]] + [round(x["d"] + 0.25, 2) for x in vitrine["plans"][1:]]
     reperes += [round(p["mots"][-1]["d"] + 0.1, 2) for p in pages[1::max(len(pages) // 3, 1)]][:3]
     for d, f in fenetres_blocs:  # un bloc se juge au milieu de sa construction et une fois complet
         reperes += [round(d + (f - d) * 0.45, 2), round(f - 0.6, 2)]
