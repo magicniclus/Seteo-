@@ -1,6 +1,6 @@
 ---
 name: video-projet
-description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : l'écran coupé en deux (en haut le projet sur fond papier, en bas la vraie vidéo de la personne, les sous-titres sur la couture), ou la personne détourée devant le projet, et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
+description: Faire la vidéo d'un projet de travaux Portail Travaux à partir d'une vidéo de la personne et des infos du projet (numéro, ville, pièces, budgets) : l'écran coupé en deux (en haut le projet sur fond bleu, en bas la vraie vidéo de la personne, les sous-titres sur la couture), ou la personne détourée devant le projet, et autour d'elle uniquement la maquette 3D du projet filmée dans l'outil Dessin du site et les éléments clés du projet (fiche, budgets, appel « propose ton devis »). Utiliser quand on donne un projet ou une demande de travaux à mettre en vidéo, ou quand on demande une maquette 3D d'un projet. Pour un montage classique (conseils, animations, extraits), c'est le skill montage-video.
 ---
 
 # Vidéo de projet
@@ -24,7 +24,7 @@ l'écran comme un présentateur (`coin`), ou au centre sous un carré animé (`v
 2. **La personne à l'écran, tout le temps**, avec des zooms sur les coupes. Ses sous-titres
    restent : ce sont ses mots. Trois mises en scène au choix :
    - **`partage`** (celle qu'on préfère, à faire par défaut) : l'écran coupé en deux. En haut, sur
-     un fond papier, une barre de titre, la carte du projet (la 3D, la pastille du budget,
+     un fond bleu de la marque, une barre de titre, la carte du projet (la 3D, la pastille du budget,
      l'étiquette de la pièce) et un encart pour le chiffre clé ; en bas, **sa vraie vidéo, avec son
      décor, sans détourage** ; les sous-titres en bandeau sur la ligne qui sépare les deux. Voir 3 ter.
      (Le détourage sur fond transparent a été jugé moche dans cette mise en page : ne le propose pas.)
@@ -219,7 +219,7 @@ pas sur son menton pendant les zooms (sinon `"zoom_coupe": 1.05`).
 ## 3 ter. Écran partagé (`partage`) : la mise en page préférée
 
 ```
- ┌──────────────────────────────┐  fond papier (léger grain)
+ ┌──────────────────────────────┐  fond bleu (léger grain)
  │ [⌂ Rénovation à Montélimar ] │  barre de titre : change avec le "titre" des plans
  │ ┌──────────────────────────┐ │
  │ │● Projet n°2114 · …  3D   │ │  en-tête de la carte ("entete", "mention")
@@ -250,7 +250,7 @@ design ni les textes.
   la somme de ceux qu'on t'a donnés.
 - **La personne** : sa vraie vidéo remplit tout le bas, sur toute la largeur, avec son décor (pas de
   détourage). Ses yeux se posent à `yeux_ecran` (1 370 px par défaut avec la couture à 1 040) ; ce
-  qui dépasse au-dessus de la couture passe sous le fond papier. Un selfie très serré ne tient pas en
+  qui dépasse au-dessus de la couture passe sous le fond bleu. Un selfie très serré ne tient pas en
   entier : le haut du front passe sous la couture, et `"zoom_coupe": 1.05` dans `reglages` évite que
   les zooms ne la collent à l'écran. Filmée d'un peu plus loin (le buste dans l'image), elle tiendrait
   entière : dis-le. (`"detoure": true` existe encore, mais n'est plus voulu.)

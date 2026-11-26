@@ -306,7 +306,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
     # "coin" : la personne détourée en bas, d'un côté puis de l'autre, le contenu toujours derrière elle.
     # "vitrine" : la personne détourée au centre, plus haut ; au-dessus d'elle, un carré encadré et
     # légèrement animé où passent les plans de coupe (la maquette 3D d'un projet).
-    # "partage" : l'écran coupé en deux. En haut, sur fond papier, une barre de titre et la carte où
+    # "partage" : l'écran coupé en deux. En haut, sur fond bleu, une barre de titre et la carte où
     # passent les plans (avec pastilles et encarts) ; en bas, la personne ; les sous-titres sur la couture.
     style = plan.get("mise_en_scene", charte.get("mise_en_scene", "plein"))
     if style not in ("plein", "cadre", "coin", "vitrine", "partage"):
@@ -346,7 +346,7 @@ def construire(dossier: Path, plan: dict, donnees: dict, charte: dict) -> dict:
         # Écran partagé : la couture (la ligne qui sépare le haut du bas) porte les sous-titres. Dans le
         # bas, la vraie vidéo de la personne, sur toute la largeur, avec son décor (par défaut : on ne la
         # détoure pas). Ses yeux se posent à "yeux_ecran" ; ce qui dépasse au-dessus de la couture passe
-        # sous le fond papier du haut. "detoure": true : l'ancienne façon (détourée, réduite, sur le fond
+        # sous le fond bleu du haut. "detoure": true : l'ancienne façon (détourée, réduite, sur le fond
         # de l'univers, le haut de la tête "sous_couture" pixels sous la couture).
         rp = plan.get("partage", {})
         L = fmt["largeur"]

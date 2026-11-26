@@ -167,7 +167,7 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 #sous-titres { z-index: 6; }
 #habillage { z-index: 7; }
 
-/* Mise en scène « partage » : l'écran coupé en deux. En haut, un fond papier (léger grain) avec la barre
+/* Mise en scène « partage » : l'écran coupé en deux. En haut, un fond bleu (léger grain) avec la barre
    de titre, la carte du projet et ses encarts ; en bas, la personne détourée sur le fond de l'univers
    (un halo derrière elle) ; sur la couture, un filet clair et les sous-titres en bandeau. */
 #root.coin #personne[data-cote="panneau"] {
@@ -181,8 +181,11 @@ body { font-family: var(--police), sans-serif; -webkit-font-smoothing: antialias
 }
 .partage-haut {
   position: absolute; left: 0; right: 0; top: 0; z-index: 2;
-  background-color: color-mix(in srgb, var(--papier) 90%, var(--encre));
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2  0 0 0 0 0.16  0 0 0 0 0.1  0 0 0 0.12 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+  /* bleu de la marque, un peu plus clair au centre, avec un grain très léger */
+  background-color: var(--marque);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>"),
+                    radial-gradient(75% 55% at 50% 42%, color-mix(in srgb, var(--marque) 82%, var(--blanc)) 0%, transparent 100%),
+                    linear-gradient(180deg, var(--marque) 0%, color-mix(in srgb, var(--marque) 70%, var(--nuit)) 100%);
 }
 .partage-couture { position: absolute; left: 0; right: 0; height: 4px; z-index: 5; background: var(--papier); }
 .partage-titre {

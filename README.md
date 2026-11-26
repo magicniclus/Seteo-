@@ -188,7 +188,7 @@ python machine/yeux.py 2026-11-30-3                # relecture
 arrondi en bas et l'animation s'affiche au-dessus ; `coin`, le contenu est derrière toi toute la vidéo
 et tu restes devant, détouré, en bas de l'écran, d'un côté puis de l'autre ; `vitrine`, tu es détouré
 au centre et le projet passe dans un carré animé au-dessus de toi ; `partage`, l'écran coupé en deux,
-le contenu en haut sur fond papier, toi en bas, les sous-titres sur la couture (la préférée). Le détourage se fait avec
+le contenu en haut sur fond bleu, toi en bas, les sous-titres sur la couture (la préférée). Le détourage se fait avec
 RobustVideoMatting (`machine/detourage.py`, il faut PyTorch version processeur).
 
 **Ponctuations** (skill `ponctuations` : *« anime plus cette vidéo »*, *« trouve un extrait pour

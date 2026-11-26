@@ -49,7 +49,7 @@ C'est ce qui fait que l'IA « te connaît ». Mets-le à jour dès que tu appren
   centre, plus haut, et la 3D du projet dans un carré travaillé et légèrement animé au-dessus de lui
   (`mise_en_scene: vitrine`, skill `video-projet`).
 - Montage (26/11/2026) : la mise en page préférée, d'après une vidéo de référence : l'écran coupé en
-  deux, le contenu en haut sur fond papier (barre de titre, carte, pastilles, encart qui déborde), lui
+  deux, le contenu en haut sur fond bleu (barre de titre, carte, pastilles, encart qui déborde), lui
   en bas, les sous-titres en bandeau sur la couture (`mise_en_scene: partage`). À faire par défaut.
   En bas, sa VRAIE vidéo avec son décor, sur toute la largeur : le détourage sur fond transparent y
   a été jugé moche (« je veux plus le background transparent »).
