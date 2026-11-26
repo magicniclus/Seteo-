@@ -72,6 +72,19 @@ Dans le `plan.json` de la copie, **efface les clés de contenu de l'ancien monta
 python machine/couper.py <id>-projet-<numero>
 ```
 
+**Le bruit de fond part à cette étape** (clim, ventilation, rue, ronflement derrière la voix) : la
+coupe passe le son dans un débruiteur fait pour la voix (RNNoise, filtre `arnndn` de ffmpeg, modèle
+téléchargé au premier usage dans `montage/modeles/`). C'est le réglage par défaut
+(`son.debruitage: voix` dans `config/da.yaml`) : rien à ajouter. Sur la vidéo du projet n°2114, le
+bruit de fond a baissé d'une dizaine de dB, la voix n'a pas bougé de plus de 1 dB.
+- Un projet copié d'un montage fait **avant** ce réglage garde son ancien son : recoupe-le (la
+  commande ci-dessus), même si rien d'autre ne change. Les coupes et les numéros de mots restent
+  les mêmes, le plan reste valable.
+- Vidéo par vidéo, dans les `reglages` du plan : `"debruitage": "voix"` (par défaut), un nombre de
+  8 à 12 (réduction douce d'un simple souffle régulier), ou `0` (aucun). Puis recoupe.
+- Tu ne peux pas écouter : à la livraison, demande si le bruit est assez parti et si la voix ne
+  sonne pas « sous l'eau ». S'il reste trop de bruit, on peut passer à un débruitage plus fort.
+
 ## 2. Les maquettes 3D
 
 Une maquette par pièce du projet, filmée en format **`fond`** (plein écran, la pièce dans le haut de
@@ -304,8 +317,12 @@ Vérifie sur les images :
 - aucun nom, adresse, téléphone ou e-mail de client, même flou mais lisible ;
 - le texte de chaque légende et du carton se lit en petit (taille d'un téléphone).
 
+Vérifie aussi le son dans le bilan de `yeux.py` (niveau autour de -14 LUFS) : le débruitage est fait
+à la coupe, pas au rendu.
+
 Envoie la vidéo et dis en quelques lignes : ce qui est derrière, dans l'ordre ; ce que la maquette
-suppose (tailles, équipements) ; que tu ne peux pas écouter la vidéo. Quand tout est fini :
+suppose (tailles, équipements) ; que le bruit de fond a été retiré ; que tu ne peux pas écouter la
+vidéo. Quand tout est fini :
 `python machine/site_local.py arreter`.
 
 ## Si ça coince
